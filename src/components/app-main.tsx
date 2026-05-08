@@ -11,6 +11,7 @@ import { DataPage } from '@/components/pages/data-pages';
 import { RekapitulasiPage } from '@/components/pages/rekapitulasi-page';
 import { DistribusiPage } from '@/components/pages/distribusi-page';
 import { PengaturanPage } from '@/components/pages/pengaturan-page';
+import { UsersPage } from '@/components/pages/users-page';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -51,6 +52,8 @@ function AppContent() {
         return <RekapitulasiPage />;
       case 'distribusi':
         return <DistribusiPage />;
+      case 'users':
+        return <UsersPage />;
       case 'pengaturan':
         return <PengaturanPage />;
       default:

@@ -12,6 +12,7 @@ import {
   GraduationCap,
   Users,
   Baby,
+  UserCog,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -26,6 +27,7 @@ const menuItems = [
   { id: 'data', label: 'Data', icon: Database, gradient: 'from-cyan-500 to-blue-600' },
   { id: 'rekapitulasi', label: 'Rekapitulasi', icon: BarChart3, gradient: 'from-purple-500 to-pink-600' },
   { id: 'distribusi', label: 'Distribusi', icon: PieChart, gradient: 'from-orange-500 to-red-600' },
+  { id: 'users', label: 'Pengguna', icon: UserCog, gradient: 'from-violet-500 to-purple-600' },
   { id: 'pengaturan', label: 'Pengaturan', icon: Settings, gradient: 'from-gray-500 to-slate-600' },
 ];
 
