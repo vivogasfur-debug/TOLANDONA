@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User for authentication
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Settings for website customization
+model Setting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Guru (Teacher) Data
+model Guru {
+  id          String   @id @default(cuid())
+  originalId  String?  // Original ID from CSV
+  nama        String
+  jk          String?  // Jenis Kelamin
+  sekolah     String?
+  alamat      String?
+  nuptk       String?
+  jenisTendik String?
+  nik         String?
+  nip         String?
+  tempatLahir String?
+  tanggalLahir String?
+  umur        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Siswa (Student) Data
+model Siswa {
+  id          String   @id @default(cuid())
+  originalId  String?  // Original ID from CSV
+  nama        String
+  jenjang     String?
+  namaSekolah String?
+  jk          String?  // Jenis Kelamin
+  alamat      String?
+  tempatLahir String?
+  tanggalLahir String?
+  nisn        String?
+  nik         String?
+  kelas       String?
+  umur        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Posyandu Data
+model Posyandu {
+  id          String   @id @default(cuid())
+  originalId  String?  // Original ID from CSV
+  nama        String
+  posyandu    String?
+  alamat      String?
+  kategori    String?
+  jk          String?  // Jenis Kelamin
+  nik         String?
+  tempatLahir String?
+  tanggalLahir String?
+  umur        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Activity Log
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String
+  details   String?
+  userId    String?
+  createdAt DateTime @default(now())
+}
