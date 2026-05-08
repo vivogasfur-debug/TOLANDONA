@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -23,14 +24,15 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
-import { Search, Filter, Download, ChevronLeft, ChevronRight, GraduationCap, Users, Baby } from 'lucide-react';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Search, Filter, Download, Upload, ChevronLeft, ChevronRight, GraduationCap, Users, Baby, FileSpreadsheet, Loader2, Check, Trash2, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface DataPageProps {
   type: 'guru' | 'siswa' | 'posyandu';
@@ -63,6 +65,16 @@ export function DataPage({ type }: DataPageProps) {
   const [filters, setFilters] = useState<Filters>({});
   const [search, setSearch] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<Record<string, string>>({});
+  
+  // Import/Export states
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [clearingData, setClearingData] = useState(false);
+  const [clearExisting, setClearExisting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -90,6 +102,7 @@ export function DataPage({ type }: DataPageProps) {
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
+      toast.error('Gagal memuat data');
     } finally {
       setLoading(false);
     }
@@ -112,6 +125,98 @@ export function DataPage({ type }: DataPageProps) {
 
   const handlePageChange = (newPage: number) => {
     setPagination(prev => ({ ...prev, page: newPage }));
+  };
+
+  // Export handler
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const response = await fetch(`/api/export?type=${type}&format=csv`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${type}_data.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Data berhasil diekspor');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Gagal mengekspor data');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // Import handlers
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!selectedFile) {
+      toast.error('Pilih file terlebih dahulu');
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('type', type);
+      formData.append('clearExisting', clearExisting.toString());
+
+      const response = await fetch('/api/import', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success(result.message);
+        setShowImportDialog(false);
+        setSelectedFile(null);
+        setClearExisting(false);
+        fetchData();
+      } else {
+        toast.error(result.error || 'Gagal mengimpor data');
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      toast.error('Gagal mengimpor data');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // Clear all data handler
+  const handleClearAll = async () => {
+    setClearingData(true);
+    try {
+      const response = await fetch(`/api/${type}/clear`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success(`Semua data ${type} berhasil dihapus`);
+        setShowClearDialog(false);
+        fetchData();
+      } else {
+        toast.error(result.error || 'Gagal menghapus data');
+      }
+    } catch (error) {
+      console.error('Clear error:', error);
+      toast.error('Gagal menghapus data');
+    } finally {
+      setClearingData(false);
+    }
   };
 
   const getTypeConfig = () => {
@@ -283,6 +388,39 @@ export function DataPage({ type }: DataPageProps) {
             <p className="text-sm text-slate-500">Total: {pagination.total.toLocaleString()} data</p>
           </div>
         </div>
+        
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowImportDialog(true)}
+            className="gap-2"
+          >
+            <Upload className="w-4 h-4" />
+            Import
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            disabled={exporting || pagination.total === 0}
+            className="gap-2"
+          >
+            {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            Export CSV
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setShowClearDialog(true)}
+            disabled={pagination.total === 0}
+            className="gap-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            Hapus Semua
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -340,7 +478,19 @@ export function DataPage({ type }: DataPageProps) {
                   {data.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={config.columns.length + 1} className="text-center py-8 text-slate-500">
-                        Tidak ada data ditemukan
+                        <div className="flex flex-col items-center gap-2">
+                          <FileSpreadsheet className="w-12 h-12 text-slate-300" />
+                          <p>Tidak ada data ditemukan</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowImportDialog(true)}
+                            className="mt-2"
+                          >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Import Data
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -421,6 +571,134 @@ export function DataPage({ type }: DataPageProps) {
           </div>
         </div>
       )}
+
+      {/* Import Dialog */}
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5 text-emerald-500" />
+              Import Data {config.title}
+            </DialogTitle>
+            <DialogDescription>
+              Upload file CSV untuk mengimpor data. Format file harus sesuai dengan template.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-6">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <div className="text-center">
+                <FileSpreadsheet className="w-12 h-12 mx-auto text-slate-400 mb-2" />
+                {selectedFile ? (
+                  <div className="flex items-center justify-center gap-2 text-emerald-600">
+                    <Check className="w-4 h-4" />
+                    <span className="font-medium">{selectedFile.name}</span>
+                  </div>
+                ) : (
+                  <p className="text-slate-500 text-sm">
+                    Drag & drop atau klik untuk memilih file CSV
+                  </p>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="mt-3"
+                >
+                  Pilih File
+                </Button>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="clearExisting"
+                checked={clearExisting}
+                onCheckedChange={(checked) => setClearExisting(checked as boolean)}
+              />
+              <label
+                htmlFor="clearExisting"
+                className="text-sm text-slate-600 dark:text-slate-400 cursor-pointer"
+              >
+                Hapus data lama sebelum import
+              </label>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowImportDialog(false);
+                setSelectedFile(null);
+                setClearExisting(false);
+              }}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={handleImport}
+              disabled={!selectedFile || importing}
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
+            >
+              {importing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Mengimpor...
+                </>
+              ) : (
+                'Import'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Clear Confirmation Dialog */}
+      <Dialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              Hapus Semua Data
+            </DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menghapus semua data {config.title}? 
+              Tindakan ini tidak dapat dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowClearDialog(false)}>
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleClearAll}
+              disabled={clearingData}
+            >
+              {clearingData ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Hapus Semua
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
