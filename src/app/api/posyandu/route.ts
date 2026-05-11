@@ -17,11 +17,11 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       where.OR = [
-        { nama: { contains: search, mode: 'insensitive' } },
-        { nik: { contains: search, mode: 'insensitive' } },
-        { posyandu: { contains: search, mode: 'insensitive' } },
-        { alamat: { contains: search, mode: 'insensitive' } },
-        { kategori: { contains: search, mode: 'insensitive' } },
+        { nama: { contains: search } },
+        { nik: { contains: search } },
+        { posyandu: { contains: search } },
+        { alamat: { contains: search } },
+        { kategori: { contains: search } },
       ];
     }
 

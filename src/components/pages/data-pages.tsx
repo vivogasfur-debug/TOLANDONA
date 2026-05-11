@@ -109,29 +109,39 @@ export function DataPage({ type }: DataPageProps) {
   const [formPosyandu, setFormPosyandu] = useState('');
   const [formKategori, setFormKategori] = useState('');
 
-  const fetchData = useCallback(async (searchValue?: string) => {
+  // Function to fetch data - accepts all parameters to avoid stale closure
+  const fetchData = async (
+    searchQuery: string = search, 
+    pageNum: number = pagination.page,
+    filtersToUse: Record<string, string> = selectedFilter
+  ) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      params.append('page', pagination.page.toString());
+      params.append('page', pageNum.toString());
       params.append('limit', pagination.limit.toString());
       
-      // Use passed searchValue or current search state
-      const currentSearch = searchValue !== undefined ? searchValue : search;
-      if (currentSearch) params.append('search', currentSearch);
+      if (searchQuery) params.append('search', searchQuery);
       
-      Object.entries(selectedFilter).forEach(([key, value]) => {
+      Object.entries(filtersToUse).forEach(([key, value]) => {
         if (value && value !== 'all') {
           params.append(key, value);
         }
       });
+
+      console.log('Fetching data with params:', params.toString());
 
       const res = await fetch(`/api/${type}?${params}`);
       const result = await res.json();
       
       if (result.success) {
         setData(result.data);
-        setPagination(prev => ({ ...prev, total: result.pagination.total, totalPages: result.pagination.totalPages }));
+        setPagination(prev => ({ 
+          ...prev, 
+          page: pageNum,
+          total: result.pagination.total, 
+          totalPages: result.pagination.totalPages 
+        }));
         if (result.filters) {
           setFilters(result.filters);
         }
@@ -142,26 +152,27 @@ export function DataPage({ type }: DataPageProps) {
     } finally {
       setLoading(false);
     }
-  }, [type, pagination.page, pagination.limit, selectedFilter]);
+  };
 
+  // Initial load
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [type]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setPagination(prev => ({ ...prev, page: 1 }));
-    // Pass current search value directly
-    fetchData(search);
+    fetchData(search, 1, selectedFilter);
   };
 
   const handleFilterChange = (key: string, value: string) => {
-    setSelectedFilter(prev => ({ ...prev, [key]: value }));
-    setPagination(prev => ({ ...prev, page: 1 }));
+    const newFilter = { ...selectedFilter, [key]: value };
+    setSelectedFilter(newFilter);
+    // Fetch with new filter immediately at page 1
+    fetchData(search, 1, newFilter);
   };
 
   const handlePageChange = (newPage: number) => {
-    setPagination(prev => ({ ...prev, page: newPage }));
+    fetchData(search, newPage, selectedFilter);
   };
 
   const openExportDialog = () => {

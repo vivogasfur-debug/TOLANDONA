@@ -86,12 +86,12 @@ export async function GET(request: NextRequest) {
       
       if (search) {
         whereGuru.OR = [
-          { nama: { contains: search, mode: 'insensitive' } },
-          { nuptk: { contains: search, mode: 'insensitive' } },
-          { nik: { contains: search, mode: 'insensitive' } },
-          { nip: { contains: search, mode: 'insensitive' } },
-          { sekolah: { contains: search, mode: 'insensitive' } },
-          { alamat: { contains: search, mode: 'insensitive' } },
+          { nama: { contains: search } },
+          { nuptk: { contains: search } },
+          { nik: { contains: search } },
+          { nip: { contains: search } },
+          { sekolah: { contains: search } },
+          { alamat: { contains: search } },
         ];
       }
       if (jk) whereGuru.jk = jk;
@@ -114,11 +114,11 @@ export async function GET(request: NextRequest) {
       
       if (search) {
         whereSiswa.OR = [
-          { nama: { contains: search, mode: 'insensitive' } },
-          { nisn: { contains: search, mode: 'insensitive' } },
-          { nik: { contains: search, mode: 'insensitive' } },
-          { namaSekolah: { contains: search, mode: 'insensitive' } },
-          { alamat: { contains: search, mode: 'insensitive' } },
+          { nama: { contains: search } },
+          { nisn: { contains: search } },
+          { nik: { contains: search } },
+          { namaSekolah: { contains: search } },
+          { alamat: { contains: search } },
         ];
       }
       if (jk) whereSiswa.jk = jk;
@@ -142,10 +142,10 @@ export async function GET(request: NextRequest) {
       
       if (search) {
         wherePosyandu.OR = [
-          { nama: { contains: search, mode: 'insensitive' } },
-          { nik: { contains: search, mode: 'insensitive' } },
-          { posyandu: { contains: search, mode: 'insensitive' } },
-          { alamat: { contains: search, mode: 'insensitive' } },
+          { nama: { contains: search } },
+          { nik: { contains: search } },
+          { posyandu: { contains: search } },
+          { alamat: { contains: search } },
         ];
       }
       if (jk) wherePosyandu.jk = jk;
