@@ -80,6 +80,7 @@ export function DataPage({ type }: DataPageProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [exportFileName, setExportFileName] = useState('');
+  const [exportFormat, setExportFormat] = useState<'csv' | 'xlsx'>('xlsx');
 
   // Add/Edit/Delete states
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -194,7 +195,7 @@ export function DataPage({ type }: DataPageProps) {
       // Build URL with search and filter parameters
       const params = new URLSearchParams();
       params.append('type', type);
-      params.append('format', 'csv');
+      params.append('format', exportFormat);
       if (search) params.append('search', search);
       
       // Add filters
@@ -209,12 +210,12 @@ export function DataPage({ type }: DataPageProps) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${exportFileName}.csv`;
+      a.download = `${exportFileName}.${exportFormat === 'xlsx' ? 'xlsx' : 'csv'}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      toast.success('Data berhasil diekspor');
+      toast.success(`Data berhasil diekspor ke format ${exportFormat.toUpperCase()}`);
       setShowExportDialog(false);
     } catch (error) {
       console.error('Export error:', error);
@@ -1186,6 +1187,35 @@ export function DataPage({ type }: DataPageProps) {
           </DialogHeader>
           <div className="space-y-4">
             <div>
+              <Label className="text-sm font-medium">Format Export</Label>
+              <div className="flex gap-2 mt-2">
+                <Button
+                  type="button"
+                  variant={exportFormat === 'xlsx' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setExportFormat('xlsx')}
+                  className={exportFormat === 'xlsx' ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : ''}
+                >
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  Excel (.xlsx)
+                </Button>
+                <Button
+                  type="button"
+                  variant={exportFormat === 'csv' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setExportFormat('csv')}
+                  className={exportFormat === 'csv' ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : ''}
+                >
+                  CSV (.csv)
+                </Button>
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                {exportFormat === 'xlsx' 
+                  ? 'Format Excel mendukung styling dan multiple sheet' 
+                  : 'Format CSV kompatibel dengan berbagai aplikasi'}
+              </p>
+            </div>
+            <div>
               <Label className="text-sm font-medium">Nama File</Label>
               <Input 
                 type="text" 
@@ -1194,7 +1224,9 @@ export function DataPage({ type }: DataPageProps) {
                 className="mt-1" 
                 placeholder="Masukkan nama file"
               />
-              <p className="text-xs text-slate-500 mt-1">File akan disimpan dengan ekstensi .csv</p>
+              <p className="text-xs text-slate-500 mt-1">
+                File akan disimpan dengan ekstensi .{exportFormat === 'xlsx' ? 'xlsx' : 'csv'}
+              </p>
             </div>
             {(search || Object.values(selectedFilter).some(v => v && v !== 'all')) && (
               <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
@@ -1213,7 +1245,7 @@ export function DataPage({ type }: DataPageProps) {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowExportDialog(false)}>Batal</Button>
             <Button onClick={handleExport} disabled={exporting || !exportFileName.trim()} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
-              {exporting ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Mengekspor...</>) : (<><Download className="w-4 h-4 mr-2" />Export</>)}
+              {exporting ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Mengekspor...</>) : (<><Download className="w-4 h-4 mr-2" />Export {exportFormat.toUpperCase()}</>)}
             </Button>
           </DialogFooter>
         </DialogContent>

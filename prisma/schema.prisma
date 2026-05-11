@@ -93,3 +93,12 @@ model ActivityLog {
   userId    String?
   createdAt DateTime @default(now())
 }
+
+// Export Settings for customizing export headers
+model ExportSetting {
+  id        String   @id @default(cuid())
+  type      String   @unique // guru, siswa, posyandu
+  headers   String   // JSON string of header configuration
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

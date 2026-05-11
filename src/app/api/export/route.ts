@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import * as XLSX from 'xlsx';
 
 // Convert data to CSV format
 function toCSV(data: any[], columns: { key: string; header: string }[]): string {
@@ -19,11 +20,95 @@ function toCSV(data: any[], columns: { key: string; header: string }[]): string 
   return `${headerRow}\n${dataRows}`;
 }
 
+// Convert data to Excel buffer
+function toExcel(data: any[], columns: { key: string; header: string }[]): Buffer {
+  const headers = columns.map(c => c.header);
+  const rows = data.map(item => {
+    return columns.map(col => item[col.key] ?? '');
+  });
+  
+  const sheetData = [headers, ...rows];
+  const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+  
+  // Set column widths
+  const colWidths = columns.map(col => ({ wch: Math.max(col.header.length, 15) }));
+  worksheet['!cols'] = colWidths;
+  
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
+  
+  return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+}
+
+// Get custom headers from database or return defaults
+async function getHeaders(type: string): Promise<{ key: string; header: string }[]> {
+  const defaultHeaders: Record<string, { key: string; header: string }[]> = {
+    guru: [
+      { key: 'originalId', header: 'ID' },
+      { key: 'nama', header: 'Nama' },
+      { key: 'jk', header: 'Jenis Kelamin' },
+      { key: 'sekolah', header: 'Sekolah' },
+      { key: 'alamat', header: 'Alamat' },
+      { key: 'nuptk', header: 'NUPTK' },
+      { key: 'jenisTendik', header: 'Jenis Tendik' },
+      { key: 'nik', header: 'NIK' },
+      { key: 'nip', header: 'NIP' },
+      { key: 'tempatLahir', header: 'Tempat Lahir' },
+      { key: 'tanggalLahir', header: 'Tanggal Lahir' },
+      { key: 'umur', header: 'Umur' },
+    ],
+    siswa: [
+      { key: 'originalId', header: 'ID' },
+      { key: 'nama', header: 'Nama' },
+      { key: 'jk', header: 'Jenis Kelamin' },
+      { key: 'jenjang', header: 'Jenjang' },
+      { key: 'namaSekolah', header: 'Nama Sekolah' },
+      { key: 'kelas', header: 'Kelas' },
+      { key: 'alamat', header: 'Alamat' },
+      { key: 'nisn', header: 'NISN' },
+      { key: 'nik', header: 'NIK' },
+      { key: 'tempatLahir', header: 'Tempat Lahir' },
+      { key: 'tanggalLahir', header: 'Tanggal Lahir' },
+      { key: 'umur', header: 'Umur' },
+    ],
+    posyandu: [
+      { key: 'originalId', header: 'ID' },
+      { key: 'nama', header: 'Nama' },
+      { key: 'jk', header: 'Jenis Kelamin' },
+      { key: 'posyandu', header: 'Posyandu' },
+      { key: 'kategori', header: 'Kategori' },
+      { key: 'alamat', header: 'Alamat' },
+      { key: 'nik', header: 'NIK' },
+      { key: 'tempatLahir', header: 'Tempat Lahir' },
+      { key: 'tanggalLahir', header: 'Tanggal Lahir' },
+      { key: 'umur', header: 'Umur' },
+    ],
+  };
+
+  try {
+    const setting = await db.exportSetting.findUnique({
+      where: { type },
+    });
+
+    if (setting) {
+      const customHeaders = JSON.parse(setting.headers);
+      // Filter only enabled headers and convert to export format
+      return customHeaders
+        .filter((h: any) => h.enabled)
+        .map((h: any) => ({ key: h.key, header: h.label }));
+    }
+  } catch (error) {
+    console.error('Error fetching custom headers:', error);
+  }
+
+  return defaultHeaders[type] || [];
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'all'; // guru, siswa, posyandu, all
-    const format = searchParams.get('format') || 'csv'; // csv or json
+    const format = searchParams.get('format') || 'csv'; // csv, xlsx, or json
     
     // Get search and filter parameters
     const search = searchParams.get('search') || '';
@@ -32,53 +117,9 @@ export async function GET(request: NextRequest) {
     const jenjang = searchParams.get('jenjang') || '';
     const namaSekolah = searchParams.get('namaSekolah') || '';
     const kategori = searchParams.get('kategori') || '';
-    const posyandu = searchParams.get('posyandu') || '';
+    const posyanduParam = searchParams.get('posyandu') || '';
 
     const result: Record<string, any> = {};
-
-    // Define columns for each type
-    const columnConfigs = {
-      guru: [
-        { key: 'originalId', header: 'ID' },
-        { key: 'nama', header: 'Nama' },
-        { key: 'jk', header: 'Jenis Kelamin' },
-        { key: 'sekolah', header: 'Sekolah' },
-        { key: 'alamat', header: 'Alamat' },
-        { key: 'nuptk', header: 'NUPTK' },
-        { key: 'jenisTendik', header: 'Jenis Tendik' },
-        { key: 'nik', header: 'NIK' },
-        { key: 'nip', header: 'NIP' },
-        { key: 'tempatLahir', header: 'Tempat Lahir' },
-        { key: 'tanggalLahir', header: 'Tanggal Lahir' },
-        { key: 'umur', header: 'Umur' },
-      ],
-      siswa: [
-        { key: 'originalId', header: 'ID' },
-        { key: 'nama', header: 'Nama' },
-        { key: 'jenjang', header: 'Jenjang' },
-        { key: 'namaSekolah', header: 'Nama Sekolah' },
-        { key: 'jk', header: 'Jenis Kelamin' },
-        { key: 'alamat', header: 'Alamat' },
-        { key: 'tempatLahir', header: 'Tempat Lahir' },
-        { key: 'tanggalLahir', header: 'Tanggal Lahir' },
-        { key: 'nisn', header: 'NISN' },
-        { key: 'nik', header: 'NIK' },
-        { key: 'kelas', header: 'Kelas' },
-        { key: 'umur', header: 'Umur' },
-      ],
-      posyandu: [
-        { key: 'originalId', header: 'ID' },
-        { key: 'nama', header: 'Nama' },
-        { key: 'posyandu', header: 'Posyandu' },
-        { key: 'alamat', header: 'Alamat' },
-        { key: 'kategori', header: 'Kategori' },
-        { key: 'jk', header: 'Jenis Kelamin' },
-        { key: 'nik', header: 'NIK' },
-        { key: 'tempatLahir', header: 'Tempat Lahir' },
-        { key: 'tanggalLahir', header: 'Tanggal Lahir' },
-        { key: 'umur', header: 'Umur' },
-      ],
-    };
 
     // Build where clause for guru
     if (type === 'all' || type === 'guru') {
@@ -101,10 +142,11 @@ export async function GET(request: NextRequest) {
         where: whereGuru,
         orderBy: { createdAt: 'asc' } 
       });
+      
+      const guruHeaders = await getHeaders('guru');
       result.guru = {
         data: guruData,
-        csv: format === 'csv' ? toCSV(guruData, columnConfigs.guru) : null,
-        columns: columnConfigs.guru,
+        headers: guruHeaders,
       };
     }
 
@@ -129,10 +171,11 @@ export async function GET(request: NextRequest) {
         where: whereSiswa,
         orderBy: { createdAt: 'asc' } 
       });
+      
+      const siswaHeaders = await getHeaders('siswa');
       result.siswa = {
         data: siswaData,
-        csv: format === 'csv' ? toCSV(siswaData, columnConfigs.siswa) : null,
-        columns: columnConfigs.siswa,
+        headers: siswaHeaders,
       };
     }
 
@@ -150,24 +193,59 @@ export async function GET(request: NextRequest) {
       }
       if (jk) wherePosyandu.jk = jk;
       if (kategori) wherePosyandu.kategori = kategori;
-      if (posyandu) wherePosyandu.posyandu = posyandu;
+      if (posyanduParam) wherePosyandu.posyandu = posyanduParam;
       
       const posyanduData = await db.posyandu.findMany({ 
         where: wherePosyandu,
         orderBy: { createdAt: 'asc' } 
       });
+      
+      const posyanduHeaders = await getHeaders('posyandu');
       result.posyandu = {
         data: posyanduData,
-        csv: format === 'csv' ? toCSV(posyanduData, columnConfigs.posyandu) : null,
-        columns: columnConfigs.posyandu,
+        headers: posyanduHeaders,
       };
+    }
+
+    // Return based on format
+    if (format === 'xlsx') {
+      // Create Excel file with multiple sheets if type is 'all', or single sheet
+      const workbook = XLSX.utils.book_new();
+      
+      const typesToExport = type === 'all' ? ['guru', 'siswa', 'posyandu'] : [type];
+      
+      for (const t of typesToExport) {
+        if (result[t]) {
+          const { data, headers } = result[t];
+          const sheetHeaders = headers.map((h: any) => h.header);
+          const rows = data.map((item: any) => headers.map((h: any) => item[h.key] ?? ''));
+          
+          const sheetData = [sheetHeaders, ...rows];
+          const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+          
+          // Set column widths
+          worksheet['!cols'] = headers.map((h: any) => ({ wch: Math.max(h.header.length, 15) }));
+          
+          XLSX.utils.book_append_sheet(workbook, worksheet, t.charAt(0).toUpperCase() + t.slice(1));
+        }
+      }
+      
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      return new NextResponse(buffer, {
+        headers: {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Content-Disposition': `attachment; filename="${type === 'all' ? 'semua_data' : type + '_data'}.xlsx"`,
+        },
+      });
     }
 
     if (format === 'csv') {
       // Return CSV format
       if (type !== 'all') {
         const typeData = result[type];
-        return new NextResponse(typeData.csv, {
+        const csv = toCSV(typeData.data, typeData.headers);
+        return new NextResponse(csv, {
           headers: {
             'Content-Type': 'text/csv; charset=utf-8',
             'Content-Disposition': `attachment; filename="${type}_data.csv"`,
@@ -175,9 +253,17 @@ export async function GET(request: NextRequest) {
         });
       } else {
         // Return all as JSON with CSV strings
+        const csvData: Record<string, any> = {};
+        for (const [key, value] of Object.entries(result)) {
+          const v = value as any;
+          csvData[key] = {
+            csv: toCSV(v.data, v.headers),
+            headers: v.headers,
+          };
+        }
         return NextResponse.json({
           success: true,
-          data: result,
+          data: csvData,
         });
       }
     }
