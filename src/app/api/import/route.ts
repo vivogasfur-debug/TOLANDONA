@@ -126,11 +126,11 @@ function mapToPosyandu(row: Record<string, string>): any {
     nama: cleanValue(row['Nama'] || row['nama'] || '') || '',
     posyandu: cleanValue(row['Posyandu'] || row['posyandu'] || ''),
     alamat: cleanValue(row['Alamat'] || row['alamat'] || ''),
-    kategori: cleanValue(row['Kategori'] || row['kategori'] || ''),
+    kategori: cleanValue(row['KATEGORI'] || row['Kategori'] || row['kategori'] || ''),
     jk: cleanValue(row['JK'] || row['jk'] || row['Jenis Kelamin'] || ''),
     nik: cleanValue(row['NIK'] || row['nik'] || ''),
-    tempatLahir: cleanValue(row['Tempat Lahir'] || row['tempatLahir'] || ''),
-    tanggalLahir: cleanValue(row['Tanggal Lahir'] || row['tanggalLahir'] || ''),
+    tempatLahir: cleanValue(row['TEMPAT Lahir'] || row['Tempat Lahir'] || row['tempatLahir'] || ''),
+    tanggalLahir: cleanValue(row['Tgl LAHIR'] || row['Tanggal Lahir'] || row['tanggalLahir'] || ''),
     umur: cleanValue(row['Umur'] || row['umur'] || ''),
   };
 }
