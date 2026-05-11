@@ -344,6 +344,17 @@ export function DataPage({ type }: DataPageProps) {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={selectedFilter.namaSekolah || 'all'} onValueChange={(v) => handleFilterChange('namaSekolah', v)}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Nama Sekolah" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Sekolah</SelectItem>
+                {filters.sekolah?.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </>
         );
       case 'posyandu':
@@ -367,6 +378,17 @@ export function DataPage({ type }: DataPageProps) {
                 <SelectItem value="all">Semua Kategori</SelectItem>
                 {filters.kategori?.map((k) => (
                   <SelectItem key={k} value={k}>{k}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedFilter.posyandu || 'all'} onValueChange={(v) => handleFilterChange('posyandu', v)}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Posyandu" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Posyandu</SelectItem>
+                {filters.posyandu?.map((p) => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

@@ -107,7 +107,7 @@ function mapToSiswa(row: Record<string, string>): any {
     originalId: cleanValue(row['ID'] || row['id'] || ''),
     nama: cleanValue(row['Nama'] || row['nama'] || '') || '',
     jenjang: cleanValue(row['Jenjang'] || row['jenjang'] || ''),
-    namaSekolah: cleanValue(row['Nama Sekolah'] || row['namaSekolah'] || ''),
+    namaSekolah: cleanValue(row['Nama Sekolah'] || row['NamaSekolah'] || row['namaSekolah'] || ''),
     jk: cleanValue(row['JK'] || row['jk'] || row['Jenis Kelamin'] || ''),
     alamat: cleanValue(row['Alamat'] || row['alamat'] || ''),
     tempatLahir: cleanValue(row['Tempat Lahir'] || row['tempatLahir'] || ''),

@@ -117,3 +117,26 @@ Stage Summary:
 - Mobile sidebar slides in/out correctly
 - All menu items accessible
 - Clean separation of desktop/mobile views
+
+---
+Task ID: 6
+Agent: Main Agent
+Task: Fix missing Nama Sekolah data and add filter dropdowns
+
+Work Log:
+- Found root cause for missing Nama Sekolah: CSV header uses "NamaSekolah" (no space)
+- Updated import/route.ts to handle both formats:
+  - "Nama Sekolah" (with space)
+  - "NamaSekolah" (camelCase, no space)
+- Added filter dropdowns to data-pages.tsx:
+  - Siswa: Nama Sekolah filter (in addition to JK and Jenjang)
+  - Guru: Sekolah filter (already existed)
+  - Posyandu: Posyandu filter (in addition to JK and Kategori)
+
+Stage Summary:
+- Import now correctly maps NamaSekolah column
+- All three data pages have complete filter dropdowns:
+  - Guru: JK + Sekolah
+  - Siswa: JK + Jenjang + Nama Sekolah
+  - Posyandu: JK + Kategori + Posyandu
+- Users can filter by school/posyandu names
