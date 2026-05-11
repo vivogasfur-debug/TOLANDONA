@@ -57,10 +57,6 @@ interface Filters {
   posyandu?: string[];
 }
 
-interface FormData {
-  [key: string]: string;
-}
-
 export function DataPage({ type }: DataPageProps) {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,9 +89,29 @@ export function DataPage({ type }: DataPageProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [deletingItem, setDeletingItem] = useState<any>(null);
-  const [formData, setFormData] = useState<FormData>({});
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Form state - individual fields
+  const [formNama, setFormNama] = useState('');
+  const [formJk, setFormJk] = useState('');
+  const [formAlamat, setFormAlamat] = useState('');
+  const [formNik, setFormNik] = useState('');
+  const [formTempatLahir, setFormTempatLahir] = useState('');
+  const [formTanggalLahir, setFormTanggalLahir] = useState('');
+  const [formUmur, setFormUmur] = useState('');
+  
+  // Type specific fields
+  const [formSekolah, setFormSekolah] = useState('');
+  const [formNuptk, setFormNuptk] = useState('');
+  const [formJenisTendik, setFormJenisTendik] = useState('');
+  const [formNip, setFormNip] = useState('');
+  const [formJenjang, setFormJenjang] = useState('');
+  const [formNamaSekolah, setFormNamaSekolah] = useState('');
+  const [formNisn, setFormNisn] = useState('');
+  const [formKelas, setFormKelas] = useState('');
+  const [formPosyandu, setFormPosyandu] = useState('');
+  const [formKategori, setFormKategori] = useState('');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -240,54 +256,110 @@ export function DataPage({ type }: DataPageProps) {
     }
   };
 
-  // Reset form data
-  const resetFormData = useCallback(() => {
-    const initialData: FormData = {
-      nama: '',
-      jk: '',
-      alamat: '',
-      nik: '',
-      tempatLahir: '',
-      tanggalLahir: '',
-      umur: '',
+  // Reset all form fields
+  const resetForm = () => {
+    setFormNama('');
+    setFormJk('');
+    setFormAlamat('');
+    setFormNik('');
+    setFormTempatLahir('');
+    setFormTanggalLahir('');
+    setFormUmur('');
+    setFormSekolah('');
+    setFormNuptk('');
+    setFormJenisTendik('');
+    setFormNip('');
+    setFormJenjang('');
+    setFormNamaSekolah('');
+    setFormNisn('');
+    setFormKelas('');
+    setFormPosyandu('');
+    setFormKategori('');
+  };
+
+  // Get form data as object
+  const getFormData = () => {
+    const baseData: Record<string, string | null> = {
+      nama: formNama,
+      jk: formJk || null,
+      alamat: formAlamat || null,
+      nik: formNik || null,
+      tempatLahir: formTempatLahir || null,
+      tanggalLahir: formTanggalLahir || null,
+      umur: formUmur || null,
     };
     
     if (type === 'guru') {
-      initialData.sekolah = '';
-      initialData.nuptk = '';
-      initialData.jenisTendik = '';
-      initialData.nip = '';
+      return {
+        ...baseData,
+        sekolah: formSekolah || null,
+        nuptk: formNuptk || null,
+        jenisTendik: formJenisTendik || null,
+        nip: formNip || null,
+      };
     } else if (type === 'siswa') {
-      initialData.jenjang = '';
-      initialData.namaSekolah = '';
-      initialData.nisn = '';
-      initialData.kelas = '';
-    } else if (type === 'posyandu') {
-      initialData.posyandu = '';
-      initialData.kategori = '';
+      return {
+        ...baseData,
+        jenjang: formJenjang || null,
+        namaSekolah: formNamaSekolah || null,
+        nisn: formNisn || null,
+        kelas: formKelas || null,
+      };
+    } else {
+      return {
+        ...baseData,
+        posyandu: formPosyandu || null,
+        kategori: formKategori || null,
+      };
     }
+  };
+
+  // Populate form from item
+  const populateForm = (item: any) => {
+    setFormNama(item.nama || '');
+    setFormJk(item.jk || '');
+    setFormAlamat(item.alamat || '');
+    setFormNik(item.nik || '');
+    setFormTempatLahir(item.tempatLahir || '');
+    setFormTanggalLahir(item.tanggalLahir || '');
+    setFormUmur(item.umur || '');
     
-    setFormData(initialData);
-  }, [type]);
+    if (type === 'guru') {
+      setFormSekolah(item.sekolah || '');
+      setFormNuptk(item.nuptk || '');
+      setFormJenisTendik(item.jenisTendik || '');
+      setFormNip(item.nip || '');
+    } else if (type === 'siswa') {
+      setFormJenjang(item.jenjang || '');
+      setFormNamaSekolah(item.namaSekolah || '');
+      setFormNisn(item.nisn || '');
+      setFormKelas(item.kelas || '');
+    } else {
+      setFormPosyandu(item.posyandu || '');
+      setFormKategori(item.kategori || '');
+    }
+  };
 
   // Add handlers
   const openAddDialog = () => {
-    resetFormData();
+    resetForm();
     setShowAddDialog(true);
   };
 
   const handleAddSubmit = async () => {
-    if (!formData.nama) {
+    if (!formNama.trim()) {
       toast.error('Nama wajib diisi');
       return;
     }
 
     setSaving(true);
     try {
+      const formDataObj = getFormData();
+      
       const response = await fetch(`/api/${type}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formDataObj),
       });
       
       const result = await response.json();
@@ -295,7 +367,7 @@ export function DataPage({ type }: DataPageProps) {
       if (result.success) {
         toast.success('Data berhasil ditambahkan');
         setShowAddDialog(false);
-        resetFormData();
+        resetForm();
         fetchData();
       } else {
         toast.error(result.error || 'Gagal menambahkan data');
@@ -311,44 +383,25 @@ export function DataPage({ type }: DataPageProps) {
   // Edit handlers
   const openEditDialog = (item: any) => {
     setEditingItem(item);
-    const editData: FormData = {
-      nama: item.nama || '',
-      jk: item.jk || '',
-      alamat: item.alamat || '',
-      nik: item.nik || '',
-      tempatLahir: item.tempatLahir || '',
-      tanggalLahir: item.tanggalLahir || '',
-      umur: item.umur || '',
-    };
-    
-    if (type === 'guru') {
-      editData.sekolah = item.sekolah || '';
-      editData.nuptk = item.nuptk || '';
-      editData.jenisTendik = item.jenisTendik || '';
-      editData.nip = item.nip || '';
-    } else if (type === 'siswa') {
-      editData.jenjang = item.jenjang || '';
-      editData.namaSekolah = item.namaSekolah || '';
-      editData.nisn = item.nisn || '';
-      editData.kelas = item.kelas || '';
-    } else if (type === 'posyandu') {
-      editData.posyandu = item.posyandu || '';
-      editData.kategori = item.kategori || '';
-    }
-    
-    setFormData(editData);
+    populateForm(item);
     setShowEditDialog(true);
   };
 
   const handleEditSubmit = async () => {
     if (!editingItem) return;
+    if (!formNama.trim()) {
+      toast.error('Nama wajib diisi');
+      return;
+    }
     
     setSaving(true);
     try {
+      const formDataObj = getFormData();
+      
       const response = await fetch(`/api/${type}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editingItem.id, ...formData }),
+        body: JSON.stringify({ id: editingItem.id, ...formDataObj }),
       });
       
       const result = await response.json();
@@ -357,6 +410,7 @@ export function DataPage({ type }: DataPageProps) {
         toast.success('Data berhasil diperbarui');
         setShowEditDialog(false);
         setEditingItem(null);
+        resetForm();
         fetchData();
       } else {
         toast.error(result.error || 'Gagal memperbarui data');
@@ -424,19 +478,6 @@ export function DataPage({ type }: DataPageProps) {
             { key: 'umur', label: 'Umur' },
             { key: 'alamat', label: 'Alamat' },
           ],
-          formFields: [
-            { key: 'nama', label: 'Nama', type: 'text', required: true },
-            { key: 'jk', label: 'Jenis Kelamin', type: 'select', options: ['L', 'P'] },
-            { key: 'sekolah', label: 'Sekolah', type: 'text' },
-            { key: 'nuptk', label: 'NUPTK', type: 'text' },
-            { key: 'nik', label: 'NIK', type: 'text' },
-            { key: 'nip', label: 'NIP', type: 'text' },
-            { key: 'jenisTendik', label: 'Jenis Tendik', type: 'text' },
-            { key: 'tempatLahir', label: 'Tempat Lahir', type: 'text' },
-            { key: 'tanggalLahir', label: 'Tanggal Lahir', type: 'text' },
-            { key: 'umur', label: 'Umur', type: 'text' },
-            { key: 'alamat', label: 'Alamat', type: 'textarea' },
-          ],
         };
       case 'siswa':
         return {
@@ -457,19 +498,6 @@ export function DataPage({ type }: DataPageProps) {
             { key: 'umur', label: 'Umur' },
             { key: 'alamat', label: 'Alamat' },
           ],
-          formFields: [
-            { key: 'nama', label: 'Nama', type: 'text', required: true },
-            { key: 'jk', label: 'Jenis Kelamin', type: 'select', options: ['L', 'P'] },
-            { key: 'jenjang', label: 'Jenjang', type: 'text' },
-            { key: 'namaSekolah', label: 'Nama Sekolah', type: 'text' },
-            { key: 'kelas', label: 'Kelas', type: 'text' },
-            { key: 'nisn', label: 'NISN', type: 'text' },
-            { key: 'nik', label: 'NIK', type: 'text' },
-            { key: 'tempatLahir', label: 'Tempat Lahir', type: 'text' },
-            { key: 'tanggalLahir', label: 'Tanggal Lahir', type: 'text' },
-            { key: 'umur', label: 'Umur', type: 'text' },
-            { key: 'alamat', label: 'Alamat', type: 'textarea' },
-          ],
         };
       case 'posyandu':
         return {
@@ -487,17 +515,6 @@ export function DataPage({ type }: DataPageProps) {
             { key: 'tanggalLahir', label: 'Tgl Lahir' },
             { key: 'umur', label: 'Umur' },
             { key: 'alamat', label: 'Alamat' },
-          ],
-          formFields: [
-            { key: 'nama', label: 'Nama', type: 'text', required: true },
-            { key: 'jk', label: 'Jenis Kelamin', type: 'select', options: ['L', 'P'] },
-            { key: 'posyandu', label: 'Posyandu', type: 'text' },
-            { key: 'kategori', label: 'Kategori', type: 'text' },
-            { key: 'nik', label: 'NIK', type: 'text' },
-            { key: 'tempatLahir', label: 'Tempat Lahir', type: 'text' },
-            { key: 'tanggalLahir', label: 'Tanggal Lahir', type: 'text' },
-            { key: 'umur', label: 'Umur', type: 'text' },
-            { key: 'alamat', label: 'Alamat', type: 'textarea' },
           ],
         };
     }
@@ -521,7 +538,8 @@ export function DataPage({ type }: DataPageProps) {
       return <Badge variant="outline" className="text-xs">{value}</Badge>;
     }
     
-    return value;
+    // Return string value
+    return String(value);
   };
 
   const getFilterOptions = () => {
@@ -629,48 +647,206 @@ export function DataPage({ type }: DataPageProps) {
     }
   };
 
-  // Render form fields for Add/Edit dialogs
+  // Render form fields
   const renderFormFields = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-      {config.formFields.map((field) => (
-        <div key={field.key} className={field.type === 'textarea' ? 'sm:col-span-2' : ''}>
-          <Label htmlFor={field.key} className="text-sm font-medium">
-            {field.label} {field.required && <span className="text-red-500">*</span>}
-          </Label>
-          {field.type === 'select' ? (
-            <Select
-              value={formData[field.key] || ''}
-              onValueChange={(v) => setFormData(prev => ({ ...prev, [field.key]: v }))}
-            >
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder={`Pilih ${field.label}`} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">-</SelectItem>
-                {field.options?.map((opt) => (
-                  <SelectItem key={opt} value={opt}>{opt === 'L' ? 'Laki-laki' : 'Perempuan'}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : field.type === 'textarea' ? (
-            <Textarea
-              id={field.key}
-              value={formData[field.key] || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, [field.key]: e.target.value }))}
-              className="mt-1"
-              rows={2}
-            />
-          ) : (
+      {/* Nama - Required */}
+      <div>
+        <Label htmlFor="nama" className="text-sm font-medium">
+          Nama <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="nama"
+          type="text"
+          value={formNama}
+          onChange={(e) => setFormNama(e.target.value)}
+          className="mt-1"
+          placeholder="Masukkan nama"
+        />
+      </div>
+      
+      {/* Jenis Kelamin */}
+      <div>
+        <Label htmlFor="jk" className="text-sm font-medium">Jenis Kelamin</Label>
+        <Select value={formJk} onValueChange={setFormJk}>
+          <SelectTrigger className="mt-1">
+            <SelectValue placeholder="Pilih JK" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">-</SelectItem>
+            <SelectItem value="L">Laki-laki</SelectItem>
+            <SelectItem value="P">Perempuan</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Type specific fields */}
+      {type === 'guru' && (
+        <>
+          <div>
+            <Label className="text-sm font-medium">Sekolah</Label>
             <Input
-              id={field.key}
               type="text"
-              value={formData[field.key] || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, [field.key]: e.target.value }))}
+              value={formSekolah}
+              onChange={(e) => setFormSekolah(e.target.value)}
               className="mt-1"
+              placeholder="Masukkan sekolah"
             />
-          )}
-        </div>
-      ))}
+          </div>
+          <div>
+            <Label className="text-sm font-medium">NUPTK</Label>
+            <Input
+              type="text"
+              value={formNuptk}
+              onChange={(e) => setFormNuptk(e.target.value)}
+              className="mt-1"
+              placeholder="Masukkan NUPTK"
+            />
+          </div>
+          <div>
+            <Label className="text-sm font-medium">NIP</Label>
+            <Input
+              type="text"
+              value={formNip}
+              onChange={(e) => setFormNip(e.target.value)}
+              className="mt-1"
+              placeholder="Masukkan NIP"
+            />
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Jenis Tendik</Label>
+            <Input
+              type="text"
+              value={formJenisTendik}
+              onChange={(e) => setFormJenisTendik(e.target.value)}
+              className="mt-1"
+              placeholder="Masukkan jenis tendik"
+            />
+          </div>
+        </>
+      )}
+
+      {type === 'siswa' && (
+        <>
+          <div>
+            <Label className="text-sm font-medium">Jenjang</Label>
+            <Input
+              type="text"
+              value={formJenjang}
+              onChange={(e) => setFormJenjang(e.target.value)}
+              className="mt-1"
+              placeholder="Masukkan jenjang"
+            />
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Nama Sekolah</Label>
+            <Input
+              type="text"
+              value={formNamaSekolah}
+              onChange={(e) => setFormNamaSekolah(e.target.value)}
+              className="mt-1"
+              placeholder="Masukkan nama sekolah"
+            />
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Kelas</Label>
+            <Input
+              type="text"
+              value={formKelas}
+              onChange={(e) => setFormKelas(e.target.value)}
+              className="mt-1"
+              placeholder="Masukkan kelas"
+            />
+          </div>
+          <div>
+            <Label className="text-sm font-medium">NISN</Label>
+            <Input
+              type="text"
+              value={formNisn}
+              onChange={(e) => setFormNisn(e.target.value)}
+              className="mt-1"
+              placeholder="Masukkan NISN"
+            />
+          </div>
+        </>
+      )}
+
+      {type === 'posyandu' && (
+        <>
+          <div>
+            <Label className="text-sm font-medium">Posyandu</Label>
+            <Input
+              type="text"
+              value={formPosyandu}
+              onChange={(e) => setFormPosyandu(e.target.value)}
+              className="mt-1"
+              placeholder="Masukkan posyandu"
+            />
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Kategori</Label>
+            <Input
+              type="text"
+              value={formKategori}
+              onChange={(e) => setFormKategori(e.target.value)}
+              className="mt-1"
+              placeholder="Masukkan kategori"
+            />
+          </div>
+        </>
+      )}
+
+      {/* Common fields */}
+      <div>
+        <Label className="text-sm font-medium">NIK</Label>
+        <Input
+          type="text"
+          value={formNik}
+          onChange={(e) => setFormNik(e.target.value)}
+          className="mt-1"
+          placeholder="Masukkan NIK"
+        />
+      </div>
+      <div>
+        <Label className="text-sm font-medium">Tempat Lahir</Label>
+        <Input
+          type="text"
+          value={formTempatLahir}
+          onChange={(e) => setFormTempatLahir(e.target.value)}
+          className="mt-1"
+          placeholder="Masukkan tempat lahir"
+        />
+      </div>
+      <div>
+        <Label className="text-sm font-medium">Tanggal Lahir</Label>
+        <Input
+          type="text"
+          value={formTanggalLahir}
+          onChange={(e) => setFormTanggalLahir(e.target.value)}
+          className="mt-1"
+          placeholder="Masukkan tanggal lahir"
+        />
+      </div>
+      <div>
+        <Label className="text-sm font-medium">Umur</Label>
+        <Input
+          type="text"
+          value={formUmur}
+          onChange={(e) => setFormUmur(e.target.value)}
+          className="mt-1"
+          placeholder="Masukkan umur"
+        />
+      </div>
+      <div className="sm:col-span-2">
+        <Label className="text-sm font-medium">Alamat</Label>
+        <Textarea
+          value={formAlamat}
+          onChange={(e) => setFormAlamat(e.target.value)}
+          className="mt-1"
+          placeholder="Masukkan alamat"
+          rows={2}
+        />
+      </div>
     </div>
   );
 
@@ -935,7 +1111,7 @@ export function DataPage({ type }: DataPageProps) {
               Tambah Data {config.title}
             </DialogTitle>
             <DialogDescription>
-              Isi formulir di bawah ini untuk menambahkan data baru.
+              Isi formulir di bawah ini untuk menambahkan data baru. Field dengan * wajib diisi.
             </DialogDescription>
           </DialogHeader>
           
@@ -975,7 +1151,7 @@ export function DataPage({ type }: DataPageProps) {
               Edit Data {config.title}
             </DialogTitle>
             <DialogDescription>
-              Perbarui data pada formulir di bawah ini.
+              Perbarui data pada formulir di bawah ini. Field dengan * wajib diisi.
             </DialogDescription>
           </DialogHeader>
           
