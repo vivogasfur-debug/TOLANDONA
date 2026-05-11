@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { compare } from 'bcryptjs';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +17,17 @@ export async function POST(request: NextRequest) {
       where: { email },
     });
 
-    if (!user || user.password !== password) {
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Email atau password salah' },
+        { status: 401 }
+      );
+    }
+
+    // Compare password with hashed password
+    const isValidPassword = await compare(password, user.password);
+
+    if (!isValidPassword) {
       return NextResponse.json(
         { success: false, error: 'Email atau password salah' },
         { status: 401 }
@@ -24,13 +35,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Log activity
-    await db.activityLog.create({
-      data: {
-        action: 'LOGIN',
-        details: `User ${user.email} logged in`,
-        userId: user.id,
-      },
-    });
+    try {
+      await db.activityLog.create({
+        data: {
+          action: 'LOGIN',
+          details: `User ${user.email} logged in`,
+          userId: user.id,
+        },
+      });
+    } catch {
+      // Ignore logging errors
+    }
 
     return NextResponse.json({
       success: true,
