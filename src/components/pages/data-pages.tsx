@@ -506,8 +506,6 @@ export function DataPage({ type }: DataPageProps) {
     setSaving(true);
     try {
       const formDataObj = getFormData();
-      // Ensure nama is a string
-      formDataObj.nama = formNama.trim();
       
       const response = await fetch(`/api/${type}`, {
         method: 'POST',
@@ -549,8 +547,6 @@ export function DataPage({ type }: DataPageProps) {
     setSaving(true);
     try {
       const formDataObj = getFormData();
-      // Ensure nama is a string
-      formDataObj.nama = formNama.trim();
       
       const response = await fetch(`/api/${type}`, {
         method: 'PUT',
