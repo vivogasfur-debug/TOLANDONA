@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
         { nuptk: { contains: search } },
         { nik: { contains: search } },
         { nip: { contains: search } },
+        { sekolah: { contains: search } },
       ];
     }
 
@@ -65,6 +66,66 @@ export async function GET(request: NextRequest) {
     console.error('Get guru error:', error);
     return NextResponse.json(
       { success: false, error: 'Terjadi kesalahan pada server' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, ...updateData } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: 'ID diperlukan' },
+        { status: 400 }
+      );
+    }
+
+    const updated = await db.guru.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: updated,
+      message: 'Data berhasil diperbarui',
+    });
+  } catch (error) {
+    console.error('Update guru error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Gagal memperbarui data' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: 'ID diperlukan' },
+        { status: 400 }
+      );
+    }
+
+    await db.guru.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Data berhasil dihapus',
+    });
+  } catch (error) {
+    console.error('Delete guru error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Gagal menghapus data' },
       { status: 500 }
     );
   }

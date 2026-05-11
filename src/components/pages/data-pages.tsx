@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -31,7 +33,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Search, Filter, Download, Upload, ChevronLeft, ChevronRight, GraduationCap, Users, Baby, FileSpreadsheet, Loader2, Check, Trash2, AlertTriangle } from 'lucide-react';
+import {
+  Search, Download, Upload, ChevronLeft, ChevronRight, GraduationCap, Users, Baby, FileSpreadsheet, Loader2, Check, Trash2, AlertTriangle, Edit, ChevronDown, ChevronUp, Maximize2, Minimize2
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 interface DataPageProps {
@@ -53,6 +57,10 @@ interface Filters {
   posyandu?: string[];
 }
 
+interface EditFormData {
+  [key: string]: string;
+}
+
 export function DataPage({ type }: DataPageProps) {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +74,9 @@ export function DataPage({ type }: DataPageProps) {
   const [search, setSearch] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<Record<string, string>>({});
   
+  // UI State
+  const [isMinimized, setIsMinimized] = useState(false);
+  
   // Import/Export states
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
@@ -75,6 +86,15 @@ export function DataPage({ type }: DataPageProps) {
   const [clearExisting, setClearExisting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  // Edit/Delete states
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [deletingItem, setDeletingItem] = useState<any>(null);
+  const [editFormData, setEditFormData] = useState<EditFormData>({});
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -219,6 +239,101 @@ export function DataPage({ type }: DataPageProps) {
     }
   };
 
+  // Edit handlers
+  const openEditDialog = (item: any) => {
+    setEditingItem(item);
+    setEditFormData({
+      nama: item.nama || '',
+      jk: item.jk || '',
+      alamat: item.alamat || '',
+      nik: item.nik || '',
+      tempatLahir: item.tempatLahir || '',
+      tanggalLahir: item.tanggalLahir || '',
+      umur: item.umur || '',
+      // Type specific fields
+      ...(type === 'guru' && {
+        sekolah: item.sekolah || '',
+        nuptk: item.nuptk || '',
+        jenisTendik: item.jenisTendik || '',
+        nip: item.nip || '',
+      }),
+      ...(type === 'siswa' && {
+        jenjang: item.jenjang || '',
+        namaSekolah: item.namaSekolah || '',
+        nisn: item.nisn || '',
+        kelas: item.kelas || '',
+      }),
+      ...(type === 'posyandu' && {
+        posyandu: item.posyandu || '',
+        kategori: item.kategori || '',
+      }),
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleEditSubmit = async () => {
+    if (!editingItem) return;
+    
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/${type}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingItem.id, ...editFormData }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Data berhasil diperbarui');
+        setShowEditDialog(false);
+        setEditingItem(null);
+        fetchData();
+      } else {
+        toast.error(result.error || 'Gagal memperbarui data');
+      }
+    } catch (error) {
+      console.error('Edit error:', error);
+      toast.error('Gagal memperbarui data');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Delete handlers
+  const openDeleteDialog = (item: any) => {
+    setDeletingItem(item);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingItem) return;
+    
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/${type}?id=${deletingItem.id}`, {
+        method: 'DELETE',
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Data berhasil dihapus');
+        setShowDeleteDialog(false);
+        setDeletingItem(null);
+        fetchData();
+      } else {
+        toast.error(result.error || 'Gagal menghapus data');
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Gagal menghapus data');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // Column configurations - ALL columns for each type
   const getTypeConfig = () => {
     switch (type) {
       case 'guru':
@@ -227,8 +342,33 @@ export function DataPage({ type }: DataPageProps) {
           icon: GraduationCap,
           color: 'text-emerald-500',
           gradient: 'from-emerald-500 to-teal-600',
-          columns: ['Nama', 'JK', 'Sekolah', 'NUPTK', 'NIK', 'Alamat'],
+          columns: [
+            { key: 'nama', label: 'Nama' },
+            { key: 'jk', label: 'JK' },
+            { key: 'sekolah', label: 'Sekolah' },
+            { key: 'nuptk', label: 'NUPTK' },
+            { key: 'nik', label: 'NIK' },
+            { key: 'nip', label: 'NIP' },
+            { key: 'jenisTendik', label: 'Jenis Tendik' },
+            { key: 'tempatLahir', label: 'Tempat Lahir' },
+            { key: 'tanggalLahir', label: 'Tgl Lahir' },
+            { key: 'umur', label: 'Umur' },
+            { key: 'alamat', label: 'Alamat' },
+          ],
           filterKey: 'sekolah',
+          editFields: [
+            { key: 'nama', label: 'Nama', type: 'text' },
+            { key: 'jk', label: 'Jenis Kelamin', type: 'select', options: ['L', 'P'] },
+            { key: 'sekolah', label: 'Sekolah', type: 'text' },
+            { key: 'nuptk', label: 'NUPTK', type: 'text' },
+            { key: 'nik', label: 'NIK', type: 'text' },
+            { key: 'nip', label: 'NIP', type: 'text' },
+            { key: 'jenisTendik', label: 'Jenis Tendik', type: 'text' },
+            { key: 'tempatLahir', label: 'Tempat Lahir', type: 'text' },
+            { key: 'tanggalLahir', label: 'Tanggal Lahir', type: 'text' },
+            { key: 'umur', label: 'Umur', type: 'text' },
+            { key: 'alamat', label: 'Alamat', type: 'textarea' },
+          ],
         };
       case 'siswa':
         return {
@@ -236,8 +376,33 @@ export function DataPage({ type }: DataPageProps) {
           icon: Users,
           color: 'text-cyan-500',
           gradient: 'from-cyan-500 to-blue-600',
-          columns: ['Nama', 'JK', 'Jenjang', 'Nama Sekolah', 'Kelas', 'NISN'],
+          columns: [
+            { key: 'nama', label: 'Nama' },
+            { key: 'jk', label: 'JK' },
+            { key: 'jenjang', label: 'Jenjang' },
+            { key: 'namaSekolah', label: 'Nama Sekolah' },
+            { key: 'kelas', label: 'Kelas' },
+            { key: 'nisn', label: 'NISN' },
+            { key: 'nik', label: 'NIK' },
+            { key: 'tempatLahir', label: 'Tempat Lahir' },
+            { key: 'tanggalLahir', label: 'Tgl Lahir' },
+            { key: 'umur', label: 'Umur' },
+            { key: 'alamat', label: 'Alamat' },
+          ],
           filterKey: 'namaSekolah',
+          editFields: [
+            { key: 'nama', label: 'Nama', type: 'text' },
+            { key: 'jk', label: 'Jenis Kelamin', type: 'select', options: ['L', 'P'] },
+            { key: 'jenjang', label: 'Jenjang', type: 'text' },
+            { key: 'namaSekolah', label: 'Nama Sekolah', type: 'text' },
+            { key: 'kelas', label: 'Kelas', type: 'text' },
+            { key: 'nisn', label: 'NISN', type: 'text' },
+            { key: 'nik', label: 'NIK', type: 'text' },
+            { key: 'tempatLahir', label: 'Tempat Lahir', type: 'text' },
+            { key: 'tanggalLahir', label: 'Tanggal Lahir', type: 'text' },
+            { key: 'umur', label: 'Umur', type: 'text' },
+            { key: 'alamat', label: 'Alamat', type: 'textarea' },
+          ],
         };
       case 'posyandu':
         return {
@@ -245,51 +410,52 @@ export function DataPage({ type }: DataPageProps) {
           icon: Baby,
           color: 'text-pink-500',
           gradient: 'from-pink-500 to-rose-600',
-          columns: ['Nama', 'JK', 'Posyandu', 'Kategori', 'Umur', 'Alamat'],
+          columns: [
+            { key: 'nama', label: 'Nama' },
+            { key: 'jk', label: 'JK' },
+            { key: 'posyandu', label: 'Posyandu' },
+            { key: 'kategori', label: 'Kategori' },
+            { key: 'nik', label: 'NIK' },
+            { key: 'tempatLahir', label: 'Tempat Lahir' },
+            { key: 'tanggalLahir', label: 'Tgl Lahir' },
+            { key: 'umur', label: 'Umur' },
+            { key: 'alamat', label: 'Alamat' },
+          ],
           filterKey: 'posyandu',
+          editFields: [
+            { key: 'nama', label: 'Nama', type: 'text' },
+            { key: 'jk', label: 'Jenis Kelamin', type: 'select', options: ['L', 'P'] },
+            { key: 'posyandu', label: 'Posyandu', type: 'text' },
+            { key: 'kategori', label: 'Kategori', type: 'text' },
+            { key: 'nik', label: 'NIK', type: 'text' },
+            { key: 'tempatLahir', label: 'Tempat Lahir', type: 'text' },
+            { key: 'tanggalLahir', label: 'Tanggal Lahir', type: 'text' },
+            { key: 'umur', label: 'Umur', type: 'text' },
+            { key: 'alamat', label: 'Alamat', type: 'textarea' },
+          ],
         };
     }
   };
 
   const config = getTypeConfig();
 
-  const renderCell = (item: any, column: string) => {
-    switch (column) {
-      case 'Nama':
-        return item.nama || '-';
-      case 'JK':
-        return (
-          <Badge variant={item.jk === 'L' ? 'default' : 'secondary'} className="text-xs">
-            {item.jk || '-'}
-          </Badge>
-        );
-      case 'Sekolah':
-        return item.sekolah || '-';
-      case 'Nama Sekolah':
-        return item.namaSekolah || '-';
-      case 'NUPTK':
-        return item.nuptk || '-';
-      case 'NIK':
-        return item.nik || '-';
-      case 'Alamat':
-        return item.alamat || '-';
-      case 'Jenjang':
-        return item.jenjang || '-';
-      case 'Kelas':
-        return item.kelas || '-';
-      case 'NISN':
-        return item.nisn || '-';
-      case 'Posyandu':
-        return item.posyandu || '-';
-      case 'Kategori':
-        return item.kategori ? (
-          <Badge variant="outline" className="text-xs">{item.kategori}</Badge>
-        ) : '-';
-      case 'Umur':
-        return item.umur || '-';
-      default:
-        return '-';
+  const renderCell = (item: any, key: string) => {
+    const value = item[key];
+    if (value === null || value === undefined || value === '') return '-';
+    
+    if (key === 'jk') {
+      return (
+        <Badge variant={value === 'L' ? 'default' : 'secondary'} className="text-xs">
+          {value}
+        </Badge>
+      );
     }
+    
+    if (key === 'kategori') {
+      return <Badge variant="outline" className="text-xs">{value}</Badge>;
+    }
+    
+    return value;
   };
 
   const getFilterOptions = () => {
@@ -412,7 +578,25 @@ export function DataPage({ type }: DataPageProps) {
         </div>
         
         {/* Action Buttons */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsMinimized(!isMinimized)}
+            className="gap-2"
+          >
+            {isMinimized ? (
+              <>
+                <Maximize2 className="w-4 h-4" />
+                Maximize
+              </>
+            ) : (
+              <>
+                <Minimize2 className="w-4 h-4" />
+                Minimize
+              </>
+            )}
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -445,154 +629,187 @@ export function DataPage({ type }: DataPageProps) {
         </div>
       </div>
 
-      {/* Filters */}
-      <Card className="border-0 shadow-lg">
-        <CardContent className="p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <form onSubmit={handleSearch} className="flex-1 flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
-                  type="text"
-                  placeholder="Cari nama, NISN, NIK..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Button type="submit" className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
-                Cari
-              </Button>
-            </form>
-            <div className="flex flex-wrap gap-2">
-              {getFilterOptions()}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Table */}
-      <Card className="border-0 shadow-lg">
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="p-6 space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex gap-4">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-4 w-10" />
-                  <Skeleton className="h-4 w-40" />
-                  <Skeleton className="h-4 w-20" />
+      <AnimatePresence>
+        {!isMinimized && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
+          >
+            {/* Filters */}
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-4">
+                <div className="flex flex-col lg:flex-row gap-4">
+                  <form onSubmit={handleSearch} className="flex-1 flex gap-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Input
+                        type="text"
+                        placeholder="Cari nama, NISN, NIK, Sekolah..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    <Button type="submit" className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+                      Cari
+                    </Button>
+                  </form>
+                  <div className="flex flex-wrap gap-2">
+                    {getFilterOptions()}
+                  </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50 dark:bg-slate-800/50">
-                    <TableHead className="w-12 text-center">#</TableHead>
-                    {config.columns.map((col) => (
-                      <TableHead key={col}>{col}</TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={config.columns.length + 1} className="text-center py-8 text-slate-500">
-                        <div className="flex flex-col items-center gap-2">
-                          <FileSpreadsheet className="w-12 h-12 text-slate-300" />
-                          <p>Tidak ada data ditemukan</p>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowImportDialog(true)}
-                            className="mt-2"
-                          >
-                            <Upload className="w-4 h-4 mr-2" />
-                            Import Data
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    data.map((item, index) => (
-                      <motion.tr
-                        key={item.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: index * 0.02 }}
-                        className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30"
-                      >
-                        <TableCell className="text-center text-slate-400">
-                          {(pagination.page - 1) * pagination.limit + index + 1}
-                        </TableCell>
-                        {config.columns.map((col) => (
-                          <TableCell key={col} className="max-w-[200px] truncate">
-                            {renderCell(item, col)}
-                          </TableCell>
-                        ))}
-                      </motion.tr>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
 
-      {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-slate-500">
-            Menampilkan {(pagination.page - 1) * pagination.limit + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} dari {pagination.total} data
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(pagination.page - 1)}
-              disabled={pagination.page === 1}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <div className="flex gap-1">
-              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                let pageNum;
-                if (pagination.totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (pagination.page <= 3) {
-                  pageNum = i + 1;
-                } else if (pagination.page >= pagination.totalPages - 2) {
-                  pageNum = pagination.totalPages - 4 + i;
-                } else {
-                  pageNum = pagination.page - 2 + i;
-                }
-                return (
+            {/* Table */}
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-0">
+                {loading ? (
+                  <div className="p-6 space-y-4">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="flex gap-4">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-4 w-10" />
+                        <Skeleton className="h-4 w-40" />
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-slate-50 dark:bg-slate-800/50">
+                          <TableHead className="w-12 text-center">#</TableHead>
+                          {config.columns.map((col) => (
+                            <TableHead key={col.key} className="whitespace-nowrap">{col.label}</TableHead>
+                          ))}
+                          <TableHead className="w-28 text-center sticky right-0 bg-slate-50 dark:bg-slate-800/50">Aksi</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {data.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={config.columns.length + 2} className="text-center py-8 text-slate-500">
+                              <div className="flex flex-col items-center gap-2">
+                                <FileSpreadsheet className="w-12 h-12 text-slate-300" />
+                                <p>Tidak ada data ditemukan</p>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setShowImportDialog(true)}
+                                  className="mt-2"
+                                >
+                                  <Upload className="w-4 h-4 mr-2" />
+                                  Import Data
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          data.map((item, index) => (
+                            <motion.tr
+                              key={item.id}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ delay: index * 0.02 }}
+                              className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30"
+                            >
+                              <TableCell className="text-center text-slate-400">
+                                {(pagination.page - 1) * pagination.limit + index + 1}
+                              </TableCell>
+                              {config.columns.map((col) => (
+                                <TableCell key={col.key} className="max-w-[200px] truncate">
+                                  {renderCell(item, col.key)}
+                                </TableCell>
+                              ))}
+                              <TableCell className="sticky right-0 bg-white dark:bg-slate-900">
+                                <div className="flex gap-1 justify-center">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openEditDialog(item)}
+                                    className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openDeleteDialog(item)}
+                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </motion.tr>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-slate-500">
+                  Menampilkan {(pagination.page - 1) * pagination.limit + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} dari {pagination.total} data
+                </p>
+                <div className="flex items-center gap-2">
                   <Button
-                    key={pageNum}
-                    variant={pagination.page === pageNum ? 'default' : 'outline'}
+                    variant="outline"
                     size="sm"
-                    onClick={() => handlePageChange(pageNum)}
-                    className={pagination.page === pageNum ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white' : ''}
+                    onClick={() => handlePageChange(pagination.page - 1)}
+                    disabled={pagination.page === 1}
                   >
-                    {pageNum}
+                    <ChevronLeft className="w-4 h-4" />
                   </Button>
-                );
-              })}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(pagination.page + 1)}
-              disabled={pagination.page === pagination.totalPages}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+                  <div className="flex gap-1">
+                    {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (pagination.totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (pagination.page <= 3) {
+                        pageNum = i + 1;
+                      } else if (pagination.page >= pagination.totalPages - 2) {
+                        pageNum = pagination.totalPages - 4 + i;
+                      } else {
+                        pageNum = pagination.page - 2 + i;
+                      }
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={pagination.page === pageNum ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => handlePageChange(pageNum)}
+                          className={pagination.page === pageNum ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white' : ''}
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(pagination.page + 1)}
+                    disabled={pagination.page === pagination.totalPages}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Import Dialog */}
       <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
@@ -715,6 +932,122 @@ export function DataPage({ type }: DataPageProps) {
                 <>
                   <Trash2 className="w-4 h-4 mr-2" />
                   Hapus Semua
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="w-5 h-5 text-blue-500" />
+              Edit Data {config.title}
+            </DialogTitle>
+            <DialogDescription>
+              Perbarui data pada formulir di bawah ini.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+            {config.editFields.map((field) => (
+              <div key={field.key} className={field.type === 'textarea' ? 'sm:col-span-2' : ''}>
+                <Label htmlFor={field.key} className="text-sm font-medium">
+                  {field.label}
+                </Label>
+                {field.type === 'select' ? (
+                  <Select
+                    value={editFormData[field.key] || ''}
+                    onValueChange={(v) => setEditFormData(prev => ({ ...prev, [field.key]: v }))}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder={`Pilih ${field.label}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">-</SelectItem>
+                      {field.options?.map((opt) => (
+                        <SelectItem key={opt} value={opt}>{opt === 'L' ? 'Laki-laki' : 'Perempuan'}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : field.type === 'textarea' ? (
+                  <Textarea
+                    id={field.key}
+                    value={editFormData[field.key] || ''}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, [field.key]: e.target.value }))}
+                    className="mt-1"
+                    rows={2}
+                  />
+                ) : (
+                  <Input
+                    id={field.key}
+                    type="text"
+                    value={editFormData[field.key] || ''}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, [field.key]: e.target.value }))}
+                    className="mt-1"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Batal
+            </Button>
+            <Button
+              onClick={handleEditSubmit}
+              disabled={saving}
+              className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                'Simpan'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              Hapus Data
+            </DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menghapus data <strong>{deletingItem?.nama}</strong>? 
+              Tindakan ini tidak dapat dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Hapus
                 </>
               )}
             </Button>
