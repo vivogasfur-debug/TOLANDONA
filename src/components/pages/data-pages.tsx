@@ -603,8 +603,6 @@ export function DataPage({ type }: DataPageProps) {
           columns: [
             { key: 'nama', label: 'Nama' },
             { key: 'jk', label: 'JK' },
-            { key: 'jenjang', label: 'Jenjang' },
-            { key: 'namaSekolah', label: 'Nama Sekolah' },
             { key: 'kelas', label: 'Kelas' },
             { key: 'nisn', label: 'NISN' },
             { key: 'nik', label: 'NIK' },
@@ -623,10 +621,7 @@ export function DataPage({ type }: DataPageProps) {
             { key: 'nama', label: 'Nama' },
             { key: 'jk', label: 'JK' },
             { key: 'posyandu', label: 'Posyandu' },
-            { key: 'kategori', label: 'Kategori' },
             { key: 'nik', label: 'NIK' },
-            { key: 'tempatLahir', label: 'Tempat Lahir' },
-            { key: 'tanggalLahir', label: 'Tgl Lahir' },
             { key: 'umur', label: 'Umur' },
             { key: 'alamat', label: 'Alamat' },
           ],
@@ -695,40 +690,16 @@ export function DataPage({ type }: DataPageProps) {
         );
       case 'siswa':
         return (
-          <>
-            <Select value={selectedFilter.jk || 'all'} onValueChange={(v) => handleFilterChange('jk', v)}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Jenis Kelamin" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua JK</SelectItem>
-                <SelectItem value="L">Laki-laki</SelectItem>
-                <SelectItem value="P">Perempuan</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={selectedFilter.jenjang || 'all'} onValueChange={(v) => handleFilterChange('jenjang', v)}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Jenjang" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Jenjang</SelectItem>
-                {filters.jenjang?.map((j) => (
-                  <SelectItem key={j} value={j}>{j}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedFilter.namaSekolah || 'all'} onValueChange={(v) => handleFilterChange('namaSekolah', v)}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Nama Sekolah" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Sekolah</SelectItem>
-                {filters.sekolah?.map((s) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </>
+          <Select value={selectedFilter.jk || 'all'} onValueChange={(v) => handleFilterChange('jk', v)}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Jenis Kelamin" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua JK</SelectItem>
+              <SelectItem value="L">Laki-laki</SelectItem>
+              <SelectItem value="P">Perempuan</SelectItem>
+            </SelectContent>
+          </Select>
         );
       case 'posyandu':
         return (
@@ -741,17 +712,6 @@ export function DataPage({ type }: DataPageProps) {
                 <SelectItem value="all">Semua JK</SelectItem>
                 <SelectItem value="L">Laki-laki</SelectItem>
                 <SelectItem value="P">Perempuan</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={selectedFilter.kategori || 'all'} onValueChange={(v) => handleFilterChange('kategori', v)}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Kategori" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Kategori</SelectItem>
-                {filters.kategori?.map((k) => (
-                  <SelectItem key={k} value={k}>{k}</SelectItem>
-                ))}
               </SelectContent>
             </Select>
             <Select value={selectedFilter.posyandu || 'all'} onValueChange={(v) => handleFilterChange('posyandu', v)}>
@@ -824,14 +784,6 @@ export function DataPage({ type }: DataPageProps) {
       {type === 'siswa' && (
         <>
           <div>
-            <Label className="text-sm font-medium">Jenjang</Label>
-            <Input type="text" value={formJenjang} onChange={(e) => setFormJenjang(e.target.value)} className="mt-1" placeholder="Masukkan jenjang" />
-          </div>
-          <div>
-            <Label className="text-sm font-medium">Nama Sekolah</Label>
-            <Input type="text" value={formNamaSekolah} onChange={(e) => setFormNamaSekolah(e.target.value)} className="mt-1" placeholder="Masukkan nama sekolah" />
-          </div>
-          <div>
             <Label className="text-sm font-medium">Kelas</Label>
             <Input type="text" value={formKelas} onChange={(e) => setFormKelas(e.target.value)} className="mt-1" placeholder="Masukkan kelas" />
           </div>
@@ -843,54 +795,66 @@ export function DataPage({ type }: DataPageProps) {
       )}
 
       {type === 'posyandu' && (
-        <>
-          <div>
-            <Label className="text-sm font-medium">Posyandu</Label>
-            <Input type="text" value={formPosyandu} onChange={(e) => setFormPosyandu(e.target.value)} className="mt-1" placeholder="Masukkan posyandu" />
-          </div>
-          <div>
-            <Label className="text-sm font-medium">Kategori</Label>
-            <Input type="text" value={formKategori} onChange={(e) => setFormKategori(e.target.value)} className="mt-1" placeholder="Masukkan kategori" />
-          </div>
-        </>
+        <div>
+          <Label className="text-sm font-medium">Posyandu</Label>
+          <Input type="text" value={formPosyandu} onChange={(e) => setFormPosyandu(e.target.value)} className="mt-1" placeholder="Masukkan posyandu" />
+        </div>
       )}
 
       <div>
         <Label className="text-sm font-medium">NIK</Label>
         <Input type="text" value={formNik} onChange={(e) => setFormNik(e.target.value)} className="mt-1" placeholder="Masukkan NIK" />
       </div>
-      <div>
-        <Label className="text-sm font-medium">Tempat Lahir</Label>
-        <Input type="text" value={formTempatLahir} onChange={(e) => setFormTempatLahir(e.target.value)} className="mt-1" placeholder="Masukkan tempat lahir" />
-      </div>
-      <div>
-        <Label className="text-sm font-medium">Tanggal Lahir</Label>
-        <Input 
-          type="date" 
-          value={formTanggalLahir} 
-          onChange={(e) => {
-            const newDate = e.target.value;
-            setFormTanggalLahir(newDate);
-            // Auto-calculate age when date changes
-            if (newDate) {
-              const calculatedAge = calculateAge(newDate);
-              setFormUmur(calculatedAge);
-            }
-          }} 
-          className="mt-1" 
-        />
-      </div>
-      <div>
-        <Label className="text-sm font-medium">Umur</Label>
-        <Input 
-          type="text" 
-          value={formUmur} 
-          onChange={(e) => setFormUmur(e.target.value)} 
-          className="mt-1 bg-slate-50 dark:bg-slate-800" 
-          placeholder="Otomatis dari tgl lahir" 
-        />
-        <p className="text-xs text-slate-500 mt-1">Dihitung otomatis dari tanggal lahir</p>
-      </div>
+      {type !== 'posyandu' && (
+        <div>
+          <Label className="text-sm font-medium">Tempat Lahir</Label>
+          <Input type="text" value={formTempatLahir} onChange={(e) => setFormTempatLahir(e.target.value)} className="mt-1" placeholder="Masukkan tempat lahir" />
+        </div>
+      )}
+      {type !== 'posyandu' && (
+        <div>
+          <Label className="text-sm font-medium">Tanggal Lahir</Label>
+          <Input 
+            type="date" 
+            value={formTanggalLahir} 
+            onChange={(e) => {
+              const newDate = e.target.value;
+              setFormTanggalLahir(newDate);
+              // Auto-calculate age when date changes
+              if (newDate) {
+                const calculatedAge = calculateAge(newDate);
+                setFormUmur(calculatedAge);
+              }
+            }} 
+            className="mt-1" 
+          />
+        </div>
+      )}
+      {type !== 'posyandu' && (
+        <div>
+          <Label className="text-sm font-medium">Umur</Label>
+          <Input 
+            type="text" 
+            value={formUmur} 
+            onChange={(e) => setFormUmur(e.target.value)} 
+            className="mt-1 bg-slate-50 dark:bg-slate-800" 
+            placeholder="Otomatis dari tgl lahir" 
+          />
+          <p className="text-xs text-slate-500 mt-1">Dihitung otomatis dari tanggal lahir</p>
+        </div>
+      )}
+      {type === 'posyandu' && (
+        <div>
+          <Label className="text-sm font-medium">Umur</Label>
+          <Input 
+            type="text" 
+            value={formUmur} 
+            onChange={(e) => setFormUmur(e.target.value)} 
+            className="mt-1" 
+            placeholder="Masukkan umur" 
+          />
+        </div>
+      )}
       <div className="sm:col-span-2">
         <Label className="text-sm font-medium">Alamat</Label>
         <Textarea value={formAlamat} onChange={(e) => setFormAlamat(e.target.value)} className="mt-1" placeholder="Masukkan alamat" rows={2} />
