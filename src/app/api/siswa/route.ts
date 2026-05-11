@@ -83,6 +83,40 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    const newSiswa = await db.siswa.create({
+      data: {
+        nama: body.nama || '',
+        jenjang: body.jenjang || null,
+        namaSekolah: body.namaSekolah || null,
+        jk: body.jk || null,
+        alamat: body.alamat || null,
+        tempatLahir: body.tempatLahir || null,
+        tanggalLahir: body.tanggalLahir || null,
+        nisn: body.nisn || null,
+        nik: body.nik || null,
+        kelas: body.kelas || null,
+        umur: body.umur || null,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: newSiswa,
+      message: 'Data berhasil ditambahkan',
+    });
+  } catch (error) {
+    console.error('Create siswa error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Gagal menambahkan data' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
@@ -95,9 +129,15 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Clean up empty strings to null
+    const cleanData: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(updateData)) {
+      cleanData[key] = value === '' ? null : value;
+    }
+
     const updated = await db.siswa.update({
       where: { id },
-      data: updateData,
+      data: cleanData,
     });
 
     return NextResponse.json({

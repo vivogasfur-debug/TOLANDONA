@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +34,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Search, Download, Upload, ChevronLeft, ChevronRight, GraduationCap, Users, Baby, FileSpreadsheet, Loader2, Check, Trash2, AlertTriangle, Edit, ChevronDown, ChevronUp, Maximize2, Minimize2
+  Search, Download, Upload, ChevronLeft, ChevronRight, GraduationCap, Users, Baby, FileSpreadsheet, Loader2, Check, Trash2, AlertTriangle, Edit, Plus, Maximize2, Minimize2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -57,7 +57,7 @@ interface Filters {
   posyandu?: string[];
 }
 
-interface EditFormData {
+interface FormData {
   [key: string]: string;
 }
 
@@ -87,12 +87,13 @@ export function DataPage({ type }: DataPageProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  // Edit/Delete states
+  // Add/Edit/Delete states
+  const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [deletingItem, setDeletingItem] = useState<any>(null);
-  const [editFormData, setEditFormData] = useState<EditFormData>({});
+  const [formData, setFormData] = useState<FormData>({});
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -186,14 +187,14 @@ export function DataPage({ type }: DataPageProps) {
 
     setImporting(true);
     try {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('type', type);
-      formData.append('clearExisting', clearExisting.toString());
+      const formDataObj = new FormData();
+      formDataObj.append('file', selectedFile);
+      formDataObj.append('type', type);
+      formDataObj.append('clearExisting', clearExisting.toString());
 
       const response = await fetch('/api/import', {
         method: 'POST',
-        body: formData,
+        body: formDataObj,
       });
 
       const result = await response.json();
@@ -239,10 +240,78 @@ export function DataPage({ type }: DataPageProps) {
     }
   };
 
+  // Reset form data
+  const resetFormData = useCallback(() => {
+    const initialData: FormData = {
+      nama: '',
+      jk: '',
+      alamat: '',
+      nik: '',
+      tempatLahir: '',
+      tanggalLahir: '',
+      umur: '',
+    };
+    
+    if (type === 'guru') {
+      initialData.sekolah = '';
+      initialData.nuptk = '';
+      initialData.jenisTendik = '';
+      initialData.nip = '';
+    } else if (type === 'siswa') {
+      initialData.jenjang = '';
+      initialData.namaSekolah = '';
+      initialData.nisn = '';
+      initialData.kelas = '';
+    } else if (type === 'posyandu') {
+      initialData.posyandu = '';
+      initialData.kategori = '';
+    }
+    
+    setFormData(initialData);
+  }, [type]);
+
+  // Add handlers
+  const openAddDialog = () => {
+    resetFormData();
+    setShowAddDialog(true);
+  };
+
+  const handleAddSubmit = async () => {
+    if (!formData.nama) {
+      toast.error('Nama wajib diisi');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/${type}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Data berhasil ditambahkan');
+        setShowAddDialog(false);
+        resetFormData();
+        fetchData();
+      } else {
+        toast.error(result.error || 'Gagal menambahkan data');
+      }
+    } catch (error) {
+      console.error('Add error:', error);
+      toast.error('Gagal menambahkan data');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Edit handlers
   const openEditDialog = (item: any) => {
     setEditingItem(item);
-    setEditFormData({
+    const editData: FormData = {
       nama: item.nama || '',
       jk: item.jk || '',
       alamat: item.alamat || '',
@@ -250,24 +319,24 @@ export function DataPage({ type }: DataPageProps) {
       tempatLahir: item.tempatLahir || '',
       tanggalLahir: item.tanggalLahir || '',
       umur: item.umur || '',
-      // Type specific fields
-      ...(type === 'guru' && {
-        sekolah: item.sekolah || '',
-        nuptk: item.nuptk || '',
-        jenisTendik: item.jenisTendik || '',
-        nip: item.nip || '',
-      }),
-      ...(type === 'siswa' && {
-        jenjang: item.jenjang || '',
-        namaSekolah: item.namaSekolah || '',
-        nisn: item.nisn || '',
-        kelas: item.kelas || '',
-      }),
-      ...(type === 'posyandu' && {
-        posyandu: item.posyandu || '',
-        kategori: item.kategori || '',
-      }),
-    });
+    };
+    
+    if (type === 'guru') {
+      editData.sekolah = item.sekolah || '';
+      editData.nuptk = item.nuptk || '';
+      editData.jenisTendik = item.jenisTendik || '';
+      editData.nip = item.nip || '';
+    } else if (type === 'siswa') {
+      editData.jenjang = item.jenjang || '';
+      editData.namaSekolah = item.namaSekolah || '';
+      editData.nisn = item.nisn || '';
+      editData.kelas = item.kelas || '';
+    } else if (type === 'posyandu') {
+      editData.posyandu = item.posyandu || '';
+      editData.kategori = item.kategori || '';
+    }
+    
+    setFormData(editData);
     setShowEditDialog(true);
   };
 
@@ -279,7 +348,7 @@ export function DataPage({ type }: DataPageProps) {
       const response = await fetch(`/api/${type}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editingItem.id, ...editFormData }),
+        body: JSON.stringify({ id: editingItem.id, ...formData }),
       });
       
       const result = await response.json();
@@ -355,9 +424,8 @@ export function DataPage({ type }: DataPageProps) {
             { key: 'umur', label: 'Umur' },
             { key: 'alamat', label: 'Alamat' },
           ],
-          filterKey: 'sekolah',
-          editFields: [
-            { key: 'nama', label: 'Nama', type: 'text' },
+          formFields: [
+            { key: 'nama', label: 'Nama', type: 'text', required: true },
             { key: 'jk', label: 'Jenis Kelamin', type: 'select', options: ['L', 'P'] },
             { key: 'sekolah', label: 'Sekolah', type: 'text' },
             { key: 'nuptk', label: 'NUPTK', type: 'text' },
@@ -389,9 +457,8 @@ export function DataPage({ type }: DataPageProps) {
             { key: 'umur', label: 'Umur' },
             { key: 'alamat', label: 'Alamat' },
           ],
-          filterKey: 'namaSekolah',
-          editFields: [
-            { key: 'nama', label: 'Nama', type: 'text' },
+          formFields: [
+            { key: 'nama', label: 'Nama', type: 'text', required: true },
             { key: 'jk', label: 'Jenis Kelamin', type: 'select', options: ['L', 'P'] },
             { key: 'jenjang', label: 'Jenjang', type: 'text' },
             { key: 'namaSekolah', label: 'Nama Sekolah', type: 'text' },
@@ -421,9 +488,8 @@ export function DataPage({ type }: DataPageProps) {
             { key: 'umur', label: 'Umur' },
             { key: 'alamat', label: 'Alamat' },
           ],
-          filterKey: 'posyandu',
-          editFields: [
-            { key: 'nama', label: 'Nama', type: 'text' },
+          formFields: [
+            { key: 'nama', label: 'Nama', type: 'text', required: true },
             { key: 'jk', label: 'Jenis Kelamin', type: 'select', options: ['L', 'P'] },
             { key: 'posyandu', label: 'Posyandu', type: 'text' },
             { key: 'kategori', label: 'Kategori', type: 'text' },
@@ -563,6 +629,51 @@ export function DataPage({ type }: DataPageProps) {
     }
   };
 
+  // Render form fields for Add/Edit dialogs
+  const renderFormFields = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+      {config.formFields.map((field) => (
+        <div key={field.key} className={field.type === 'textarea' ? 'sm:col-span-2' : ''}>
+          <Label htmlFor={field.key} className="text-sm font-medium">
+            {field.label} {field.required && <span className="text-red-500">*</span>}
+          </Label>
+          {field.type === 'select' ? (
+            <Select
+              value={formData[field.key] || ''}
+              onValueChange={(v) => setFormData(prev => ({ ...prev, [field.key]: v }))}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder={`Pilih ${field.label}`} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">-</SelectItem>
+                {field.options?.map((opt) => (
+                  <SelectItem key={opt} value={opt}>{opt === 'L' ? 'Laki-laki' : 'Perempuan'}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : field.type === 'textarea' ? (
+            <Textarea
+              id={field.key}
+              value={formData[field.key] || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, [field.key]: e.target.value }))}
+              className="mt-1"
+              rows={2}
+            />
+          ) : (
+            <Input
+              id={field.key}
+              type="text"
+              value={formData[field.key] || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, [field.key]: e.target.value }))}
+              className="mt-1"
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -579,6 +690,13 @@ export function DataPage({ type }: DataPageProps) {
         
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={openAddDialog}
+            className="gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700"
+          >
+            <Plus className="w-4 h-4" />
+            Tambah Data
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -665,7 +783,7 @@ export function DataPage({ type }: DataPageProps) {
             </Card>
 
             {/* Table */}
-            <Card className="border-0 shadow-lg">
+            <Card className="border-0 shadow-lg overflow-hidden">
               <CardContent className="p-0">
                 {loading ? (
                   <div className="p-6 space-y-4">
@@ -682,12 +800,12 @@ export function DataPage({ type }: DataPageProps) {
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-slate-50 dark:bg-slate-800/50">
-                          <TableHead className="w-12 text-center">#</TableHead>
+                        <TableRow className="bg-slate-100 dark:bg-slate-800">
+                          <TableHead className="w-12 text-center font-semibold">#</TableHead>
                           {config.columns.map((col) => (
-                            <TableHead key={col.key} className="whitespace-nowrap">{col.label}</TableHead>
+                            <TableHead key={col.key} className="whitespace-nowrap font-semibold">{col.label}</TableHead>
                           ))}
-                          <TableHead className="w-28 text-center sticky right-0 bg-slate-50 dark:bg-slate-800/50">Aksi</TableHead>
+                          <TableHead className="w-32 text-center font-semibold bg-slate-100 dark:bg-slate-800">Aksi</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -698,24 +816,19 @@ export function DataPage({ type }: DataPageProps) {
                                 <FileSpreadsheet className="w-12 h-12 text-slate-300" />
                                 <p>Tidak ada data ditemukan</p>
                                 <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setShowImportDialog(true)}
-                                  className="mt-2"
+                                  onClick={openAddDialog}
+                                  className="mt-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
                                 >
-                                  <Upload className="w-4 h-4 mr-2" />
-                                  Import Data
+                                  <Plus className="w-4 h-4 mr-2" />
+                                  Tambah Data
                                 </Button>
                               </div>
                             </TableCell>
                           </TableRow>
                         ) : (
                           data.map((item, index) => (
-                            <motion.tr
+                            <TableRow
                               key={item.id}
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ delay: index * 0.02 }}
                               className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30"
                             >
                               <TableCell className="text-center text-slate-400">
@@ -726,27 +839,29 @@ export function DataPage({ type }: DataPageProps) {
                                   {renderCell(item, col.key)}
                                 </TableCell>
                               ))}
-                              <TableCell className="sticky right-0 bg-white dark:bg-slate-900">
-                                <div className="flex gap-1 justify-center">
+                              <TableCell>
+                                <div className="flex gap-2 justify-center">
                                   <Button
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => openEditDialog(item)}
-                                    className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                    className="h-8 w-8 p-0 border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                                    title="Edit"
                                   >
                                     <Edit className="w-4 h-4" />
                                   </Button>
                                   <Button
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => openDeleteDialog(item)}
-                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    className="h-8 w-8 p-0 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                    title="Hapus"
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
                                 </div>
                               </TableCell>
-                            </motion.tr>
+                            </TableRow>
                           ))
                         )}
                       </TableBody>
@@ -810,6 +925,122 @@ export function DataPage({ type }: DataPageProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Add Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5 text-emerald-500" />
+              Tambah Data {config.title}
+            </DialogTitle>
+            <DialogDescription>
+              Isi formulir di bawah ini untuk menambahkan data baru.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {renderFormFields()}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+              Batal
+            </Button>
+            <Button
+              onClick={handleAddSubmit}
+              disabled={saving}
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Tambah
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="w-5 h-5 text-blue-500" />
+              Edit Data {config.title}
+            </DialogTitle>
+            <DialogDescription>
+              Perbarui data pada formulir di bawah ini.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {renderFormFields()}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Batal
+            </Button>
+            <Button
+              onClick={handleEditSubmit}
+              disabled={saving}
+              className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                'Simpan'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              Hapus Data
+            </DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menghapus data <strong>{deletingItem?.nama}</strong>? 
+              Tindakan ini tidak dapat dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Hapus
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Import Dialog */}
       <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
@@ -932,122 +1163,6 @@ export function DataPage({ type }: DataPageProps) {
                 <>
                   <Trash2 className="w-4 h-4 mr-2" />
                   Hapus Semua
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Edit className="w-5 h-5 text-blue-500" />
-              Edit Data {config.title}
-            </DialogTitle>
-            <DialogDescription>
-              Perbarui data pada formulir di bawah ini.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-            {config.editFields.map((field) => (
-              <div key={field.key} className={field.type === 'textarea' ? 'sm:col-span-2' : ''}>
-                <Label htmlFor={field.key} className="text-sm font-medium">
-                  {field.label}
-                </Label>
-                {field.type === 'select' ? (
-                  <Select
-                    value={editFormData[field.key] || ''}
-                    onValueChange={(v) => setEditFormData(prev => ({ ...prev, [field.key]: v }))}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder={`Pilih ${field.label}`} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">-</SelectItem>
-                      {field.options?.map((opt) => (
-                        <SelectItem key={opt} value={opt}>{opt === 'L' ? 'Laki-laki' : 'Perempuan'}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : field.type === 'textarea' ? (
-                  <Textarea
-                    id={field.key}
-                    value={editFormData[field.key] || ''}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, [field.key]: e.target.value }))}
-                    className="mt-1"
-                    rows={2}
-                  />
-                ) : (
-                  <Input
-                    id={field.key}
-                    type="text"
-                    value={editFormData[field.key] || ''}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, [field.key]: e.target.value }))}
-                    className="mt-1"
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-              Batal
-            </Button>
-            <Button
-              onClick={handleEditSubmit}
-              disabled={saving}
-              className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Menyimpan...
-                </>
-              ) : (
-                'Simpan'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="w-5 h-5" />
-              Hapus Data
-            </DialogTitle>
-            <DialogDescription>
-              Apakah Anda yakin ingin menghapus data <strong>{deletingItem?.nama}</strong>? 
-              Tindakan ini tidak dapat dibatalkan.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-              Batal
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-              disabled={deleting}
-            >
-              {deleting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Menghapus...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Hapus
                 </>
               )}
             </Button>

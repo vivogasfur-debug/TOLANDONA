@@ -71,6 +71,40 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    const newGuru = await db.guru.create({
+      data: {
+        nama: body.nama || '',
+        jk: body.jk || null,
+        sekolah: body.sekolah || null,
+        alamat: body.alamat || null,
+        nuptk: body.nuptk || null,
+        jenisTendik: body.jenisTendik || null,
+        nik: body.nik || null,
+        nip: body.nip || null,
+        tempatLahir: body.tempatLahir || null,
+        tanggalLahir: body.tanggalLahir || null,
+        umur: body.umur || null,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: newGuru,
+      message: 'Data berhasil ditambahkan',
+    });
+  } catch (error) {
+    console.error('Create guru error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Gagal menambahkan data' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
@@ -83,9 +117,15 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Clean up empty strings to null
+    const cleanData: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(updateData)) {
+      cleanData[key] = value === '' ? null : value;
+    }
+
     const updated = await db.guru.update({
       where: { id },
-      data: updateData,
+      data: cleanData,
     });
 
     return NextResponse.json({

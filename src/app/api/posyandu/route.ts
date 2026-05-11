@@ -82,6 +82,38 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    const newPosyandu = await db.posyandu.create({
+      data: {
+        nama: body.nama || '',
+        posyandu: body.posyandu || null,
+        alamat: body.alamat || null,
+        kategori: body.kategori || null,
+        jk: body.jk || null,
+        nik: body.nik || null,
+        tempatLahir: body.tempatLahir || null,
+        tanggalLahir: body.tanggalLahir || null,
+        umur: body.umur || null,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: newPosyandu,
+      message: 'Data berhasil ditambahkan',
+    });
+  } catch (error) {
+    console.error('Create posyandu error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Gagal menambahkan data' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
@@ -94,9 +126,15 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Clean up empty strings to null
+    const cleanData: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(updateData)) {
+      cleanData[key] = value === '' ? null : value;
+    }
+
     const updated = await db.posyandu.update({
       where: { id },
-      data: updateData,
+      data: cleanData,
     });
 
     return NextResponse.json({
