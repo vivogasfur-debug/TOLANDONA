@@ -96,3 +96,24 @@ Stage Summary:
 - Login now properly verifies hashed passwords
 - Admin password reset successfully
 - All user passwords are properly hashed with bcryptjs
+
+---
+Task ID: 5
+Agent: Main Agent
+Task: Fix sidebar not showing after publish
+
+Work Log:
+- Found root cause: framer-motion animation was hiding sidebar on desktop
+- Sidebar used `animate={{ x: isOpen ? 0 : -280 }}` which hid sidebar when isOpen=false
+- Rewrote sidebar component with separate Desktop and Mobile views:
+  - Desktop: Fixed positioned, always visible
+  - Mobile: Slide in/out with overlay
+- Added main content margin-left (lg:ml-72) to account for fixed sidebar
+- Fixed lint error (components created during render)
+- Added responsive detection with useEffect
+
+Stage Summary:
+- Sidebar now always visible on desktop
+- Mobile sidebar slides in/out correctly
+- All menu items accessible
+- Clean separation of desktop/mobile views

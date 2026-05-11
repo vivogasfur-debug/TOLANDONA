@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -13,6 +13,7 @@ import {
   Users,
   Baby,
   UserCog,
+  X,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -38,124 +39,166 @@ const dataSubmenu = [
 ];
 
 export function Sidebar({ currentPage, onNavigate, isOpen, onClose }: SidebarProps) {
+  const [isMobile, setIsMobile] = useState(false);
   const isDataSubmenu = ['guru', 'siswa', 'posyandu'].includes(currentPage);
+
+  // Detect mobile screen
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Navigation items renderer
+  const renderNavItems = (isMobileView: boolean) => (
+    menuItems.map((item, index) => (
+      <motion.div
+        key={item.id}
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: index * 0.05 }}
+      >
+        <button
+          onClick={() => {
+            onNavigate(item.id === 'data' ? 'guru' : item.id);
+            if (isMobileView) onClose();
+          }}
+          className={cn(
+            'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300',
+            'hover:bg-white/10 group relative overflow-hidden',
+            (item.id === 'data' && isDataSubmenu) || currentPage === item.id
+              ? 'bg-gradient-to-r ' + item.gradient + ' text-white shadow-lg'
+              : 'text-slate-300'
+          )}
+        >
+          <item.icon className="w-5 h-5" />
+          <span className="font-medium">{item.label}</span>
+        </button>
+
+        {/* Data submenu */}
+        {item.id === 'data' && (
+          <div className="ml-4 mt-2 space-y-1">
+            {dataSubmenu.map((subItem) => (
+              <button
+                key={subItem.id}
+                onClick={() => {
+                  onNavigate(subItem.id);
+                  if (isMobileView) onClose();
+                }}
+                className={cn(
+                  'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200',
+                  'hover:bg-white/5',
+                  currentPage === subItem.id
+                    ? 'bg-white/10 text-white'
+                    : 'text-slate-400'
+                )}
+              >
+                <subItem.icon className={cn('w-4 h-4', subItem.color)} />
+                <span className="text-sm">{subItem.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </motion.div>
+    ))
+  );
+
+  // Logo component
+  const renderLogo = () => (
+    <div className="flex items-center gap-3">
+      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+        <Database className="w-6 h-6 text-white" />
+      </div>
+      <div>
+        <h1 className="text-lg font-bold text-white">SIDATA</h1>
+        <p className="text-xs text-slate-400">Kec. Tolandona</p>
+      </div>
+    </div>
+  );
+
+  // Footer component
+  const renderFooter = () => (
+    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10">
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+        <span className="text-sm font-bold text-white">TL</span>
+      </div>
+      <div>
+        <p className="text-sm font-medium text-white">Tolandona</p>
+        <p className="text-xs text-slate-400">Buton Tengah</p>
+      </div>
+    </div>
+  );
 
   return (
     <>
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={onClose}
-        />
-      )}
-
-      {/* Sidebar */}
-      <motion.aside
-        initial={{ x: -280 }}
-        animate={{ x: isOpen ? 0 : -280 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className={cn(
-          'fixed lg:static left-0 top-0 z-50 h-full w-72',
-          'bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900',
-          'shadow-2xl shadow-emerald-500/10',
-          'flex flex-col'
-        )}
-      >
+      {/* Desktop Sidebar - Always visible */}
+      <aside className="hidden lg:flex fixed left-0 top-0 z-40 h-full w-72 flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 shadow-2xl shadow-emerald-500/10">
         {/* Logo section */}
         <div className="p-6 border-b border-white/10">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3"
-          >
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-              <Database className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-white">SIDATA</h1>
-              <p className="text-xs text-slate-400">Kec. Tolandona</p>
-            </div>
-          </motion.div>
+          {renderLogo()}
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {menuItems.map((item, index) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <button
-                onClick={() => {
-                  onNavigate(item.id === 'data' ? 'guru' : item.id);
-                  onClose();
-                }}
-                className={cn(
-                  'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300',
-                  'hover:bg-white/10 group relative overflow-hidden',
-                  (item.id === 'data' && isDataSubmenu) || currentPage === item.id
-                    ? 'bg-gradient-to-r ' + item.gradient + ' text-white shadow-lg'
-                    : 'text-slate-300'
-                )}
-              >
-                <item.icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
-                {item.id === currentPage && (
-                  <motion.div
-                    layoutId="activeIndicator"
-                    className="absolute right-2 w-2 h-2 rounded-full bg-white"
-                  />
-                )}
-              </button>
-
-              {/* Data submenu */}
-              {item.id === 'data' && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  className="ml-4 mt-2 space-y-1"
-                >
-                  {dataSubmenu.map((subItem) => (
-                    <button
-                      key={subItem.id}
-                      onClick={() => {
-                        onNavigate(subItem.id);
-                        onClose();
-                      }}
-                      className={cn(
-                        'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200',
-                        'hover:bg-white/5',
-                        currentPage === subItem.id
-                          ? 'bg-white/10 text-white'
-                          : 'text-slate-400'
-                      )}
-                    >
-                      <subItem.icon className={cn('w-4 h-4', subItem.color)} />
-                      <span className="text-sm">{subItem.label}</span>
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </motion.div>
-          ))}
+          {renderNavItems(false)}
         </nav>
 
         {/* Footer */}
         <div className="p-4 border-t border-white/10">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
-              <span className="text-sm font-bold text-white">TL</span>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-white">Tolandona</p>
-              <p className="text-xs text-slate-400">Buton Tengah</p>
-            </div>
-          </div>
+          {renderFooter()}
         </div>
-      </motion.aside>
+      </aside>
+
+      {/* Mobile Sidebar - Slide in/out */}
+      <AnimatePresence>
+        {isOpen && isMobile && (
+          <>
+            {/* Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+              onClick={onClose}
+            />
+            
+            {/* Sidebar */}
+            <motion.aside
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed lg:hidden left-0 top-0 z-50 h-full w-72 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 shadow-2xl shadow-emerald-500/10 flex flex-col"
+            >
+              {/* Close button */}
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 p-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Logo section */}
+              <div className="p-6 border-b border-white/10">
+                {renderLogo()}
+              </div>
+
+              {/* Navigation */}
+              <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+                {renderNavItems(true)}
+              </nav>
+
+              {/* Footer */}
+              <div className="p-4 border-t border-white/10">
+                {renderFooter()}
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 }

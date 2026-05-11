@@ -71,8 +71,8 @@ function AppContent() {
         onClose={() => setSidebarOpen(false)}
       />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen lg:ml-0">
+      {/* Main Content - with left margin on desktop for sidebar */}
+      <div className="flex-1 flex flex-col min-h-screen lg:ml-72">
         <Header
           onMenuClick={() => setSidebarOpen(true)}
           theme={theme}
