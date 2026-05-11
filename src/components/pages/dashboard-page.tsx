@@ -11,16 +11,18 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Users, GraduationCap, Baby, TrendingUp, Activity,
-  ArrowUpRight, ArrowDownRight, Calendar
+  ArrowUpRight, ArrowDownRight, Calendar, HeartHandshake
 } from 'lucide-react';
 
 interface Stats {
   totalGuru: number;
   totalSiswa: number;
   totalPosyandu: number;
+  totalRelawan: number;
   guruGender: Array<{ name: string; value: number }>;
   siswaGender: Array<{ name: string; value: number }>;
   posyanduGender: Array<{ name: string; value: number }>;
+  relawanGender: Array<{ name: string; value: number }>;
   guruSekolah: Array<{ name: string; value: number }>;
   siswaSekolah: Array<{ name: string; value: number }>;
   siswaJenjang: Array<{ name: string; value: number }>;
@@ -61,7 +63,7 @@ export function DashboardPage() {
   return (
     <div className="space-y-6 p-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatsCard
           title="Total Guru"
           value={stats?.totalGuru || 0}
@@ -87,8 +89,16 @@ export function DashboardPage() {
           trendUp={true}
         />
         <StatsCard
+          title="Data Relawan"
+          value={stats?.totalRelawan || 0}
+          icon={HeartHandshake}
+          gradient="from-amber-500 to-orange-600"
+          trend="+3%"
+          trendUp={true}
+        />
+        <StatsCard
           title="Total Data"
-          value={(stats?.totalGuru || 0) + (stats?.totalSiswa || 0) + (stats?.totalPosyandu || 0)}
+          value={(stats?.totalGuru || 0) + (stats?.totalSiswa || 0) + (stats?.totalPosyandu || 0) + (stats?.totalRelawan || 0)}
           icon={Activity}
           gradient="from-purple-500 to-indigo-600"
           trend="+10%"
@@ -108,10 +118,11 @@ export function DashboardPage() {
             <CardDescription>Perbandingan gender di setiap kategori</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <GenderPieChart data={stats?.guruGender || []} title="Guru" color="#10b981" />
               <GenderPieChart data={stats?.siswaGender || []} title="Siswa" color="#06b6d4" />
               <GenderPieChart data={stats?.posyanduGender || []} title="Posyandu" color="#ec4899" />
+              <GenderPieChart data={stats?.relawanGender || []} title="Relawan" color="#f59e0b" />
             </div>
           </CardContent>
         </Card>

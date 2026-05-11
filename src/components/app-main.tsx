@@ -47,6 +47,7 @@ function AppContent() {
       case 'guru':
       case 'siswa':
       case 'posyandu':
+      case 'relawan':
         return <DataPage type={currentPage} />;
       case 'rekapitulasi':
         return <RekapitulasiPage />;
