@@ -507,9 +507,58 @@ export function DataPage({ type }: DataPageProps) {
 
   const config = getTypeConfig();
 
+  // Fungsi untuk menghitung umur dari tanggal lahir
+  const calculateAge = (tanggalLahir: string | null | undefined): string => {
+    if (!tanggalLahir) return '-';
+    
+    try {
+      // Parse tanggal lahir - bisa dalam format berbeda
+      let birthDate: Date;
+      
+      // Coba format YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}$/.test(tanggalLahir)) {
+        birthDate = new Date(tanggalLahir);
+      } 
+      // Coba format DD/MM/YYYY atau DD-MM-YYYY
+      else if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(tanggalLahir)) {
+        const parts = tanggalLahir.split(/[\/\-]/);
+        birthDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+      }
+      // Coba parse langsung
+      else {
+        birthDate = new Date(tanggalLahir);
+      }
+      
+      // Validasi tanggal
+      if (isNaN(birthDate.getTime())) return '-';
+      
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      
+      return age >= 0 ? `${age} tahun` : '-';
+    } catch {
+      return '-';
+    }
+  };
+
   const renderCell = (item: any, key: string) => {
     const value = item[key];
-    if (value === null || value === undefined || value === '') return '-';
+    
+    if (key === 'umur') {
+      // Jika umur sudah ada dan valid, tampilkan
+      if (value && value !== '#ERROR!' && !String(value).includes('ERROR')) {
+        return String(value);
+      }
+      // Jika tidak, hitung dari tanggal lahir
+      return calculateAge(item.tanggalLahir);
+    }
+    
+    if (value === null || value === undefined || value === '' || value === '#ERROR!') return '-';
     
     if (key === 'jk') {
       return (
@@ -726,11 +775,31 @@ export function DataPage({ type }: DataPageProps) {
       </div>
       <div>
         <Label className="text-sm font-medium">Tanggal Lahir</Label>
-        <Input type="text" value={formTanggalLahir} onChange={(e) => setFormTanggalLahir(e.target.value)} className="mt-1" placeholder="Masukkan tanggal lahir" />
+        <Input 
+          type="date" 
+          value={formTanggalLahir} 
+          onChange={(e) => {
+            const newDate = e.target.value;
+            setFormTanggalLahir(newDate);
+            // Auto-calculate age when date changes
+            if (newDate) {
+              const calculatedAge = calculateAge(newDate);
+              setFormUmur(calculatedAge);
+            }
+          }} 
+          className="mt-1" 
+        />
       </div>
       <div>
         <Label className="text-sm font-medium">Umur</Label>
-        <Input type="text" value={formUmur} onChange={(e) => setFormUmur(e.target.value)} className="mt-1" placeholder="Masukkan umur" />
+        <Input 
+          type="text" 
+          value={formUmur} 
+          onChange={(e) => setFormUmur(e.target.value)} 
+          className="mt-1 bg-slate-50 dark:bg-slate-800" 
+          placeholder="Otomatis dari tgl lahir" 
+        />
+        <p className="text-xs text-slate-500 mt-1">Dihitung otomatis dari tanggal lahir</p>
       </div>
       <div className="sm:col-span-2">
         <Label className="text-sm font-medium">Alamat</Label>
