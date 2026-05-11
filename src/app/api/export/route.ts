@@ -126,8 +126,11 @@ async function getHeaders(type: string): Promise<{ key: string; header: string }
       { key: 'nama', header: 'Nama' },
       { key: 'jk', header: 'Jenis Kelamin' },
       { key: 'posyandu', header: 'Posyandu' },
+      { key: 'kategori', header: 'Kategori' },
       { key: 'alamat', header: 'Alamat' },
       { key: 'nik', header: 'NIK' },
+      { key: 'tempatLahir', header: 'Tempat Lahir' },
+      { key: 'tanggalLahir', header: 'Tanggal Lahir' },
       { key: 'umur', header: 'Umur' },
     ],
   };
