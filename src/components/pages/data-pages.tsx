@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -34,7 +33,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Search, Download, Upload, ChevronLeft, ChevronRight, GraduationCap, Users, Baby, FileSpreadsheet, Loader2, Check, Trash2, AlertTriangle, Edit, Plus, Maximize2, Minimize2
+  Search, Download, Upload, ChevronLeft, ChevronRight, GraduationCap, Users, Baby, FileSpreadsheet, Loader2, Check, Trash2, AlertTriangle, Edit, Plus
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -70,9 +69,6 @@ export function DataPage({ type }: DataPageProps) {
   const [search, setSearch] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<Record<string, string>>({});
   
-  // UI State
-  const [isMinimized, setIsMinimized] = useState(false);
-  
   // Import/Export states
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
@@ -92,7 +88,7 @@ export function DataPage({ type }: DataPageProps) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // Form state - individual fields
+  // Form state
   const [formNama, setFormNama] = useState('');
   const [formJk, setFormJk] = useState('');
   const [formAlamat, setFormAlamat] = useState('');
@@ -100,8 +96,6 @@ export function DataPage({ type }: DataPageProps) {
   const [formTempatLahir, setFormTempatLahir] = useState('');
   const [formTanggalLahir, setFormTanggalLahir] = useState('');
   const [formUmur, setFormUmur] = useState('');
-  
-  // Type specific fields
   const [formSekolah, setFormSekolah] = useState('');
   const [formNuptk, setFormNuptk] = useState('');
   const [formJenisTendik, setFormJenisTendik] = useState('');
@@ -164,7 +158,6 @@ export function DataPage({ type }: DataPageProps) {
     setPagination(prev => ({ ...prev, page: newPage }));
   };
 
-  // Export handler
   const handleExport = async () => {
     setExporting(true);
     try {
@@ -187,7 +180,6 @@ export function DataPage({ type }: DataPageProps) {
     }
   };
 
-  // Import handlers
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -232,7 +224,6 @@ export function DataPage({ type }: DataPageProps) {
     }
   };
 
-  // Clear all data handler
   const handleClearAll = async () => {
     setClearingData(true);
     try {
@@ -256,7 +247,6 @@ export function DataPage({ type }: DataPageProps) {
     }
   };
 
-  // Reset all form fields
   const resetForm = () => {
     setFormNama('');
     setFormJk('');
@@ -277,44 +267,42 @@ export function DataPage({ type }: DataPageProps) {
     setFormKategori('');
   };
 
-  // Get form data as object
   const getFormData = () => {
     const baseData: Record<string, string | null> = {
-      nama: formNama,
+      nama: formNama.trim() || null,
       jk: formJk || null,
-      alamat: formAlamat || null,
-      nik: formNik || null,
-      tempatLahir: formTempatLahir || null,
-      tanggalLahir: formTanggalLahir || null,
-      umur: formUmur || null,
+      alamat: formAlamat.trim() || null,
+      nik: formNik.trim() || null,
+      tempatLahir: formTempatLahir.trim() || null,
+      tanggalLahir: formTanggalLahir.trim() || null,
+      umur: formUmur.trim() || null,
     };
     
     if (type === 'guru') {
       return {
         ...baseData,
-        sekolah: formSekolah || null,
-        nuptk: formNuptk || null,
-        jenisTendik: formJenisTendik || null,
-        nip: formNip || null,
+        sekolah: formSekolah.trim() || null,
+        nuptk: formNuptk.trim() || null,
+        jenisTendik: formJenisTendik.trim() || null,
+        nip: formNip.trim() || null,
       };
     } else if (type === 'siswa') {
       return {
         ...baseData,
-        jenjang: formJenjang || null,
-        namaSekolah: formNamaSekolah || null,
-        nisn: formNisn || null,
-        kelas: formKelas || null,
+        jenjang: formJenjang.trim() || null,
+        namaSekolah: formNamaSekolah.trim() || null,
+        nisn: formNisn.trim() || null,
+        kelas: formKelas.trim() || null,
       };
     } else {
       return {
         ...baseData,
-        posyandu: formPosyandu || null,
-        kategori: formKategori || null,
+        posyandu: formPosyandu.trim() || null,
+        kategori: formKategori.trim() || null,
       };
     }
   };
 
-  // Populate form from item
   const populateForm = (item: any) => {
     setFormNama(item.nama || '');
     setFormJk(item.jk || '');
@@ -340,7 +328,6 @@ export function DataPage({ type }: DataPageProps) {
     }
   };
 
-  // Add handlers
   const openAddDialog = () => {
     resetForm();
     setShowAddDialog(true);
@@ -355,6 +342,8 @@ export function DataPage({ type }: DataPageProps) {
     setSaving(true);
     try {
       const formDataObj = getFormData();
+      // Ensure nama is a string
+      formDataObj.nama = formNama.trim();
       
       const response = await fetch(`/api/${type}`, {
         method: 'POST',
@@ -380,7 +369,6 @@ export function DataPage({ type }: DataPageProps) {
     }
   };
 
-  // Edit handlers
   const openEditDialog = (item: any) => {
     setEditingItem(item);
     populateForm(item);
@@ -397,6 +385,8 @@ export function DataPage({ type }: DataPageProps) {
     setSaving(true);
     try {
       const formDataObj = getFormData();
+      // Ensure nama is a string
+      formDataObj.nama = formNama.trim();
       
       const response = await fetch(`/api/${type}`, {
         method: 'PUT',
@@ -423,7 +413,6 @@ export function DataPage({ type }: DataPageProps) {
     }
   };
 
-  // Delete handlers
   const openDeleteDialog = (item: any) => {
     setDeletingItem(item);
     setShowDeleteDialog(true);
@@ -456,14 +445,12 @@ export function DataPage({ type }: DataPageProps) {
     }
   };
 
-  // Column configurations - ALL columns for each type
   const getTypeConfig = () => {
     switch (type) {
       case 'guru':
         return {
           title: 'Data Guru',
           icon: GraduationCap,
-          color: 'text-emerald-500',
           gradient: 'from-emerald-500 to-teal-600',
           columns: [
             { key: 'nama', label: 'Nama' },
@@ -483,7 +470,6 @@ export function DataPage({ type }: DataPageProps) {
         return {
           title: 'Data Siswa',
           icon: Users,
-          color: 'text-cyan-500',
           gradient: 'from-cyan-500 to-blue-600',
           columns: [
             { key: 'nama', label: 'Nama' },
@@ -503,7 +489,6 @@ export function DataPage({ type }: DataPageProps) {
         return {
           title: 'Data Posyandu',
           icon: Baby,
-          color: 'text-pink-500',
           gradient: 'from-pink-500 to-rose-600',
           columns: [
             { key: 'nama', label: 'Nama' },
@@ -538,7 +523,6 @@ export function DataPage({ type }: DataPageProps) {
       return <Badge variant="outline" className="text-xs">{value}</Badge>;
     }
     
-    // Return string value
     return String(value);
   };
 
@@ -647,10 +631,8 @@ export function DataPage({ type }: DataPageProps) {
     }
   };
 
-  // Render form fields
   const renderFormFields = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-      {/* Nama - Required */}
       <div>
         <Label htmlFor="nama" className="text-sm font-medium">
           Nama <span className="text-red-500">*</span>
@@ -665,7 +647,6 @@ export function DataPage({ type }: DataPageProps) {
         />
       </div>
       
-      {/* Jenis Kelamin */}
       <div>
         <Label htmlFor="jk" className="text-sm font-medium">Jenis Kelamin</Label>
         <Select value={formJk} onValueChange={setFormJk}>
@@ -680,48 +661,23 @@ export function DataPage({ type }: DataPageProps) {
         </Select>
       </div>
 
-      {/* Type specific fields */}
       {type === 'guru' && (
         <>
           <div>
             <Label className="text-sm font-medium">Sekolah</Label>
-            <Input
-              type="text"
-              value={formSekolah}
-              onChange={(e) => setFormSekolah(e.target.value)}
-              className="mt-1"
-              placeholder="Masukkan sekolah"
-            />
+            <Input type="text" value={formSekolah} onChange={(e) => setFormSekolah(e.target.value)} className="mt-1" placeholder="Masukkan sekolah" />
           </div>
           <div>
             <Label className="text-sm font-medium">NUPTK</Label>
-            <Input
-              type="text"
-              value={formNuptk}
-              onChange={(e) => setFormNuptk(e.target.value)}
-              className="mt-1"
-              placeholder="Masukkan NUPTK"
-            />
+            <Input type="text" value={formNuptk} onChange={(e) => setFormNuptk(e.target.value)} className="mt-1" placeholder="Masukkan NUPTK" />
           </div>
           <div>
             <Label className="text-sm font-medium">NIP</Label>
-            <Input
-              type="text"
-              value={formNip}
-              onChange={(e) => setFormNip(e.target.value)}
-              className="mt-1"
-              placeholder="Masukkan NIP"
-            />
+            <Input type="text" value={formNip} onChange={(e) => setFormNip(e.target.value)} className="mt-1" placeholder="Masukkan NIP" />
           </div>
           <div>
             <Label className="text-sm font-medium">Jenis Tendik</Label>
-            <Input
-              type="text"
-              value={formJenisTendik}
-              onChange={(e) => setFormJenisTendik(e.target.value)}
-              className="mt-1"
-              placeholder="Masukkan jenis tendik"
-            />
+            <Input type="text" value={formJenisTendik} onChange={(e) => setFormJenisTendik(e.target.value)} className="mt-1" placeholder="Masukkan jenis tendik" />
           </div>
         </>
       )}
@@ -730,43 +686,19 @@ export function DataPage({ type }: DataPageProps) {
         <>
           <div>
             <Label className="text-sm font-medium">Jenjang</Label>
-            <Input
-              type="text"
-              value={formJenjang}
-              onChange={(e) => setFormJenjang(e.target.value)}
-              className="mt-1"
-              placeholder="Masukkan jenjang"
-            />
+            <Input type="text" value={formJenjang} onChange={(e) => setFormJenjang(e.target.value)} className="mt-1" placeholder="Masukkan jenjang" />
           </div>
           <div>
             <Label className="text-sm font-medium">Nama Sekolah</Label>
-            <Input
-              type="text"
-              value={formNamaSekolah}
-              onChange={(e) => setFormNamaSekolah(e.target.value)}
-              className="mt-1"
-              placeholder="Masukkan nama sekolah"
-            />
+            <Input type="text" value={formNamaSekolah} onChange={(e) => setFormNamaSekolah(e.target.value)} className="mt-1" placeholder="Masukkan nama sekolah" />
           </div>
           <div>
             <Label className="text-sm font-medium">Kelas</Label>
-            <Input
-              type="text"
-              value={formKelas}
-              onChange={(e) => setFormKelas(e.target.value)}
-              className="mt-1"
-              placeholder="Masukkan kelas"
-            />
+            <Input type="text" value={formKelas} onChange={(e) => setFormKelas(e.target.value)} className="mt-1" placeholder="Masukkan kelas" />
           </div>
           <div>
             <Label className="text-sm font-medium">NISN</Label>
-            <Input
-              type="text"
-              value={formNisn}
-              onChange={(e) => setFormNisn(e.target.value)}
-              className="mt-1"
-              placeholder="Masukkan NISN"
-            />
+            <Input type="text" value={formNisn} onChange={(e) => setFormNisn(e.target.value)} className="mt-1" placeholder="Masukkan NISN" />
           </div>
         </>
       )}
@@ -775,77 +707,34 @@ export function DataPage({ type }: DataPageProps) {
         <>
           <div>
             <Label className="text-sm font-medium">Posyandu</Label>
-            <Input
-              type="text"
-              value={formPosyandu}
-              onChange={(e) => setFormPosyandu(e.target.value)}
-              className="mt-1"
-              placeholder="Masukkan posyandu"
-            />
+            <Input type="text" value={formPosyandu} onChange={(e) => setFormPosyandu(e.target.value)} className="mt-1" placeholder="Masukkan posyandu" />
           </div>
           <div>
             <Label className="text-sm font-medium">Kategori</Label>
-            <Input
-              type="text"
-              value={formKategori}
-              onChange={(e) => setFormKategori(e.target.value)}
-              className="mt-1"
-              placeholder="Masukkan kategori"
-            />
+            <Input type="text" value={formKategori} onChange={(e) => setFormKategori(e.target.value)} className="mt-1" placeholder="Masukkan kategori" />
           </div>
         </>
       )}
 
-      {/* Common fields */}
       <div>
         <Label className="text-sm font-medium">NIK</Label>
-        <Input
-          type="text"
-          value={formNik}
-          onChange={(e) => setFormNik(e.target.value)}
-          className="mt-1"
-          placeholder="Masukkan NIK"
-        />
+        <Input type="text" value={formNik} onChange={(e) => setFormNik(e.target.value)} className="mt-1" placeholder="Masukkan NIK" />
       </div>
       <div>
         <Label className="text-sm font-medium">Tempat Lahir</Label>
-        <Input
-          type="text"
-          value={formTempatLahir}
-          onChange={(e) => setFormTempatLahir(e.target.value)}
-          className="mt-1"
-          placeholder="Masukkan tempat lahir"
-        />
+        <Input type="text" value={formTempatLahir} onChange={(e) => setFormTempatLahir(e.target.value)} className="mt-1" placeholder="Masukkan tempat lahir" />
       </div>
       <div>
         <Label className="text-sm font-medium">Tanggal Lahir</Label>
-        <Input
-          type="text"
-          value={formTanggalLahir}
-          onChange={(e) => setFormTanggalLahir(e.target.value)}
-          className="mt-1"
-          placeholder="Masukkan tanggal lahir"
-        />
+        <Input type="text" value={formTanggalLahir} onChange={(e) => setFormTanggalLahir(e.target.value)} className="mt-1" placeholder="Masukkan tanggal lahir" />
       </div>
       <div>
         <Label className="text-sm font-medium">Umur</Label>
-        <Input
-          type="text"
-          value={formUmur}
-          onChange={(e) => setFormUmur(e.target.value)}
-          className="mt-1"
-          placeholder="Masukkan umur"
-        />
+        <Input type="text" value={formUmur} onChange={(e) => setFormUmur(e.target.value)} className="mt-1" placeholder="Masukkan umur" />
       </div>
       <div className="sm:col-span-2">
         <Label className="text-sm font-medium">Alamat</Label>
-        <Textarea
-          value={formAlamat}
-          onChange={(e) => setFormAlamat(e.target.value)}
-          className="mt-1"
-          placeholder="Masukkan alamat"
-          rows={2}
-        />
+        <Textarea value={formAlamat} onChange={(e) => setFormAlamat(e.target.value)} className="mt-1" placeholder="Masukkan alamat" rows={2} />
       </div>
     </div>
   );
@@ -864,243 +753,164 @@ export function DataPage({ type }: DataPageProps) {
           </div>
         </div>
         
-        {/* Action Buttons */}
         <div className="flex flex-wrap gap-2">
-          <Button
-            onClick={openAddDialog}
-            className="gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700"
-          >
+          <Button onClick={openAddDialog} className="gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700">
             <Plus className="w-4 h-4" />
             Tambah Data
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsMinimized(!isMinimized)}
-            className="gap-2"
-          >
-            {isMinimized ? (
-              <>
-                <Maximize2 className="w-4 h-4" />
-                Maximize
-              </>
-            ) : (
-              <>
-                <Minimize2 className="w-4 h-4" />
-                Minimize
-              </>
-            )}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowImportDialog(true)}
-            className="gap-2"
-          >
+          <Button variant="outline" size="sm" onClick={() => setShowImportDialog(true)} className="gap-2">
             <Upload className="w-4 h-4" />
             Import
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExport}
-            disabled={exporting || pagination.total === 0}
-            className="gap-2"
-          >
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting || pagination.total === 0} className="gap-2">
             {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             Export CSV
           </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setShowClearDialog(true)}
-            disabled={pagination.total === 0}
-            className="gap-2"
-          >
+          <Button variant="destructive" size="sm" onClick={() => setShowClearDialog(true)} disabled={pagination.total === 0} className="gap-2">
             <Trash2 className="w-4 h-4" />
             Hapus Semua
           </Button>
         </div>
       </div>
 
-      <AnimatePresence>
-        {!isMinimized && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-6"
-          >
-            {/* Filters */}
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex flex-col lg:flex-row gap-4">
-                  <form onSubmit={handleSearch} className="flex-1 flex gap-2">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <Input
-                        type="text"
-                        placeholder="Cari nama, NISN, NIK, Sekolah..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                    <Button type="submit" className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
-                      Cari
-                    </Button>
-                  </form>
-                  <div className="flex flex-wrap gap-2">
-                    {getFilterOptions()}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Table */}
-            <Card className="border-0 shadow-lg overflow-hidden">
-              <CardContent className="p-0">
-                {loading ? (
-                  <div className="p-6 space-y-4">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <div key={i} className="flex gap-4">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-4 w-10" />
-                        <Skeleton className="h-4 w-40" />
-                        <Skeleton className="h-4 w-20" />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-slate-100 dark:bg-slate-800">
-                          <TableHead className="w-12 text-center font-semibold">#</TableHead>
-                          {config.columns.map((col) => (
-                            <TableHead key={col.key} className="whitespace-nowrap font-semibold">{col.label}</TableHead>
-                          ))}
-                          <TableHead className="w-32 text-center font-semibold bg-slate-100 dark:bg-slate-800">Aksi</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {data.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={config.columns.length + 2} className="text-center py-8 text-slate-500">
-                              <div className="flex flex-col items-center gap-2">
-                                <FileSpreadsheet className="w-12 h-12 text-slate-300" />
-                                <p>Tidak ada data ditemukan</p>
-                                <Button
-                                  onClick={openAddDialog}
-                                  className="mt-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
-                                >
-                                  <Plus className="w-4 h-4 mr-2" />
-                                  Tambah Data
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          data.map((item, index) => (
-                            <TableRow
-                              key={item.id}
-                              className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30"
-                            >
-                              <TableCell className="text-center text-slate-400">
-                                {(pagination.page - 1) * pagination.limit + index + 1}
-                              </TableCell>
-                              {config.columns.map((col) => (
-                                <TableCell key={col.key} className="max-w-[200px] truncate">
-                                  {renderCell(item, col.key)}
-                                </TableCell>
-                              ))}
-                              <TableCell>
-                                <div className="flex gap-2 justify-center">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => openEditDialog(item)}
-                                    className="h-8 w-8 p-0 border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-                                    title="Edit"
-                                  >
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => openDeleteDialog(item)}
-                                    className="h-8 w-8 p-0 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-                                    title="Hapus"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Pagination */}
-            {pagination.totalPages > 1 && (
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-slate-500">
-                  Menampilkan {(pagination.page - 1) * pagination.limit + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} dari {pagination.total} data
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page === 1}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <div className="flex gap-1">
-                    {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                      let pageNum;
-                      if (pagination.totalPages <= 5) {
-                        pageNum = i + 1;
-                      } else if (pagination.page <= 3) {
-                        pageNum = i + 1;
-                      } else if (pagination.page >= pagination.totalPages - 2) {
-                        pageNum = pagination.totalPages - 4 + i;
-                      } else {
-                        pageNum = pagination.page - 2 + i;
-                      }
-                      return (
-                        <Button
-                          key={pageNum}
-                          variant={pagination.page === pageNum ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => handlePageChange(pageNum)}
-                          className={pagination.page === pageNum ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white' : ''}
-                        >
-                          {pageNum}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page === pagination.totalPages}
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
+      {/* Filters */}
+      <Card className="border-0 shadow-lg">
+        <CardContent className="p-4">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <form onSubmit={handleSearch} className="flex-1 flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  type="text"
+                  placeholder="Cari nama, NISN, NIK, Sekolah..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <Button type="submit" className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+                Cari
+              </Button>
+            </form>
+            <div className="flex flex-wrap gap-2">
+              {getFilterOptions()}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Table */}
+      <Card className="border-0 shadow-lg overflow-hidden">
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="p-6 space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex gap-4">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-10" />
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-100 dark:bg-slate-800">
+                    <TableHead className="w-12 text-center font-semibold">#</TableHead>
+                    {config.columns.map((col) => (
+                      <TableHead key={col.key} className="whitespace-nowrap font-semibold">{col.label}</TableHead>
+                    ))}
+                    <TableHead className="w-32 text-center font-semibold bg-slate-100 dark:bg-slate-800">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={config.columns.length + 2} className="text-center py-8 text-slate-500">
+                        <div className="flex flex-col items-center gap-2">
+                          <FileSpreadsheet className="w-12 h-12 text-slate-300" />
+                          <p>Tidak ada data ditemukan</p>
+                          <Button onClick={openAddDialog} className="mt-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+                            <Plus className="w-4 h-4 mr-2" />
+                            Tambah Data
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    data.map((item, index) => (
+                      <TableRow key={item.id} className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                        <TableCell className="text-center text-slate-400">
+                          {(pagination.page - 1) * pagination.limit + index + 1}
+                        </TableCell>
+                        {config.columns.map((col) => (
+                          <TableCell key={col.key} className="max-w-[200px] truncate">
+                            {renderCell(item, col.key)}
+                          </TableCell>
+                        ))}
+                        <TableCell>
+                          <div className="flex gap-2 justify-center">
+                            <Button variant="outline" size="sm" onClick={() => openEditDialog(item)} className="h-8 w-8 p-0 border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700" title="Edit">
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => openDeleteDialog(item)} className="h-8 w-8 p-0 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" title="Hapus">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-slate-500">
+            Menampilkan {(pagination.page - 1) * pagination.limit + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} dari {pagination.total} data
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.page - 1)} disabled={pagination.page === 1}>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <div className="flex gap-1">
+              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                let pageNum;
+                if (pagination.totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (pagination.page <= 3) {
+                  pageNum = i + 1;
+                } else if (pagination.page >= pagination.totalPages - 2) {
+                  pageNum = pagination.totalPages - 4 + i;
+                } else {
+                  pageNum = pagination.page - 2 + i;
+                }
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={pagination.page === pageNum ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handlePageChange(pageNum)}
+                    className={pagination.page === pageNum ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white' : ''}
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              })}
+            </div>
+            <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.page + 1)} disabled={pagination.page === pagination.totalPages}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Add Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
@@ -1110,33 +920,13 @@ export function DataPage({ type }: DataPageProps) {
               <Plus className="w-5 h-5 text-emerald-500" />
               Tambah Data {config.title}
             </DialogTitle>
-            <DialogDescription>
-              Isi formulir di bawah ini untuk menambahkan data baru. Field dengan * wajib diisi.
-            </DialogDescription>
+            <DialogDescription>Isi formulir di bawah ini untuk menambahkan data baru. Field dengan * wajib diisi.</DialogDescription>
           </DialogHeader>
-          
           {renderFormFields()}
-          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-              Batal
-            </Button>
-            <Button
-              onClick={handleAddSubmit}
-              disabled={saving}
-              className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Menyimpan...
-                </>
-              ) : (
-                <>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Tambah
-                </>
-              )}
+            <Button variant="outline" onClick={() => setShowAddDialog(false)}>Batal</Button>
+            <Button onClick={handleAddSubmit} disabled={saving} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+              {saving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Menyimpan...</>) : (<><Plus className="w-4 h-4 mr-2" />Tambah</>)}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1150,36 +940,19 @@ export function DataPage({ type }: DataPageProps) {
               <Edit className="w-5 h-5 text-blue-500" />
               Edit Data {config.title}
             </DialogTitle>
-            <DialogDescription>
-              Perbarui data pada formulir di bawah ini. Field dengan * wajib diisi.
-            </DialogDescription>
+            <DialogDescription>Perbarui data pada formulir di bawah ini. Field dengan * wajib diisi.</DialogDescription>
           </DialogHeader>
-          
           {renderFormFields()}
-          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-              Batal
-            </Button>
-            <Button
-              onClick={handleEditSubmit}
-              disabled={saving}
-              className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Menyimpan...
-                </>
-              ) : (
-                'Simpan'
-              )}
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>Batal</Button>
+            <Button onClick={handleEditSubmit} disabled={saving} className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white">
+              {saving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Menyimpan...</>) : 'Simpan'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -1187,32 +960,12 @@ export function DataPage({ type }: DataPageProps) {
               <AlertTriangle className="w-5 h-5" />
               Hapus Data
             </DialogTitle>
-            <DialogDescription>
-              Apakah Anda yakin ingin menghapus data <strong>{deletingItem?.nama}</strong>? 
-              Tindakan ini tidak dapat dibatalkan.
-            </DialogDescription>
+            <DialogDescription>Apakah Anda yakin ingin menghapus data <strong>{deletingItem?.nama}</strong>? Tindakan ini tidak dapat dibatalkan.</DialogDescription>
           </DialogHeader>
-          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-              Batal
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-              disabled={deleting}
-            >
-              {deleting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Menghapus...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Hapus
-                </>
-              )}
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>Batal</Button>
+            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleting}>
+              {deleting ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Menghapus...</>) : (<><Trash2 className="w-4 h-4 mr-2" />Hapus</>)}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1226,20 +979,11 @@ export function DataPage({ type }: DataPageProps) {
               <Upload className="w-5 h-5 text-emerald-500" />
               Import Data {config.title}
             </DialogTitle>
-            <DialogDescription>
-              Upload file CSV untuk mengimpor data. Format file harus sesuai dengan template.
-            </DialogDescription>
+            <DialogDescription>Upload file CSV untuk mengimpor data.</DialogDescription>
           </DialogHeader>
-          
           <div className="space-y-4">
             <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-6">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
+              <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
               <div className="text-center">
                 <FileSpreadsheet className="w-12 h-12 mx-auto text-slate-400 mb-2" />
                 {selectedFile ? (
@@ -1248,66 +992,26 @@ export function DataPage({ type }: DataPageProps) {
                     <span className="font-medium">{selectedFile.name}</span>
                   </div>
                 ) : (
-                  <p className="text-slate-500 text-sm">
-                    Drag & drop atau klik untuk memilih file CSV
-                  </p>
+                  <p className="text-slate-500 text-sm">Klik untuk memilih file CSV</p>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="mt-3"
-                >
-                  Pilih File
-                </Button>
+                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="mt-3">Pilih File</Button>
               </div>
             </div>
-            
             <div className="flex items-center space-x-2">
-              <Checkbox
-                id="clearExisting"
-                checked={clearExisting}
-                onCheckedChange={(checked) => setClearExisting(checked as boolean)}
-              />
-              <label
-                htmlFor="clearExisting"
-                className="text-sm text-slate-600 dark:text-slate-400 cursor-pointer"
-              >
-                Hapus data lama sebelum import
-              </label>
+              <Checkbox id="clearExisting" checked={clearExisting} onCheckedChange={(checked) => setClearExisting(checked as boolean)} />
+              <label htmlFor="clearExisting" className="text-sm text-slate-600 dark:text-slate-400 cursor-pointer">Hapus data lama sebelum import</label>
             </div>
           </div>
-          
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowImportDialog(false);
-                setSelectedFile(null);
-                setClearExisting(false);
-              }}
-            >
-              Batal
-            </Button>
-            <Button
-              onClick={handleImport}
-              disabled={!selectedFile || importing}
-              className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
-            >
-              {importing ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Mengimpor...
-                </>
-              ) : (
-                'Import'
-              )}
+            <Button variant="outline" onClick={() => { setShowImportDialog(false); setSelectedFile(null); setClearExisting(false); }}>Batal</Button>
+            <Button onClick={handleImport} disabled={!selectedFile || importing} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+              {importing ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Mengimpor...</>) : 'Import'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Clear Confirmation Dialog */}
+      {/* Clear Dialog */}
       <Dialog open={showClearDialog} onOpenChange={setShowClearDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -1315,32 +1019,12 @@ export function DataPage({ type }: DataPageProps) {
               <AlertTriangle className="w-5 h-5" />
               Hapus Semua Data
             </DialogTitle>
-            <DialogDescription>
-              Apakah Anda yakin ingin menghapus semua data {config.title}? 
-              Tindakan ini tidak dapat dibatalkan.
-            </DialogDescription>
+            <DialogDescription>Apakah Anda yakin ingin menghapus semua data {config.title}? Tindakan ini tidak dapat dibatalkan.</DialogDescription>
           </DialogHeader>
-          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowClearDialog(false)}>
-              Batal
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleClearAll}
-              disabled={clearingData}
-            >
-              {clearingData ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Menghapus...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Hapus Semua
-                </>
-              )}
+            <Button variant="outline" onClick={() => setShowClearDialog(false)}>Batal</Button>
+            <Button variant="destructive" onClick={handleClearAll} disabled={clearingData}>
+              {clearingData ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Menghapus...</>) : (<><Trash2 className="w-4 h-4 mr-2" />Hapus Semua</>)}
             </Button>
           </DialogFooter>
         </DialogContent>
