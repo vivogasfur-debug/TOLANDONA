@@ -2,6 +2,58 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import * as XLSX from 'xlsx';
 
+// Function to calculate age from birth date
+function calculateAge(tanggalLahir: string | null | undefined): string {
+  if (!tanggalLahir) return '-';
+  
+  try {
+    let birthDate: Date;
+    
+    // Try YYYY-MM-DD format
+    if (/^\d{4}-\d{2}-\d{2}$/.test(tanggalLahir)) {
+      birthDate = new Date(tanggalLahir);
+    }
+    // Try DD/MM/YYYY or DD-MM-YYYY format
+    else if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(tanggalLahir)) {
+      const parts = tanggalLahir.split(/[\/\-]/);
+      birthDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    }
+    // Try parsing directly
+    else {
+      birthDate = new Date(tanggalLahir);
+    }
+    
+    // Validate date
+    if (isNaN(birthDate.getTime())) return '-';
+    
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age >= 0 ? `${age} tahun` : '-';
+  } catch {
+    return '-';
+  }
+}
+
+// Process data to calculate age and fix #ERROR! values
+function processData(data: any[]): any[] {
+  return data.map(item => {
+    const processedItem = { ...item };
+    
+    // Calculate age from tanggalLahir if umur is empty or has error
+    if (!item.umur || item.umur === '#ERROR!' || String(item.umur).includes('ERROR')) {
+      processedItem.umur = calculateAge(item.tanggalLahir);
+    }
+    
+    return processedItem;
+  });
+}
+
 // Convert data to CSV format
 function toCSV(data: any[], columns: { key: string; header: string }[]): string {
   const headerRow = columns.map(c => c.header).join(',');
@@ -86,19 +138,22 @@ async function getHeaders(type: string): Promise<{ key: string; header: string }
   };
 
   try {
-    const setting = await db.exportSetting.findUnique({
-      where: { type },
-    });
+    // Check if exportSetting model exists in db
+    if (db.exportSetting) {
+      const setting = await db.exportSetting.findUnique({
+        where: { type },
+      });
 
-    if (setting) {
-      const customHeaders = JSON.parse(setting.headers);
-      // Filter only enabled headers and convert to export format
-      return customHeaders
-        .filter((h: any) => h.enabled)
-        .map((h: any) => ({ key: h.key, header: h.label }));
+      if (setting) {
+        const customHeaders = JSON.parse(setting.headers);
+        // Filter only enabled headers and convert to export format
+        return customHeaders
+          .filter((h: any) => h.enabled)
+          .map((h: any) => ({ key: h.key, header: h.label }));
+      }
     }
   } catch (error) {
-    console.error('Error fetching custom headers:', error);
+    // Silently use default headers if custom headers not available
   }
 
   return defaultHeaders[type] || [];
@@ -138,10 +193,11 @@ export async function GET(request: NextRequest) {
       if (jk) whereGuru.jk = jk;
       if (sekolah) whereGuru.sekolah = sekolah;
       
-      const guruData = await db.guru.findMany({ 
+      const guruDataRaw = await db.guru.findMany({ 
         where: whereGuru,
         orderBy: { createdAt: 'asc' } 
       });
+      const guruData = processData(guruDataRaw);
       
       const guruHeaders = await getHeaders('guru');
       result.guru = {
@@ -167,10 +223,11 @@ export async function GET(request: NextRequest) {
       if (jenjang) whereSiswa.jenjang = jenjang;
       if (namaSekolah) whereSiswa.namaSekolah = namaSekolah;
       
-      const siswaData = await db.siswa.findMany({ 
+      const siswaDataRaw = await db.siswa.findMany({ 
         where: whereSiswa,
         orderBy: { createdAt: 'asc' } 
       });
+      const siswaData = processData(siswaDataRaw);
       
       const siswaHeaders = await getHeaders('siswa');
       result.siswa = {
@@ -195,10 +252,11 @@ export async function GET(request: NextRequest) {
       if (kategori) wherePosyandu.kategori = kategori;
       if (posyanduParam) wherePosyandu.posyandu = posyanduParam;
       
-      const posyanduData = await db.posyandu.findMany({ 
+      const posyanduDataRaw = await db.posyandu.findMany({ 
         where: wherePosyandu,
         orderBy: { createdAt: 'asc' } 
       });
+      const posyanduData = processData(posyanduDataRaw);
       
       const posyanduHeaders = await getHeaders('posyandu');
       result.posyandu = {
