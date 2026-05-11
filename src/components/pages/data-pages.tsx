@@ -649,12 +649,12 @@ export function DataPage({ type }: DataPageProps) {
       
       <div>
         <Label htmlFor="jk" className="text-sm font-medium">Jenis Kelamin</Label>
-        <Select value={formJk} onValueChange={setFormJk}>
+        <Select value={formJk || undefined} onValueChange={(v) => setFormJk(v === 'none' ? '' : v)}>
           <SelectTrigger className="mt-1">
             <SelectValue placeholder="Pilih JK" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">-</SelectItem>
+            <SelectItem value="none">-</SelectItem>
             <SelectItem value="L">Laki-laki</SelectItem>
             <SelectItem value="P">Perempuan</SelectItem>
           </SelectContent>
