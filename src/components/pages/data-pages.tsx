@@ -109,13 +109,16 @@ export function DataPage({ type }: DataPageProps) {
   const [formPosyandu, setFormPosyandu] = useState('');
   const [formKategori, setFormKategori] = useState('');
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (searchValue?: string) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       params.append('page', pagination.page.toString());
       params.append('limit', pagination.limit.toString());
-      if (search) params.append('search', search);
+      
+      // Use passed searchValue or current search state
+      const currentSearch = searchValue !== undefined ? searchValue : search;
+      if (currentSearch) params.append('search', currentSearch);
       
       Object.entries(selectedFilter).forEach(([key, value]) => {
         if (value && value !== 'all') {
@@ -139,7 +142,7 @@ export function DataPage({ type }: DataPageProps) {
     } finally {
       setLoading(false);
     }
-  }, [type, pagination.page, pagination.limit, search, selectedFilter]);
+  }, [type, pagination.page, pagination.limit, selectedFilter]);
 
   useEffect(() => {
     fetchData();
@@ -148,7 +151,8 @@ export function DataPage({ type }: DataPageProps) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPagination(prev => ({ ...prev, page: 1 }));
-    fetchData();
+    // Pass current search value directly
+    fetchData(search);
   };
 
   const handleFilterChange = (key: string, value: string) => {
@@ -332,14 +336,98 @@ export function DataPage({ type }: DataPageProps) {
     }
   };
 
+  // Fungsi untuk menghitung umur dari tanggal lahir
+  const calculateAge = (tanggalLahir: string | null | undefined): string => {
+    if (!tanggalLahir) return '-';
+    
+    try {
+      // Parse tanggal lahir - bisa dalam format berbeda
+      let birthDate: Date;
+      
+      // Coba format YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}$/.test(tanggalLahir)) {
+        birthDate = new Date(tanggalLahir);
+      } 
+      // Coba format DD/MM/YYYY atau DD-MM-YYYY
+      else if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(tanggalLahir)) {
+        const parts = tanggalLahir.split(/[\/\-]/);
+        birthDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+      }
+      // Coba parse langsung
+      else {
+        birthDate = new Date(tanggalLahir);
+      }
+      
+      // Validasi tanggal
+      if (isNaN(birthDate.getTime())) return '-';
+      
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      
+      return age >= 0 ? `${age} tahun` : '-';
+    } catch {
+      return '-';
+    }
+  };
+
+  // Fungsi untuk mengkonversi format tanggal ke YYYY-MM-DD untuk input date
+  const convertToISODate = (dateStr: string | null | undefined): string => {
+    if (!dateStr) return '';
+    
+    try {
+      // Jika sudah format YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return dateStr;
+      }
+      
+      // Jika format DD/MM/YYYY atau DD-MM-YYYY
+      if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(dateStr)) {
+        const parts = dateStr.split(/[\/\-]/);
+        const day = parts[0].padStart(2, '0');
+        const month = parts[1].padStart(2, '0');
+        const year = parts[2];
+        return `${year}-${month}-${day}`;
+      }
+      
+      // Coba parse dengan Date object
+      const date = new Date(dateStr);
+      if (!isNaN(date.getTime())) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+      
+      return '';
+    } catch {
+      return '';
+    }
+  };
+
   const populateForm = (item: any) => {
     setFormNama(item.nama || '');
     setFormJk(item.jk || '');
     setFormAlamat(item.alamat || '');
     setFormNik(item.nik || '');
     setFormTempatLahir(item.tempatLahir || '');
-    setFormTanggalLahir(item.tanggalLahir || '');
-    setFormUmur(item.umur || '');
+    
+    // Convert date to YYYY-MM-DD format for date input
+    const isoDate = convertToISODate(item.tanggalLahir);
+    setFormTanggalLahir(isoDate);
+    
+    // Set umur - if empty, calculate from tanggalLahir
+    if (item.umur && item.umur !== '#ERROR!' && !String(item.umur).includes('ERROR')) {
+      setFormUmur(item.umur);
+    } else if (isoDate) {
+      setFormUmur(calculateAge(isoDate));
+    } else {
+      setFormUmur('');
+    }
     
     if (type === 'guru') {
       setFormSekolah(item.sekolah || '');
@@ -535,45 +623,6 @@ export function DataPage({ type }: DataPageProps) {
   };
 
   const config = getTypeConfig();
-
-  // Fungsi untuk menghitung umur dari tanggal lahir
-  const calculateAge = (tanggalLahir: string | null | undefined): string => {
-    if (!tanggalLahir) return '-';
-    
-    try {
-      // Parse tanggal lahir - bisa dalam format berbeda
-      let birthDate: Date;
-      
-      // Coba format YYYY-MM-DD
-      if (/^\d{4}-\d{2}-\d{2}$/.test(tanggalLahir)) {
-        birthDate = new Date(tanggalLahir);
-      } 
-      // Coba format DD/MM/YYYY atau DD-MM-YYYY
-      else if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(tanggalLahir)) {
-        const parts = tanggalLahir.split(/[\/\-]/);
-        birthDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-      }
-      // Coba parse langsung
-      else {
-        birthDate = new Date(tanggalLahir);
-      }
-      
-      // Validasi tanggal
-      if (isNaN(birthDate.getTime())) return '-';
-      
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      
-      return age >= 0 ? `${age} tahun` : '-';
-    } catch {
-      return '-';
-    }
-  };
 
   const renderCell = (item: any, key: string) => {
     const value = item[key];
