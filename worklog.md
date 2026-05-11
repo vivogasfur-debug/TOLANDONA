@@ -49,3 +49,31 @@ Stage Summary:
 - Can add, edit, and delete users
 - Password hashing with bcryptjs
 - Protection against deleting last admin
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Fix skipDuplicates error and complete user management
+
+Work Log:
+- Fixed import error by removing skipDuplicates (SQLite doesn't support it)
+- Created /api/users endpoint for user management:
+  - GET: List all users with pagination and search
+  - POST: Create new user with password hashing
+  - PUT: Update user (name, email, password, role)
+  - DELETE: Delete user
+- Created UsersPage component with full CRUD functionality:
+  - User list table with pagination
+  - Add user dialog with form validation
+  - Edit user dialog (password optional)
+  - Delete confirmation dialog
+  - Role selection (Admin/User)
+- Updated app-main.tsx to route 'users' to UsersPage
+- Sidebar already has 'Pengguna' menu item
+
+Stage Summary:
+- Import/Export now works correctly (skipDuplicates removed)
+- User management fully functional
+- Users can be added, edited, and deleted
+- Password hashing with bcryptjs
+- Clean UI with toast notifications

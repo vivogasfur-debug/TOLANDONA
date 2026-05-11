@@ -162,7 +162,6 @@ export async function POST(request: NextRequest) {
       if (dataToInsert.length > 0) {
         await db.guru.createMany({
           data: dataToInsert,
-          skipDuplicates: true,
         });
         insertedCount = dataToInsert.length;
       }
@@ -179,7 +178,6 @@ export async function POST(request: NextRequest) {
       if (dataToInsert.length > 0) {
         await db.siswa.createMany({
           data: dataToInsert,
-          skipDuplicates: true,
         });
         insertedCount = dataToInsert.length;
       }
@@ -196,7 +194,6 @@ export async function POST(request: NextRequest) {
       if (dataToInsert.length > 0) {
         await db.posyandu.createMany({
           data: dataToInsert,
-          skipDuplicates: true,
         });
         insertedCount = dataToInsert.length;
       }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -32,24 +32,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { 
-  Users as UsersIcon, 
-  Plus, 
-  MoreVertical, 
-  Pencil, 
-  Trash2, 
-  Search,
-  Loader2,
-  Shield,
-  ShieldCheck,
-  ShieldAlert,
-  AlertTriangle
-} from 'lucide-react';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Search, Plus, Pencil, Trash2, Users, Loader2, Shield, User, ChevronLeft, ChevronRight, Key, Mail, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface User {
@@ -61,166 +53,97 @@ interface User {
   updatedAt: string;
 }
 
-interface UserFormData {
-  name: string;
-  email: string;
-  password: string;
-  role: string;
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
-
-const initialFormData: UserFormData = {
-  name: '',
-  email: '',
-  password: '',
-  role: 'admin',
-};
 
 export function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
   const [search, setSearch] = useState('');
-  
+
   // Dialog states
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  
-  // Form data
-  const [formData, setFormData] = useState<UserFormData>(initialFormData);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  const fetchUsers = async () => {
+  // Form state
+  const [formData, setFormData] = useState({
+    id: '',
+    name: '',
+    email: '',
+    password: '',
+    role: 'user',
+  });
+
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/users');
+      const params = new URLSearchParams();
+      params.append('page', pagination.page.toString());
+      params.append('limit', pagination.limit.toString());
+      if (search) params.append('search', search);
+
+      const res = await fetch(`/api/users?${params}`);
       const result = await res.json();
-      
+
       if (result.success) {
         setUsers(result.data);
-      } else {
-        toast.error('Gagal memuat data pengguna');
+        setPagination(prev => ({ ...prev, total: result.pagination.total, totalPages: result.pagination.totalPages }));
       }
     } catch (error) {
       console.error('Failed to fetch users:', error);
-      toast.error('Gagal memuat data pengguna');
+      toast.error('Gagal memuat data user');
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, search]);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
-  const handleAddUser = async () => {
-    if (!formData.name || !formData.email || !formData.password) {
-      toast.error('Semua field harus diisi');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const res = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      
-      const result = await res.json();
-      
-      if (result.success) {
-        toast.success('Pengguna berhasil ditambahkan');
-        setShowAddDialog(false);
-        setFormData(initialFormData);
-        fetchUsers();
-      } else {
-        toast.error(result.error || 'Gagal menambahkan pengguna');
-      }
-    } catch (error) {
-      console.error('Add user error:', error);
-      toast.error('Gagal menambahkan pengguna');
-    } finally {
-      setSaving(false);
-    }
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPagination(prev => ({ ...prev, page: 1 }));
+    fetchUsers();
   };
 
-  const handleEditUser = async () => {
-    if (!selectedUser) return;
-    
-    if (!formData.name || !formData.email) {
-      toast.error('Nama dan email harus diisi');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const updateData: Record<string, unknown> = {
-        name: formData.name,
-        email: formData.email,
-        role: formData.role,
-      };
-      
-      if (formData.password) {
-        updateData.password = formData.password;
-      }
-
-      const res = await fetch(`/api/users/${selectedUser.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateData),
-      });
-      
-      const result = await res.json();
-      
-      if (result.success) {
-        toast.success('Pengguna berhasil diperbarui');
-        setShowEditDialog(false);
-        setSelectedUser(null);
-        setFormData(initialFormData);
-        fetchUsers();
-      } else {
-        toast.error(result.error || 'Gagal memperbarui pengguna');
-      }
-    } catch (error) {
-      console.error('Edit user error:', error);
-      toast.error('Gagal memperbarui pengguna');
-    } finally {
-      setSaving(false);
-    }
+  const handlePageChange = (newPage: number) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
   };
 
-  const handleDeleteUser = async () => {
-    if (!selectedUser) return;
-
-    setDeleting(true);
-    try {
-      const res = await fetch(`/api/users/${selectedUser.id}`, {
-        method: 'DELETE',
-      });
-      
-      const result = await res.json();
-      
-      if (result.success) {
-        toast.success('Pengguna berhasil dihapus');
-        setShowDeleteDialog(false);
-        setSelectedUser(null);
-        fetchUsers();
-      } else {
-        toast.error(result.error || 'Gagal menghapus pengguna');
-      }
-    } catch (error) {
-      console.error('Delete user error:', error);
-      toast.error('Gagal menghapus pengguna');
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  const openEditDialog = (user: User) => {
-    setSelectedUser(user);
+  const resetForm = () => {
     setFormData({
+      id: '',
+      name: '',
+      email: '',
+      password: '',
+      role: 'user',
+    });
+  };
+
+  const handleAddUser = () => {
+    resetForm();
+    setShowAddDialog(true);
+  };
+
+  const handleEditUser = (user: User) => {
+    setFormData({
+      id: user.id,
       name: user.name,
       email: user.email,
       password: '',
@@ -229,40 +152,127 @@ export function UsersPage() {
     setShowEditDialog(true);
   };
 
-  const openDeleteDialog = (user: User) => {
-    setSelectedUser(user);
+  const handleDeleteClick = (userId: string) => {
+    setSelectedUserId(userId);
     setShowDeleteDialog(true);
   };
 
-  const filteredUsers = users.filter(user => 
-    user.name.toLowerCase().includes(search.toLowerCase()) ||
-    user.email.toLowerCase().includes(search.toLowerCase())
-  );
+  const validateForm = (isEdit: boolean) => {
+    if (!formData.name.trim()) {
+      toast.error('Nama harus diisi');
+      return false;
+    }
+    if (!formData.email.trim()) {
+      toast.error('Email harus diisi');
+      return false;
+    }
+    if (!formData.email.includes('@')) {
+      toast.error('Format email tidak valid');
+      return false;
+    }
+    if (!isEdit && !formData.password) {
+      toast.error('Password harus diisi');
+      return false;
+    }
+    if (!isEdit && formData.password.length < 6) {
+      toast.error('Password minimal 6 karakter');
+      return false;
+    }
+    if (isEdit && formData.password && formData.password.length < 6) {
+      toast.error('Password minimal 6 karakter');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSaveUser = async (isEdit: boolean) => {
+    if (!validateForm(isEdit)) return;
+
+    setSaving(true);
+    try {
+      const url = '/api/users';
+      const method = isEdit ? 'PUT' : 'POST';
+      
+      const body: Record<string, string | undefined> = {
+        name: formData.name,
+        email: formData.email,
+        role: formData.role,
+      };
+
+      if (isEdit) {
+        body.id = formData.id;
+        if (formData.password) {
+          body.password = formData.password;
+        }
+      } else {
+        body.password = formData.password;
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        toast.success(result.message);
+        setShowAddDialog(false);
+        setShowEditDialog(false);
+        resetForm();
+        fetchUsers();
+      } else {
+        toast.error(result.error || 'Terjadi kesalahan');
+      }
+    } catch (error) {
+      console.error('Save user error:', error);
+      toast.error('Terjadi kesalahan saat menyimpan user');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUserId) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/users?id=${selectedUserId}`, {
+        method: 'DELETE',
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        toast.success(result.message);
+        setShowDeleteDialog(false);
+        setSelectedUserId(null);
+        fetchUsers();
+      } else {
+        toast.error(result.error || 'Terjadi kesalahan');
+      }
+    } catch (error) {
+      console.error('Delete user error:', error);
+      toast.error('Terjadi kesalahan saat menghapus user');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const getRoleBadge = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return (
-          <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-            <ShieldCheck className="w-3 h-3 mr-1" />
-            Admin
-          </Badge>
-        );
-      case 'superadmin':
-        return (
-          <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-            <ShieldAlert className="w-3 h-3 mr-1" />
-            Super Admin
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="secondary">
-            <Shield className="w-3 h-3 mr-1" />
-            {role}
-          </Badge>
-        );
+    if (role === 'admin') {
+      return <Badge className="bg-gradient-to-r from-amber-500 to-orange-600 text-white"><Shield className="w-3 h-3 mr-1" />Admin</Badge>;
     }
+    return <Badge variant="secondary"><User className="w-3 h-3 mr-1" />User</Badge>;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
   };
 
   return (
@@ -270,54 +280,56 @@ export function UsersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg">
-            <UsersIcon className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
+            <Users className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Manajemen Pengguna</h1>
-            <p className="text-sm text-slate-500">Total: {users.length} pengguna</p>
+            <h1 className="text-2xl font-bold">Manajemen User</h1>
+            <p className="text-sm text-slate-500">Total: {pagination.total} user</p>
           </div>
         </div>
         
         <Button
-          onClick={() => {
-            setFormData(initialFormData);
-            setShowAddDialog(true);
-          }}
-          className="bg-gradient-to-r from-purple-500 to-pink-600 text-white gap-2"
+          onClick={handleAddUser}
+          className="bg-gradient-to-r from-violet-500 to-purple-600 text-white gap-2"
         >
           <Plus className="w-4 h-4" />
-          Tambah Pengguna
+          Tambah User
         </Button>
       </div>
 
       {/* Search */}
       <Card className="border-0 shadow-lg">
         <CardContent className="p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              type="text"
-              placeholder="Cari nama atau email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+          <form onSubmit={handleSearch} className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                type="text"
+                placeholder="Cari nama atau email..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Button type="submit" className="bg-gradient-to-r from-violet-500 to-purple-600 text-white">
+              Cari
+            </Button>
+          </form>
         </CardContent>
       </Card>
 
-      {/* Users Table */}
+      {/* Table */}
       <Card className="border-0 shadow-lg">
         <CardContent className="p-0">
           {loading ? (
             <div className="p-6 space-y-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex gap-4 items-center">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <Skeleton className="h-4 w-40" />
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-6 w-20" />
+                <div key={i} className="flex gap-4">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-4 w-64" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-24" />
                 </div>
               ))}
             </div>
@@ -326,25 +338,26 @@ export function UsersPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50 dark:bg-slate-800/50">
+                    <TableHead className="w-12 text-center">#</TableHead>
                     <TableHead>Nama</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
-                    <TableHead>Dibuat</TableHead>
-                    <TableHead className="w-12"></TableHead>
+                    <TableHead>Tanggal Dibuat</TableHead>
+                    <TableHead className="text-center">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.length === 0 ? (
+                  {users.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                      <TableCell colSpan={6} className="text-center py-8 text-slate-500">
                         <div className="flex flex-col items-center gap-2">
-                          <UsersIcon className="w-12 h-12 text-slate-300" />
-                          <p>Tidak ada pengguna ditemukan</p>
+                          <Users className="w-12 h-12 text-slate-300" />
+                          <p>Tidak ada user ditemukan</p>
                         </div>
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredUsers.map((user, index) => (
+                    users.map((user, index) => (
                       <motion.tr
                         key={user.id}
                         initial={{ opacity: 0 }}
@@ -352,37 +365,32 @@ export function UsersPage() {
                         transition={{ delay: index * 0.05 }}
                         className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30"
                       >
-                        <TableCell className="font-medium">{user.name}</TableCell>
-                        <TableCell className="text-slate-600 dark:text-slate-400">{user.email}</TableCell>
-                        <TableCell>{getRoleBadge(user.role)}</TableCell>
-                        <TableCell className="text-slate-500 text-sm">
-                          {new Date(user.createdAt).toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })}
+                        <TableCell className="text-center text-slate-400">
+                          {(pagination.page - 1) * pagination.limit + index + 1}
                         </TableCell>
+                        <TableCell className="font-medium">{user.name}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>{getRoleBadge(user.role)}</TableCell>
+                        <TableCell>{formatDate(user.createdAt)}</TableCell>
                         <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <MoreVertical className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => openEditDialog(user)}>
-                                <Pencil className="w-4 h-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => openDeleteDialog(user)}
-                                className="text-red-600 focus:text-red-600"
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Hapus
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <div className="flex justify-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditUser(user)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteClick(user.id)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </motion.tr>
                     ))
@@ -394,16 +402,68 @@ export function UsersPage() {
         </CardContent>
       </Card>
 
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-slate-500">
+            Menampilkan {(pagination.page - 1) * pagination.limit + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} dari {pagination.total} user
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(pagination.page - 1)}
+              disabled={pagination.page === 1}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <div className="flex gap-1">
+              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                let pageNum;
+                if (pagination.totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (pagination.page <= 3) {
+                  pageNum = i + 1;
+                } else if (pagination.page >= pagination.totalPages - 2) {
+                  pageNum = pagination.totalPages - 4 + i;
+                } else {
+                  pageNum = pagination.page - 2 + i;
+                }
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={pagination.page === pageNum ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handlePageChange(pageNum)}
+                    className={pagination.page === pageNum ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white' : ''}
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              })}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(pagination.page + 1)}
+              disabled={pagination.page === pagination.totalPages}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Add User Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Plus className="w-5 h-5 text-purple-500" />
-              Tambah Pengguna Baru
+              <Plus className="w-5 h-5 text-violet-500" />
+              Tambah User Baru
             </DialogTitle>
             <DialogDescription>
-              Isi data pengguna baru di bawah ini.
+              Isi form berikut untuk menambahkan user baru.
             </DialogDescription>
           </DialogHeader>
           
@@ -420,24 +480,32 @@ export function UsersPage() {
             
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="contoh@email.com"
-              />
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="contoh@email.com"
+                  className="pl-10"
+                />
+              </div>
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Masukkan password"
-              />
+              <div className="relative">
+                <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="Minimal 6 karakter"
+                  className="pl-10"
+                />
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -451,7 +519,6 @@ export function UsersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="superadmin">Super Admin</SelectItem>
                   <SelectItem value="user">User</SelectItem>
                 </SelectContent>
               </Select>
@@ -459,13 +526,19 @@ export function UsersPage() {
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAddDialog(false);
+                resetForm();
+              }}
+            >
               Batal
             </Button>
             <Button
-              onClick={handleAddUser}
+              onClick={() => handleSaveUser(false)}
               disabled={saving}
-              className="bg-gradient-to-r from-purple-500 to-pink-600 text-white"
+              className="bg-gradient-to-r from-violet-500 to-purple-600 text-white"
             >
               {saving ? (
                 <>
@@ -485,11 +558,11 @@ export function UsersPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Pencil className="w-5 h-5 text-purple-500" />
-              Edit Pengguna
+              <Pencil className="w-5 h-5 text-violet-500" />
+              Edit User
             </DialogTitle>
             <DialogDescription>
-              Perbarui data pengguna.
+              Ubah informasi user. Kosongkan password jika tidak ingin mengubahnya.
             </DialogDescription>
           </DialogHeader>
           
@@ -506,24 +579,32 @@ export function UsersPage() {
             
             <div className="space-y-2">
               <Label htmlFor="edit-email">Email</Label>
-              <Input
-                id="edit-email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="contoh@email.com"
-              />
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="contoh@email.com"
+                  className="pl-10"
+                />
+              </div>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="edit-password">Password Baru (kosongkan jika tidak ingin mengubah)</Label>
-              <Input
-                id="edit-password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Masukkan password baru"
-              />
+              <Label htmlFor="edit-password">Password Baru (opsional)</Label>
+              <div className="relative">
+                <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  id="edit-password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="Kosongkan jika tidak diubah"
+                  className="pl-10"
+                />
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -537,7 +618,6 @@ export function UsersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="superadmin">Super Admin</SelectItem>
                   <SelectItem value="user">User</SelectItem>
                 </SelectContent>
               </Select>
@@ -545,13 +625,19 @@ export function UsersPage() {
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowEditDialog(false);
+                resetForm();
+              }}
+            >
               Batal
             </Button>
             <Button
-              onClick={handleEditUser}
+              onClick={() => handleSaveUser(true)}
               disabled={saving}
-              className="bg-gradient-to-r from-purple-500 to-pink-600 text-white"
+              className="bg-gradient-to-r from-violet-500 to-purple-600 text-white"
             >
               {saving ? (
                 <>
@@ -567,27 +653,23 @@ export function UsersPage() {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
               <AlertTriangle className="w-5 h-5" />
-              Hapus Pengguna
-            </DialogTitle>
-            <DialogDescription>
-              Apakah Anda yakin ingin menghapus pengguna &quot;{selectedUser?.name}&quot;? 
-              Tindakan ini tidak dapat dibatalkan.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-              Batal
-            </Button>
-            <Button
-              variant="destructive"
+              Hapus User
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus user ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
               onClick={handleDeleteUser}
               disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
             >
               {deleting ? (
                 <>
@@ -595,15 +677,12 @@ export function UsersPage() {
                   Menghapus...
                 </>
               ) : (
-                <>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Hapus
-                </>
+                'Hapus'
               )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

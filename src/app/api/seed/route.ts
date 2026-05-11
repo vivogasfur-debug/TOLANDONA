@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { hash } from 'bcryptjs';
 
 export async function GET() {
   try {
@@ -10,10 +11,11 @@ export async function GET() {
       return NextResponse.json({ success: true, message: 'Data already seeded', counts: { guru: existingGuru } });
     }
 
-    // Create admin user
+    // Create admin user with hashed password
     try {
+      const hashedPassword = await hash('admin123', 10);
       await db.user.create({
-        data: { email: 'admin@tolandona.go.id', password: 'admin123', name: 'Administrator', role: 'admin' }
+        data: { email: 'admin@tolandona.go.id', password: hashedPassword, name: 'Administrator', role: 'admin' }
       });
     } catch (e) {}
 
