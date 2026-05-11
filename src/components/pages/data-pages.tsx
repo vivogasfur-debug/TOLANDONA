@@ -72,12 +72,14 @@ export function DataPage({ type }: DataPageProps) {
   // Import/Export states
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [clearingData, setClearingData] = useState(false);
   const [clearExisting, setClearExisting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [exportFileName, setExportFileName] = useState('');
 
   // Add/Edit/Delete states
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -158,20 +160,47 @@ export function DataPage({ type }: DataPageProps) {
     setPagination(prev => ({ ...prev, page: newPage }));
   };
 
+  const openExportDialog = () => {
+    // Set default filename based on type and current date
+    const today = new Date().toISOString().split('T')[0];
+    const searchSuffix = search ? `_cari_${search.replace(/\s+/g, '_')}` : '';
+    setExportFileName(`${type}_data${searchSuffix}_${today}`);
+    setShowExportDialog(true);
+  };
+
   const handleExport = async () => {
+    if (!exportFileName.trim()) {
+      toast.error('Nama file tidak boleh kosong');
+      return;
+    }
+
     setExporting(true);
     try {
-      const response = await fetch(`/api/export?type=${type}&format=csv`);
+      // Build URL with search and filter parameters
+      const params = new URLSearchParams();
+      params.append('type', type);
+      params.append('format', 'csv');
+      if (search) params.append('search', search);
+      
+      // Add filters
+      Object.entries(selectedFilter).forEach(([key, value]) => {
+        if (value && value !== 'all') {
+          params.append(key, value);
+        }
+      });
+
+      const response = await fetch(`/api/export?${params}`);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${type}_data.csv`;
+      a.download = `${exportFileName}.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast.success('Data berhasil diekspor');
+      setShowExportDialog(false);
     } catch (error) {
       console.error('Export error:', error);
       toast.error('Gagal mengekspor data');
@@ -831,7 +860,7 @@ export function DataPage({ type }: DataPageProps) {
             <Upload className="w-4 h-4" />
             Import
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting || pagination.total === 0} className="gap-2">
+          <Button variant="outline" size="sm" onClick={openExportDialog} disabled={exporting || pagination.total === 0} className="gap-2">
             {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             Export CSV
           </Button>
@@ -1075,6 +1104,56 @@ export function DataPage({ type }: DataPageProps) {
             <Button variant="outline" onClick={() => { setShowImportDialog(false); setSelectedFile(null); setClearExisting(false); }}>Batal</Button>
             <Button onClick={handleImport} disabled={!selectedFile || importing} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
               {importing ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Mengimpor...</>) : 'Import'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Dialog */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Download className="w-5 h-5 text-emerald-500" />
+              Export Data {config.title}
+            </DialogTitle>
+            <DialogDescription>
+              {search || Object.values(selectedFilter).some(v => v && v !== 'all') 
+                ? `Akan mengekspor ${pagination.total} data sesuai filter/pencarian.`
+                : `Akan mengekspor semua ${pagination.total} data.`
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium">Nama File</Label>
+              <Input 
+                type="text" 
+                value={exportFileName} 
+                onChange={(e) => setExportFileName(e.target.value)} 
+                className="mt-1" 
+                placeholder="Masukkan nama file"
+              />
+              <p className="text-xs text-slate-500 mt-1">File akan disimpan dengan ekstensi .csv</p>
+            </div>
+            {(search || Object.values(selectedFilter).some(v => v && v !== 'all')) && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <strong>Filter aktif:</strong>
+                </p>
+                {search && <p className="text-xs text-blue-600 dark:text-blue-400">• Pencarian: "{search}"</p>}
+                {Object.entries(selectedFilter).map(([key, value]) => (
+                  value && value !== 'all' && (
+                    <p key={key} className="text-xs text-blue-600 dark:text-blue-400">• {key}: {value}</p>
+                  )
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowExportDialog(false)}>Batal</Button>
+            <Button onClick={handleExport} disabled={exporting || !exportFileName.trim()} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+              {exporting ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Mengekspor...</>) : (<><Download className="w-4 h-4 mr-2" />Export</>)}
             </Button>
           </DialogFooter>
         </DialogContent>

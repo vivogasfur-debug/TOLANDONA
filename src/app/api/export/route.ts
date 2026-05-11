@@ -24,6 +24,15 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'all'; // guru, siswa, posyandu, all
     const format = searchParams.get('format') || 'csv'; // csv or json
+    
+    // Get search and filter parameters
+    const search = searchParams.get('search') || '';
+    const jk = searchParams.get('jk') || '';
+    const sekolah = searchParams.get('sekolah') || '';
+    const jenjang = searchParams.get('jenjang') || '';
+    const namaSekolah = searchParams.get('namaSekolah') || '';
+    const kategori = searchParams.get('kategori') || '';
+    const posyandu = searchParams.get('posyandu') || '';
 
     const result: Record<string, any> = {};
 
@@ -71,8 +80,27 @@ export async function GET(request: NextRequest) {
       ],
     };
 
+    // Build where clause for guru
     if (type === 'all' || type === 'guru') {
-      const guruData = await db.guru.findMany({ orderBy: { createdAt: 'asc' } });
+      const whereGuru: Record<string, unknown> = {};
+      
+      if (search) {
+        whereGuru.OR = [
+          { nama: { contains: search, mode: 'insensitive' } },
+          { nuptk: { contains: search, mode: 'insensitive' } },
+          { nik: { contains: search, mode: 'insensitive' } },
+          { nip: { contains: search, mode: 'insensitive' } },
+          { sekolah: { contains: search, mode: 'insensitive' } },
+          { alamat: { contains: search, mode: 'insensitive' } },
+        ];
+      }
+      if (jk) whereGuru.jk = jk;
+      if (sekolah) whereGuru.sekolah = sekolah;
+      
+      const guruData = await db.guru.findMany({ 
+        where: whereGuru,
+        orderBy: { createdAt: 'asc' } 
+      });
       result.guru = {
         data: guruData,
         csv: format === 'csv' ? toCSV(guruData, columnConfigs.guru) : null,
@@ -80,8 +108,27 @@ export async function GET(request: NextRequest) {
       };
     }
 
+    // Build where clause for siswa
     if (type === 'all' || type === 'siswa') {
-      const siswaData = await db.siswa.findMany({ orderBy: { createdAt: 'asc' } });
+      const whereSiswa: Record<string, unknown> = {};
+      
+      if (search) {
+        whereSiswa.OR = [
+          { nama: { contains: search, mode: 'insensitive' } },
+          { nisn: { contains: search, mode: 'insensitive' } },
+          { nik: { contains: search, mode: 'insensitive' } },
+          { namaSekolah: { contains: search, mode: 'insensitive' } },
+          { alamat: { contains: search, mode: 'insensitive' } },
+        ];
+      }
+      if (jk) whereSiswa.jk = jk;
+      if (jenjang) whereSiswa.jenjang = jenjang;
+      if (namaSekolah) whereSiswa.namaSekolah = namaSekolah;
+      
+      const siswaData = await db.siswa.findMany({ 
+        where: whereSiswa,
+        orderBy: { createdAt: 'asc' } 
+      });
       result.siswa = {
         data: siswaData,
         csv: format === 'csv' ? toCSV(siswaData, columnConfigs.siswa) : null,
@@ -89,8 +136,26 @@ export async function GET(request: NextRequest) {
       };
     }
 
+    // Build where clause for posyandu
     if (type === 'all' || type === 'posyandu') {
-      const posyanduData = await db.posyandu.findMany({ orderBy: { createdAt: 'asc' } });
+      const wherePosyandu: Record<string, unknown> = {};
+      
+      if (search) {
+        wherePosyandu.OR = [
+          { nama: { contains: search, mode: 'insensitive' } },
+          { nik: { contains: search, mode: 'insensitive' } },
+          { posyandu: { contains: search, mode: 'insensitive' } },
+          { alamat: { contains: search, mode: 'insensitive' } },
+        ];
+      }
+      if (jk) wherePosyandu.jk = jk;
+      if (kategori) wherePosyandu.kategori = kategori;
+      if (posyandu) wherePosyandu.posyandu = posyandu;
+      
+      const posyanduData = await db.posyandu.findMany({ 
+        where: wherePosyandu,
+        orderBy: { createdAt: 'asc' } 
+      });
       result.posyandu = {
         data: posyanduData,
         csv: format === 'csv' ? toCSV(posyanduData, columnConfigs.posyandu) : null,
