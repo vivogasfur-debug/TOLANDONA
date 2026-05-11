@@ -133,6 +133,21 @@ async function getHeaders(type: string): Promise<{ key: string; header: string }
       { key: 'tanggalLahir', header: 'Tanggal Lahir' },
       { key: 'umur', header: 'Umur' },
     ],
+    relawan: [
+      { key: 'originalId', header: 'ID' },
+      { key: 'nama', header: 'Nama' },
+      { key: 'jk', header: 'Jenis Kelamin' },
+      { key: 'divisi', header: 'Divisi' },
+      { key: 'jabatan', header: 'Jabatan' },
+      { key: 'nik', header: 'NIK' },
+      { key: 'tempatLahir', header: 'Tempat Lahir' },
+      { key: 'tanggalLahir', header: 'Tanggal Lahir' },
+      { key: 'umur', header: 'Umur' },
+      { key: 'gajiPokok', header: 'Gaji Pokok' },
+      { key: 'hariKerja', header: 'Hari Kerja' },
+      { key: 'bonus', header: 'Bonus' },
+      { key: 'totalGaji', header: 'Total Gaji' },
+    ],
   };
 
   try {
@@ -263,12 +278,39 @@ export async function GET(request: NextRequest) {
       };
     }
 
+    // Build where clause for relawan
+    if (type === 'all' || type === 'relawan') {
+      const whereRelawan: Record<string, unknown> = {};
+      
+      if (search) {
+        whereRelawan.OR = [
+          { nama: { contains: search } },
+          { nik: { contains: search } },
+          { divisi: { contains: search } },
+          { jabatan: { contains: search } },
+        ];
+      }
+      if (jk) whereRelawan.jk = jk;
+      
+      const relawanDataRaw = await db.relawan.findMany({ 
+        where: whereRelawan,
+        orderBy: { createdAt: 'asc' } 
+      });
+      const relawanData = processData(relawanDataRaw);
+      
+      const relawanHeaders = await getHeaders('relawan');
+      result.relawan = {
+        data: relawanData,
+        headers: relawanHeaders,
+      };
+    }
+
     // Return based on format
     if (format === 'xlsx') {
       // Create Excel file with multiple sheets if type is 'all', or single sheet
       const workbook = XLSX.utils.book_new();
       
-      const typesToExport = type === 'all' ? ['guru', 'siswa', 'posyandu'] : [type];
+      const typesToExport = type === 'all' ? ['guru', 'siswa', 'posyandu', 'relawan'] : [type];
       
       for (const t of typesToExport) {
         if (result[t]) {

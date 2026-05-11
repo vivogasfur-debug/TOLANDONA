@@ -135,6 +135,25 @@ function mapToPosyandu(row: Record<string, string>): any {
   };
 }
 
+// Map CSV row to Relawan data
+function mapToRelawan(row: Record<string, string>): any {
+  return {
+    originalId: cleanValue(row['ID'] || row['id'] || ''),
+    nama: cleanValue(row['Nama'] || row['nama'] || '') || '',
+    divisi: cleanValue(row['Divisi'] || row['divisi'] || ''),
+    jabatan: cleanValue(row['Jabatan'] || row['jabatan'] || ''),
+    gajiPokok: cleanValue(row['Gaji Pokok'] || row['gajiPokok'] || ''),
+    jk: cleanValue(row['JK'] || row['jk'] || row['Jenis Kelamin'] || ''),
+    nik: cleanValue(row['NIK'] || row['nik'] || ''),
+    tempatLahir: cleanValue(row['TEMPAT Lahir'] || row['Tempat Lahir'] || row['tempatLahir'] || ''),
+    tanggalLahir: cleanValue(row['Tgl LAHIR'] || row['Tanggal Lahir'] || row['tanggalLahir'] || ''),
+    umur: cleanValue(row['Umur'] || row['umur'] || ''),
+    hariKerja: cleanValue(row['Hari Kerja'] || row['hariKerja'] || ''),
+    bonus: cleanValue(row['Bonus'] || row['bonus'] || ''),
+    totalGaji: cleanValue(row['Total Gaji'] || row['totalGaji'] || ''),
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -149,10 +168,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validTypes = ['guru', 'siswa', 'posyandu'];
+    const validTypes = ['guru', 'siswa', 'posyandu', 'relawan'];
     if (!validTypes.includes(type)) {
       return NextResponse.json(
-        { success: false, error: 'Tipe data tidak valid. Gunakan: guru, siswa, atau posyandu' },
+        { success: false, error: 'Tipe data tidak valid. Gunakan: guru, siswa, posyandu, atau relawan' },
         { status: 400 }
       );
     }
@@ -176,6 +195,8 @@ export async function POST(request: NextRequest) {
         await db.siswa.deleteMany({});
       } else if (type === 'posyandu') {
         await db.posyandu.deleteMany({});
+      } else if (type === 'relawan') {
+        await db.relawan.deleteMany({});
       }
     }
 
@@ -281,6 +302,40 @@ export async function POST(request: NextRequest) {
             for (const item of batch) {
               try {
                 await db.posyandu.create({ data: item });
+                insertedCount++;
+              } catch {
+                // Skip
+              }
+            }
+          }
+        }
+      }
+    } else if (type === 'relawan') {
+      const dataToInsert = rows.map((row, index) => {
+        try {
+          const mapped = mapToRelawan(row);
+          if (!mapped.nama || mapped.nama.trim() === '') {
+            errors.push(`Baris ${index + 2}: Nama kosong, dilewati`);
+            return null;
+          }
+          return mapped;
+        } catch (e) {
+          errors.push(`Baris ${index + 2}: ${e}`);
+          return null;
+        }
+      }).filter(Boolean);
+
+      if (dataToInsert.length > 0) {
+        const batchSize = 100;
+        for (let i = 0; i < dataToInsert.length; i += batchSize) {
+          const batch = dataToInsert.slice(i, i + batchSize);
+          try {
+            await db.relawan.createMany({ data: batch });
+            insertedCount += batch.length;
+          } catch {
+            for (const item of batch) {
+              try {
+                await db.relawan.create({ data: item });
                 insertedCount++;
               } catch {
                 // Skip

@@ -97,8 +97,28 @@ model ActivityLog {
 // Export Settings for customizing export headers
 model ExportSetting {
   id        String   @id @default(cuid())
-  type      String   @unique // guru, siswa, posyandu
+  type      String   @unique // guru, siswa, posyandu, relawan
   headers   String   // JSON string of header configuration
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Relawan (Volunteer) Data
+model Relawan {
+  id          String   @id @default(cuid())
+  originalId  String?  // Original ID from CSV
+  nama        String
+  divisi      String?
+  jabatan     String?
+  gajiPokok   String?
+  jk          String?  // Jenis Kelamin
+  nik         String?
+  tempatLahir String?
+  tanggalLahir String?
+  umur        String?
+  hariKerja   String?
+  bonus       String?
+  totalGaji   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

@@ -4,10 +4,11 @@ import { db } from '@/lib/db';
 export async function GET() {
   try {
     // Get counts
-    const [totalGuru, totalSiswa, totalPosyandu] = await Promise.all([
+    const [totalGuru, totalSiswa, totalPosyandu, totalRelawan] = await Promise.all([
       db.guru.count(),
       db.siswa.count(),
       db.posyandu.count(),
+      db.relawan.count(),
     ]);
 
     // Gender distribution for Guru
@@ -24,6 +25,12 @@ export async function GET() {
 
     // Gender distribution for Posyandu
     const posyanduGender = await db.posyandu.groupBy({
+      by: ['jk'],
+      _count: true,
+    });
+
+    // Gender distribution for Relawan
+    const relawanGender = await db.relawan.groupBy({
       by: ['jk'],
       _count: true,
     });
@@ -85,9 +92,11 @@ export async function GET() {
         totalGuru,
         totalSiswa,
         totalPosyandu,
+        totalRelawan,
         guruGender: guruGender.map(g => ({ name: g.jk || 'Tidak Diketahui', value: g._count })),
         siswaGender: siswaGender.map(g => ({ name: g.jk || 'Tidak Diketahui', value: g._count })),
         posyanduGender: posyanduGender.map(g => ({ name: g.jk || 'Tidak Diketahui', value: g._count })),
+        relawanGender: relawanGender.map(g => ({ name: g.jk || 'Tidak Diketahui', value: g._count })),
         guruSekolah: guruSekolah.map(g => ({ name: g.sekolah || 'Tidak Diketahui', value: g._count })),
         siswaSekolah: siswaSekolah.map(g => ({ name: g.namaSekolah || 'Tidak Diketahui', value: g._count })),
         siswaJenjang: siswaJenjang.map(g => ({ name: g.jenjang || 'Tidak Diketahui', value: g._count })),

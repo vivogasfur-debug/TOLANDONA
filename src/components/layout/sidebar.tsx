@@ -14,6 +14,7 @@ import {
   Baby,
   UserCog,
   X,
+  HeartHandshake,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -36,11 +37,12 @@ const dataSubmenu = [
   { id: 'guru', label: 'Data Guru', icon: GraduationCap, color: 'text-emerald-500' },
   { id: 'siswa', label: 'Data Siswa', icon: Users, color: 'text-cyan-500' },
   { id: 'posyandu', label: 'Data Posyandu', icon: Baby, color: 'text-pink-500' },
+  { id: 'relawan', label: 'Data Relawan', icon: HeartHandshake, color: 'text-amber-500' },
 ];
 
 export function Sidebar({ currentPage, onNavigate, isOpen, onClose }: SidebarProps) {
   const [isMobile, setIsMobile] = useState(false);
-  const isDataSubmenu = ['guru', 'siswa', 'posyandu'].includes(currentPage);
+  const isDataSubmenu = ['guru', 'siswa', 'posyandu', 'relawan'].includes(currentPage);
 
   // Detect mobile screen
   useEffect(() => {

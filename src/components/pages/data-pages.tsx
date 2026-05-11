@@ -33,12 +33,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Search, Download, Upload, ChevronLeft, ChevronRight, GraduationCap, Users, Baby, FileSpreadsheet, Loader2, Check, Trash2, AlertTriangle, Edit, Plus
+  Search, Download, Upload, ChevronLeft, ChevronRight, GraduationCap, Users, Baby, FileSpreadsheet, Loader2, Check, Trash2, AlertTriangle, Edit, Plus, HeartHandshake
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface DataPageProps {
-  type: 'guru' | 'siswa' | 'posyandu';
+  type: 'guru' | 'siswa' | 'posyandu' | 'relawan';
 }
 
 interface PaginationInfo {
@@ -54,6 +54,8 @@ interface Filters {
   sekolah?: string[];
   kategori?: string[];
   posyandu?: string[];
+  divisi?: string[];
+  jabatan?: string[];
 }
 
 export function DataPage({ type }: DataPageProps) {
@@ -109,6 +111,13 @@ export function DataPage({ type }: DataPageProps) {
   const [formKelas, setFormKelas] = useState('');
   const [formPosyandu, setFormPosyandu] = useState('');
   const [formKategori, setFormKategori] = useState('');
+  // Relawan form state
+  const [formDivisi, setFormDivisi] = useState('');
+  const [formJabatan, setFormJabatan] = useState('');
+  const [formGajiPokok, setFormGajiPokok] = useState('');
+  const [formHariKerja, setFormHariKerja] = useState('');
+  const [formBonus, setFormBonus] = useState('');
+  const [formTotalGaji, setFormTotalGaji] = useState('');
 
   // Function to fetch data - accepts all parameters to avoid stale closure
   const fetchData = async (
@@ -310,6 +319,13 @@ export function DataPage({ type }: DataPageProps) {
     setFormKelas('');
     setFormPosyandu('');
     setFormKategori('');
+    // Relawan
+    setFormDivisi('');
+    setFormJabatan('');
+    setFormGajiPokok('');
+    setFormHariKerja('');
+    setFormBonus('');
+    setFormTotalGaji('');
   };
 
   const getFormData = () => {
@@ -339,11 +355,22 @@ export function DataPage({ type }: DataPageProps) {
         nisn: formNisn.trim() || null,
         kelas: formKelas.trim() || null,
       };
-    } else {
+    } else if (type === 'posyandu') {
       return {
         ...baseData,
         posyandu: formPosyandu.trim() || null,
         kategori: formKategori.trim() || null,
+      };
+    } else {
+      // relawan
+      return {
+        ...baseData,
+        divisi: formDivisi.trim() || null,
+        jabatan: formJabatan.trim() || null,
+        gajiPokok: formGajiPokok.trim() || null,
+        hariKerja: formHariKerja.trim() || null,
+        bonus: formBonus.trim() || null,
+        totalGaji: formTotalGaji.trim() || null,
       };
     }
   };
@@ -451,9 +478,17 @@ export function DataPage({ type }: DataPageProps) {
       setFormNamaSekolah(item.namaSekolah || '');
       setFormNisn(item.nisn || '');
       setFormKelas(item.kelas || '');
-    } else {
+    } else if (type === 'posyandu') {
       setFormPosyandu(item.posyandu || '');
       setFormKategori(item.kategori || '');
+    } else {
+      // relawan
+      setFormDivisi(item.divisi || '');
+      setFormJabatan(item.jabatan || '');
+      setFormGajiPokok(item.gajiPokok || '');
+      setFormHariKerja(item.hariKerja || '');
+      setFormBonus(item.bonus || '');
+      setFormTotalGaji(item.totalGaji || '');
     }
   };
 
@@ -629,6 +664,26 @@ export function DataPage({ type }: DataPageProps) {
             { key: 'alamat', label: 'Alamat' },
           ],
         };
+      case 'relawan':
+        return {
+          title: 'Data Relawan',
+          icon: HeartHandshake,
+          gradient: 'from-amber-500 to-orange-600',
+          columns: [
+            { key: 'nama', label: 'Nama' },
+            { key: 'jk', label: 'JK' },
+            { key: 'divisi', label: 'Divisi' },
+            { key: 'jabatan', label: 'Jabatan' },
+            { key: 'nik', label: 'NIK' },
+            { key: 'tempatLahir', label: 'Tempat Lahir' },
+            { key: 'tanggalLahir', label: 'Tgl Lahir' },
+            { key: 'umur', label: 'Umur' },
+            { key: 'gajiPokok', label: 'Gaji Pokok' },
+            { key: 'hariKerja', label: 'Hari Kerja' },
+            { key: 'bonus', label: 'Bonus' },
+            { key: 'totalGaji', label: 'Total Gaji' },
+          ],
+        };
     }
   };
 
@@ -741,6 +796,43 @@ export function DataPage({ type }: DataPageProps) {
             </Select>
           </>
         );
+      case 'relawan':
+        return (
+          <>
+            <Select value={selectedFilter.jk || 'all'} onValueChange={(v) => handleFilterChange('jk', v)}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Jenis Kelamin" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua JK</SelectItem>
+                <SelectItem value="L">Laki-laki</SelectItem>
+                <SelectItem value="P">Perempuan</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={selectedFilter.divisi || 'all'} onValueChange={(v) => handleFilterChange('divisi', v)}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Divisi" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Divisi</SelectItem>
+                {filters.divisi?.map((d) => (
+                  <SelectItem key={d} value={d}>{d}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedFilter.jabatan || 'all'} onValueChange={(v) => handleFilterChange('jabatan', v)}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Jabatan" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Jabatan</SelectItem>
+                {filters.jabatan?.map((j) => (
+                  <SelectItem key={j} value={j}>{j}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </>
+        );
     }
   };
 
@@ -817,6 +909,35 @@ export function DataPage({ type }: DataPageProps) {
           <div>
             <Label className="text-sm font-medium">Kategori</Label>
             <Input type="text" value={formKategori} onChange={(e) => setFormKategori(e.target.value)} className="mt-1" placeholder="Masukkan kategori" />
+          </div>
+        </>
+      )}
+
+      {type === 'relawan' && (
+        <>
+          <div>
+            <Label className="text-sm font-medium">Divisi</Label>
+            <Input type="text" value={formDivisi} onChange={(e) => setFormDivisi(e.target.value)} className="mt-1" placeholder="Masukkan divisi" />
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Jabatan</Label>
+            <Input type="text" value={formJabatan} onChange={(e) => setFormJabatan(e.target.value)} className="mt-1" placeholder="Masukkan jabatan" />
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Gaji Pokok</Label>
+            <Input type="text" value={formGajiPokok} onChange={(e) => setFormGajiPokok(e.target.value)} className="mt-1" placeholder="Masukkan gaji pokok" />
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Hari Kerja</Label>
+            <Input type="text" value={formHariKerja} onChange={(e) => setFormHariKerja(e.target.value)} className="mt-1" placeholder="Masukkan hari kerja" />
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Bonus</Label>
+            <Input type="text" value={formBonus} onChange={(e) => setFormBonus(e.target.value)} className="mt-1" placeholder="Masukkan bonus" />
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Total Gaji</Label>
+            <Input type="text" value={formTotalGaji} onChange={(e) => setFormTotalGaji(e.target.value)} className="mt-1" placeholder="Masukkan total gaji" />
           </div>
         </>
       )}
