@@ -45,10 +45,11 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Group by school
+    // Group by school and category
     const schoolMap = new Map<string, {
       namaSekolah: string;
       distribusi: Array<{
+        kategori: string;
         kelas: string;
         jumlah: number;
         total: number;
@@ -56,6 +57,7 @@ export async function GET(request: NextRequest) {
       }>;
       totalJumlah: number;
       totalAll: number;
+      byKategori: Record<string, { jumlah: number; total: number }>;
     }>();
 
     filteredData.forEach(d => {
@@ -66,11 +68,13 @@ export async function GET(request: NextRequest) {
           distribusi: [],
           totalJumlah: 0,
           totalAll: 0,
+          byKategori: {},
         });
       }
       
       const schoolData = schoolMap.get(key)!;
       schoolData.distribusi.push({
+        kategori: d.kategori,
         kelas: d.kelas,
         jumlah: d.jumlah,
         total: d.total,
@@ -78,6 +82,13 @@ export async function GET(request: NextRequest) {
       });
       schoolData.totalJumlah += d.jumlah;
       schoolData.totalAll += d.total;
+      
+      // Track by category
+      if (!schoolData.byKategori[d.kategori]) {
+        schoolData.byKategori[d.kategori] = { jumlah: 0, total: 0 };
+      }
+      schoolData.byKategori[d.kategori].jumlah += d.jumlah;
+      schoolData.byKategori[d.kategori].total += d.total;
     });
 
     const rekapData = Array.from(schoolMap.values());
@@ -87,6 +98,16 @@ export async function GET(request: NextRequest) {
       jumlah: filteredData.reduce((sum, d) => sum + d.jumlah, 0),
       total: filteredData.reduce((sum, d) => sum + d.total, 0),
     };
+
+    // Calculate totals by category
+    const byKategori: Record<string, { jumlah: number; total: number }> = {};
+    filteredData.forEach(d => {
+      if (!byKategori[d.kategori]) {
+        byKategori[d.kategori] = { jumlah: 0, total: 0 };
+      }
+      byKategori[d.kategori].jumlah += d.jumlah;
+      byKategori[d.kategori].total += d.total;
+    });
 
     // Get unique years for filter dropdown
     const years = [...new Set(allData.map(d => new Date(d.tanggal).getFullYear()))].sort((a, b) => b - a);
@@ -144,6 +165,7 @@ export async function GET(request: NextRequest) {
         rekap: rekapData,
         filteredData,
         grandTotal,
+        byKategori,
         years,
         weeklySummary,
         monthlySummary,

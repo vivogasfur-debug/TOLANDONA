@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
           OR: [
             { namaSekolah: { contains: search } },
             { kelas: { contains: search } },
+            { kategori: { contains: search } },
           ],
         }
       : {};
@@ -51,9 +52,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { namaSekolah, kelas, jumlah, total, tanggal } = body;
+    const { namaSekolah, kategori, kelas, jumlah, total, tanggal } = body;
 
-    if (!namaSekolah || !kelas || jumlah === undefined || total === undefined) {
+    if (!namaSekolah || !kategori || !kelas || jumlah === undefined || total === undefined) {
       return NextResponse.json(
         { success: false, error: 'Semua field harus diisi' },
         { status: 400 }
@@ -63,6 +64,7 @@ export async function POST(request: NextRequest) {
     const distribusi = await db.distribusi.create({
       data: {
         namaSekolah,
+        kategori,
         kelas,
         jumlah: parseInt(jumlah),
         total: parseInt(total),

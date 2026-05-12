@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -52,6 +52,7 @@ import { toast } from 'sonner';
 interface Distribusi {
   id: string;
   namaSekolah: string;
+  kategori: string;
   kelas: string;
   jumlah: number;
   total: number;
@@ -62,6 +63,7 @@ interface Distribusi {
 interface RekapData {
   namaSekolah: string;
   distribusi: Array<{
+    kategori: string;
     kelas: string;
     jumlah: number;
     total: number;
@@ -69,22 +71,19 @@ interface RekapData {
   }>;
   totalJumlah: number;
   totalAll: number;
+  byKategori: Record<string, { jumlah: number; total: number }>;
 }
 
 interface RekapResponse {
   rekap: RekapData[];
   filteredData: Distribusi[];
   grandTotal: { jumlah: number; total: number };
+  byKategori: Record<string, { jumlah: number; total: number }>;
   years: number[];
   weeklySummary: Array<{ month: number; monthName: string; totalJumlah: number; totalAll: number; count: number }>;
   monthlySummary: Array<{ month: number; monthName: string; totalJumlah: number; totalAll: number; count: number }>;
   yearlySummary: Array<{ year: number; totalJumlah: number; totalAll: number; count: number }>;
 }
-
-const KELAS_OPTIONS = [
-  'TK A', 'TK B', 'Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Kelas 5', 'Kelas 6',
-  'Kelas 7', 'Kelas 8', 'Kelas 9', 'Kelas 10', 'Kelas 11', 'Kelas 12'
-];
 
 const MONTHS = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -92,6 +91,109 @@ const MONTHS = [
 ];
 
 const COLORS = ['#10b981', '#06b6d4', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'];
+
+// Kategori options
+const KATEGORI_OPTIONS = [
+  { value: 'Siswa', label: 'Siswa' },
+  { value: 'Guru', label: 'Guru' },
+  { value: 'Uji Organoleptik', label: 'Uji Organoleptik' },
+];
+
+// Detect school level from name
+function detectSchoolLevel(schoolName: string): string {
+  const name = schoolName.toLowerCase();
+  
+  if (name.includes('tk') || name.includes('taman kanak-kanak') || name.includes('raudhatul athfal') || name.includes('ra ')) {
+    return 'TK';
+  }
+  if (name.includes('paud') || name.includes('pendidikan anak usia dini')) {
+    return 'PAUD';
+  }
+  if (name.includes('mi ') || name.includes('madrasah ibtidaiyah')) {
+    return 'MI';
+  }
+  if (name.includes('sd ') || name.includes('sekolah dasar')) {
+    return 'SD';
+  }
+  if (name.includes('mts ') || name.includes('madrasah tsanawiyah')) {
+    return 'MTs';
+  }
+  if (name.includes('smp ') || name.includes('sekolah menengah pertama')) {
+    return 'SMP';
+  }
+  if (name.includes('ma ') || name.includes('madrasah aliyah')) {
+    return 'MA';
+  }
+  if (name.includes('smk ') || name.includes('sekolah menengah kejuruan')) {
+    return 'SMK';
+  }
+  if (name.includes('sma ') || name.includes('sekolah menengah atas')) {
+    return 'SMA';
+  }
+  
+  return 'UNKNOWN';
+}
+
+// Get class options based on school level and category
+function getKelasOptions(schoolLevel: string, kategori: string): string[] {
+  // For Guru and Uji Organoleptik, show type options
+  if (kategori === 'Guru') {
+    return [
+      'Kepala Sekolah',
+      'Guru',
+      'Tendik',
+      'Non Tendik',
+    ];
+  }
+  
+  if (kategori === 'Uji Organoleptik') {
+    return [
+      'Uji Organoleptik',
+    ];
+  }
+  
+  // For Siswa, show class options based on school level
+  switch (schoolLevel) {
+    case 'TK':
+    case 'PAUD':
+      return ['Kelompok Bermain', 'TK A', 'TK B'];
+    case 'SD':
+    case 'MI':
+      return ['Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Kelas 5', 'Kelas 6'];
+    case 'SMP':
+    case 'MTs':
+      return ['Kelas 7', 'Kelas 8', 'Kelas 9'];
+    case 'SMA':
+    case 'SMK':
+    case 'MA':
+      return ['Kelas 10', 'Kelas 11', 'Kelas 12'];
+    default:
+      // Return all options for unknown school type
+      return [
+        'Kelompok Bermain', 'TK A', 'TK B',
+        'Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Kelas 5', 'Kelas 6',
+        'Kelas 7', 'Kelas 8', 'Kelas 9',
+        'Kelas 10', 'Kelas 11', 'Kelas 12',
+      ];
+  }
+}
+
+// Get school level display name
+function getSchoolLevelName(level: string): string {
+  const names: Record<string, string> = {
+    'TK': 'Taman Kanak-kanak',
+    'PAUD': 'PAUD',
+    'SD': 'Sekolah Dasar',
+    'MI': 'Madrasah Ibtidaiyah',
+    'SMP': 'Sekolah Menengah Pertama',
+    'MTs': 'Madrasah Tsanawiyah',
+    'SMA': 'Sekolah Menengah Atas',
+    'SMK': 'Sekolah Menengah Kejuruan',
+    'MA': 'Madrasah Aliyah',
+    'UNKNOWN': 'Tidak Diketahui',
+  };
+  return names[level] || level;
+}
 
 export function DistribusiPage() {
   const [activeTab, setActiveTab] = useState('data');
@@ -106,6 +208,7 @@ export function DistribusiPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     namaSekolah: '',
+    kategori: 'Siswa',
     kelas: '',
     jumlah: '',
     total: '',
@@ -121,6 +224,10 @@ export function DistribusiPage() {
   // Schools list from database
   const [schools, setSchools] = useState<string[]>([]);
 
+  // Calculate school level and class options
+  const schoolLevel = useMemo(() => detectSchoolLevel(formData.namaSekolah), [formData.namaSekolah]);
+  const kelasOptions = useMemo(() => getKelasOptions(schoolLevel, formData.kategori), [schoolLevel, formData.kategori]);
+
   useEffect(() => {
     fetchDistribusi();
     fetchRekap();
@@ -130,6 +237,13 @@ export function DistribusiPage() {
   useEffect(() => {
     fetchRekap();
   }, [filterPeriod, filterYear, filterMonth, filterWeek]);
+
+  // Reset kelas when kategori or school changes
+  useEffect(() => {
+    if (kelasOptions.length > 0 && !kelasOptions.includes(formData.kelas)) {
+      setFormData(prev => ({ ...prev, kelas: '' }));
+    }
+  }, [kelasOptions, formData.kelas]);
 
   const fetchDistribusi = async (page = 1) => {
     try {
@@ -181,7 +295,7 @@ export function DistribusiPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.namaSekolah || !formData.kelas || !formData.jumlah || !formData.total) {
+    if (!formData.namaSekolah || !formData.kategori || !formData.kelas || !formData.jumlah || !formData.total) {
       toast.error('Semua field harus diisi');
       return;
     }
@@ -217,6 +331,7 @@ export function DistribusiPage() {
     setEditingId(item.id);
     setFormData({
       namaSekolah: item.namaSekolah,
+      kategori: item.kategori,
       kelas: item.kelas,
       jumlah: item.jumlah.toString(),
       total: item.total.toString(),
@@ -247,6 +362,7 @@ export function DistribusiPage() {
     setEditingId(null);
     setFormData({
       namaSekolah: '',
+      kategori: 'Siswa',
       kelas: '',
       jumlah: '',
       total: '',
@@ -255,21 +371,11 @@ export function DistribusiPage() {
   };
 
   const exportToCSV = () => {
-    const headers = 'No,Sekolah,Kelas,Jumlah,Total,Tanggal\n';
+    const headers = 'No,Sekolah,Kategori,Kelas,Jumlah,Total,Tanggal\n';
     const rows = distribusiData.map((d, i) => 
-      `${i + 1},"${d.namaSekolah}","${d.kelas}",${d.jumlah},${d.total},"${new Date(d.tanggal).toLocaleDateString('id-ID')}"`
+      `${i + 1},"${d.namaSekolah}","${d.kategori}","${d.kelas}",${d.jumlah},${d.total},"${new Date(d.tanggal).toLocaleDateString('id-ID')}"`
     ).join('\n');
     downloadFile(headers + rows, 'distribusi.csv', 'text/csv');
-  };
-
-  const exportToExcel = async () => {
-    toast.info('Export Excel sedang diproses...');
-    // Would need to implement Excel export API
-  };
-
-  const exportToPDF = async () => {
-    toast.info('Export PDF sedang diproses...');
-    // Would need to implement PDF export API
   };
 
   const downloadFile = (content: string, filename: string, type: string) => {
@@ -314,12 +420,6 @@ export function DistribusiPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={exportToCSV}>
                 <FileText className="w-4 h-4 mr-2" />Export CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={exportToExcel}>
-                <FileSpreadsheet className="w-4 h-4 mr-2" />Export Excel
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={exportToPDF}>
-                <FileType className="w-4 h-4 mr-2" />Export PDF
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -368,6 +468,7 @@ export function DistribusiPage() {
                     <TableRow className="bg-slate-50 dark:bg-slate-800/50">
                       <TableHead>No</TableHead>
                       <TableHead>Nama Sekolah</TableHead>
+                      <TableHead>Kategori</TableHead>
                       <TableHead>Kelas</TableHead>
                       <TableHead className="text-center">Jumlah</TableHead>
                       <TableHead className="text-center">Total</TableHead>
@@ -378,7 +479,7 @@ export function DistribusiPage() {
                   <TableBody>
                     {distribusiData.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                        <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                           Belum ada data distribusi
                         </TableCell>
                       </TableRow>
@@ -387,6 +488,11 @@ export function DistribusiPage() {
                         <TableRow key={item.id}>
                           <TableCell>{(pagination.page - 1) * pagination.limit + index + 1}</TableCell>
                           <TableCell className="font-medium">{item.namaSekolah}</TableCell>
+                          <TableCell>
+                            <Badge variant={item.kategori === 'Guru' ? 'default' : item.kategori === 'Uji Organoleptik' ? 'secondary' : 'outline'}>
+                              {item.kategori}
+                            </Badge>
+                          </TableCell>
                           <TableCell>{item.kelas}</TableCell>
                           <TableCell className="text-center">{item.jumlah}</TableCell>
                           <TableCell className="text-center font-bold">{item.total}</TableCell>
@@ -438,6 +544,26 @@ export function DistribusiPage() {
 
         {/* Hasil Tab (All Results) */}
         <TabsContent value="hasil" className="space-y-6 mt-6">
+          {/* Summary by Category */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {Object.entries(rekapData?.byKategori || {}).map(([kategori, data]) => (
+              <Card key={kategori} className="border-0 shadow-lg">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-slate-500">{kategori}</p>
+                      <p className="text-2xl font-bold">{data.total}</p>
+                      <p className="text-xs text-slate-400">Jumlah: {data.jumlah}</p>
+                    </div>
+                    <Badge variant={kategori === 'Guru' ? 'default' : kategori === 'Uji Organoleptik' ? 'secondary' : 'outline'}>
+                      {kategori}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
           <Card className="border-0 shadow-lg">
             <CardHeader>
               <CardTitle>Rekapitulasi Hasil Distribusi</CardTitle>
@@ -450,15 +576,16 @@ export function DistribusiPage() {
                     <TableRow className="bg-slate-50 dark:bg-slate-800/50">
                       <TableHead>No</TableHead>
                       <TableHead>Nama Sekolah</TableHead>
-                      <TableHead className="text-center">Total Jumlah</TableHead>
+                      <TableHead className="text-center">Siswa</TableHead>
+                      <TableHead className="text-center">Guru</TableHead>
+                      <TableHead className="text-center">Uji Org.</TableHead>
                       <TableHead className="text-center">Grand Total</TableHead>
-                      <TableHead className="text-center">Jumlah Transaksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {rekapData?.rekap.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                        <TableCell colSpan={6} className="text-center py-8 text-slate-500">
                           Tidak ada data
                         </TableCell>
                       </TableRow>
@@ -467,18 +594,20 @@ export function DistribusiPage() {
                         <TableRow key={index}>
                           <TableCell>{index + 1}</TableCell>
                           <TableCell className="font-medium">{item.namaSekolah}</TableCell>
-                          <TableCell className="text-center">{item.totalJumlah}</TableCell>
+                          <TableCell className="text-center">{item.byKategori['Siswa']?.total || 0}</TableCell>
+                          <TableCell className="text-center">{item.byKategori['Guru']?.total || 0}</TableCell>
+                          <TableCell className="text-center">{item.byKategori['Uji Organoleptik']?.total || 0}</TableCell>
                           <TableCell className="text-center font-bold text-emerald-600">{item.totalAll}</TableCell>
-                          <TableCell className="text-center">{item.distribusi.length}</TableCell>
                         </TableRow>
                       ))
                     )}
                     {rekapData && rekapData.rekap.length > 0 && (
                       <TableRow className="bg-emerald-50 dark:bg-emerald-900/20 font-bold">
                         <TableCell colSpan={2}>TOTAL</TableCell>
-                        <TableCell className="text-center">{rekapData.grandTotal.jumlah}</TableCell>
+                        <TableCell className="text-center">{rekapData.byKategori['Siswa']?.total || 0}</TableCell>
+                        <TableCell className="text-center">{rekapData.byKategori['Guru']?.total || 0}</TableCell>
+                        <TableCell className="text-center">{rekapData.byKategori['Uji Organoleptik']?.total || 0}</TableCell>
                         <TableCell className="text-center text-emerald-600">{rekapData.grandTotal.total}</TableCell>
-                        <TableCell className="text-center">{rekapData.filteredData.length}</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -546,14 +675,16 @@ export function DistribusiPage() {
                     <TableRow className="bg-slate-50 dark:bg-slate-800/50">
                       <TableHead>No</TableHead>
                       <TableHead>Nama Sekolah</TableHead>
-                      <TableHead className="text-center">Total Jumlah</TableHead>
-                      <TableHead className="text-center">Grand Total</TableHead>
+                      <TableHead className="text-center">Siswa</TableHead>
+                      <TableHead className="text-center">Guru</TableHead>
+                      <TableHead className="text-center">Uji Org.</TableHead>
+                      <TableHead className="text-center">Total</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {rekapData?.rekap.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                        <TableCell colSpan={6} className="text-center py-8 text-slate-500">
                           Tidak ada data untuk periode ini
                         </TableCell>
                       </TableRow>
@@ -562,7 +693,9 @@ export function DistribusiPage() {
                         <TableRow key={index}>
                           <TableCell>{index + 1}</TableCell>
                           <TableCell className="font-medium">{item.namaSekolah}</TableCell>
-                          <TableCell className="text-center">{item.totalJumlah}</TableCell>
+                          <TableCell className="text-center">{item.byKategori['Siswa']?.total || 0}</TableCell>
+                          <TableCell className="text-center">{item.byKategori['Guru']?.total || 0}</TableCell>
+                          <TableCell className="text-center">{item.byKategori['Uji Organoleptik']?.total || 0}</TableCell>
                           <TableCell className="text-center font-bold text-emerald-600">{item.totalAll}</TableCell>
                         </TableRow>
                       ))
@@ -570,7 +703,9 @@ export function DistribusiPage() {
                     {rekapData && rekapData.rekap.length > 0 && (
                       <TableRow className="bg-emerald-50 dark:bg-emerald-900/20 font-bold">
                         <TableCell colSpan={2}>TOTAL</TableCell>
-                        <TableCell className="text-center">{rekapData.grandTotal.jumlah}</TableCell>
+                        <TableCell className="text-center">{rekapData.byKategori['Siswa']?.total || 0}</TableCell>
+                        <TableCell className="text-center">{rekapData.byKategori['Guru']?.total || 0}</TableCell>
+                        <TableCell className="text-center">{rekapData.byKategori['Uji Organoleptik']?.total || 0}</TableCell>
                         <TableCell className="text-center text-emerald-600">{rekapData.grandTotal.total}</TableCell>
                       </TableRow>
                     )}
@@ -716,7 +851,7 @@ export function DistribusiPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="namaSekolah">Nama Sekolah</Label>
-              <Select value={formData.namaSekolah} onValueChange={(v) => setFormData({ ...formData, namaSekolah: v })}>
+              <Select value={formData.namaSekolah} onValueChange={(v) => setFormData({ ...formData, namaSekolah: v, kelas: '' })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih sekolah" />
                 </SelectTrigger>
@@ -726,30 +861,58 @@ export function DistribusiPage() {
                   ))}
                 </SelectContent>
               </Select>
-              {schools.length === 0 && (
-                <p className="text-xs text-slate-500">Ketik nama sekolah manual</p>
-              )}
-              {!schools.includes(formData.namaSekolah) && formData.namaSekolah && (
-                <Input
-                  value={formData.namaSekolah}
-                  onChange={(e) => setFormData({ ...formData, namaSekolah: e.target.value })}
-                  placeholder="Nama sekolah"
-                />
+              {/* Allow custom school input */}
+              <Input
+                value={!schools.includes(formData.namaSekolah) ? formData.namaSekolah : ''}
+                onChange={(e) => setFormData({ ...formData, namaSekolah: e.target.value, kelas: '' })}
+                placeholder="Atau ketik nama sekolah lain"
+                className="mt-1"
+              />
+              {formData.namaSekolah && (
+                <p className="text-xs text-slate-500">
+                  Jenjang: {getSchoolLevelName(schoolLevel)}
+                </p>
               )}
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="kelas">Kelas</Label>
-              <Select value={formData.kelas} onValueChange={(v) => setFormData({ ...formData, kelas: v })}>
+              <Label htmlFor="kategori">Kategori</Label>
+              <Select value={formData.kategori} onValueChange={(v) => setFormData({ ...formData, kategori: v, kelas: '' })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih kelas" />
+                  <SelectValue placeholder="Pilih kategori" />
                 </SelectTrigger>
                 <SelectContent>
-                  {KELAS_OPTIONS.map(k => (
+                  {KATEGORI_OPTIONS.map(k => (
+                    <SelectItem key={k.value} value={k.value}>{k.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="kelas">
+                {formData.kategori === 'Guru' ? 'Jenis Tenaga' : 
+                 formData.kategori === 'Uji Organoleptik' ? 'Kategori' : 'Kelas'}
+              </Label>
+              <Select value={formData.kelas} onValueChange={(v) => setFormData({ ...formData, kelas: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder={
+                    formData.kategori === 'Guru' ? 'Pilih jenis tenaga' :
+                    formData.kategori === 'Uji Organoleptik' ? 'Pilih kategori' :
+                    'Pilih kelas'
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {kelasOptions.map(k => (
                     <SelectItem key={k} value={k}>{k}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {formData.kategori === 'Siswa' && schoolLevel === 'UNKNOWN' && (
+                <p className="text-xs text-amber-500">
+                  Pilih nama sekolah terlebih dahulu untuk melihat pilihan kelas yang sesuai
+                </p>
+              )}
             </div>
             
             <div className="grid grid-cols-2 gap-4">

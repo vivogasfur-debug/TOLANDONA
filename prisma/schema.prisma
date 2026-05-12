@@ -128,6 +128,7 @@ model Relawan {
 model Distribusi {
   id          String   @id @default(cuid())
   namaSekolah String
+  kategori    String   // Siswa, Guru, Uji Organoleptik
   kelas       String
   jumlah      Int
   total       Int

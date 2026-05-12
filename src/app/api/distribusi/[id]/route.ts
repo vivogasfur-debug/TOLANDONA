@@ -38,12 +38,13 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { namaSekolah, kelas, jumlah, total, tanggal } = body;
+    const { namaSekolah, kategori, kelas, jumlah, total, tanggal } = body;
 
     const distribusi = await db.distribusi.update({
       where: { id },
       data: {
         namaSekolah,
+        kategori,
         kelas,
         jumlah: parseInt(jumlah),
         total: parseInt(total),
