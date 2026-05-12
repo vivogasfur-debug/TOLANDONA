@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useLayoutEffect, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useCallback, useMemo } from 'react';
 
 interface ThemeContextType {
   theme: 'light' | 'dark';
@@ -22,8 +22,8 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  // Initialize theme from localStorage or system preference
-  const getTheme = (): 'light' | 'dark' => {
+  // Initialize from localStorage on client side
+  const getInitialTheme = (): 'light' | 'dark' => {
     if (typeof window === 'undefined') return 'light';
     const saved = localStorage.getItem('theme');
     if (saved === 'dark' || saved === 'light') return saved;
@@ -36,20 +36,26 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     localStorage.setItem('theme', newTheme);
   }, []);
 
-  // Get initial theme and apply it
-  const theme = getTheme();
-
   // Sync theme on mount
-  useLayoutEffect(() => {
+  useEffect(() => {
+    const theme = getInitialTheme();
     applyTheme(theme);
-  }, [theme, applyTheme]);
+  }, [applyTheme]);
 
   const toggleTheme = useCallback(() => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
+    const saved = localStorage.getItem('theme');
+    const currentTheme = (saved === 'dark' || saved === 'light') ? saved : 'light';
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
     applyTheme(newTheme);
-    // Force re-render to update theme value
-    window.location.reload();
-  }, [theme, applyTheme]);
+  }, [applyTheme]);
+
+  // Get current theme for context (from localStorage)
+  const theme = useMemo(() => {
+    if (typeof window === 'undefined') return 'light';
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark' || saved === 'light') return saved;
+    return 'light';
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
