@@ -23,7 +23,8 @@ export async function POST(request: NextRequest) {
       const guruTendik = s.tendikBreakdown['Guru Tendik'] || { L: 0, P: 0, Total: 0 };
       const tenagaKependidikan = s.tendikBreakdown['Tenaga Kependidikan'] || { L: 0, P: 0, Total: 0 };
       const nonTendik = s.tendikBreakdown['Non Tendik'] || { L: 0, P: 0, Total: 0 };
-      const ujiOrganoleptik = kepsek.Total + guru.Total;
+      // Uji Organoleptik = dari jenisTendik "UJI ORGANOLEPTIK" di database
+      const ujiOrganoleptik = s.tendikBreakdown['UJI ORGANOLEPTIK']?.Total || 0;
 
       return {
         'No': i + 1,
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
       'Tendik P': data.reduce((sum, s) => sum + ((s.tendikBreakdown['Guru Tendik']?.P || 0) + (s.tendikBreakdown['Tenaga Kependidikan']?.P || 0)), 0),
       'Non Tendik L': data.reduce((sum, s) => sum + (s.tendikBreakdown['Non Tendik']?.L || 0), 0),
       'Non Tendik P': data.reduce((sum, s) => sum + (s.tendikBreakdown['Non Tendik']?.P || 0), 0),
-      'Uji Organoleptik': data.reduce((sum, s) => sum + ((s.tendikBreakdown['Kepala Sekolah']?.Total || 0) + (s.tendikBreakdown['Guru']?.Total || 0)), 0),
+      'Uji Organoleptik': data.reduce((sum, s) => sum + (s.tendikBreakdown['UJI ORGANOLEPTIK']?.Total || 0), 0),
       'Jumlah L': data.reduce((sum, s) => sum + s.guruL, 0),
       'Jumlah P': data.reduce((sum, s) => sum + s.guruP, 0),
       'Total': data.reduce((sum, s) => sum + s.guruTotal, 0),

@@ -523,10 +523,8 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
         const tendik = s.tendikBreakdown[t] || { L: 0, P: 0, Total: 0 };
         return `${tendik.L},${tendik.P},${tendik.Total}`;
       }).join(',');
-      // Uji Organoleptik = Kepala Sekolah + Guru (yang wajib uji organoleptik)
-      const kepsek = s.tendikBreakdown['Kepala Sekolah'] || { L: 0, P: 0, Total: 0 };
-      const guru = s.tendikBreakdown['Guru'] || { L: 0, P: 0, Total: 0 };
-      const ujiOrganoleptik = kepsek.Total + guru.Total;
+      // Uji Organoleptik = dari jenisTendik "UJI ORGANOLEPTIK" di database
+      const ujiOrganoleptik = s.tendikBreakdown['UJI ORGANOLEPTIK']?.Total || 0;
       return `${i+1},"${s.namaSekolah}",${tendikValues},${ujiOrganoleptik},${s.guruL},${s.guruP},${s.guruTotal}`;
     }).join('\n');
     const blob = new Blob([headers + rows], { type: 'text/csv' });
@@ -1006,8 +1004,8 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                       const guru = s.tendikBreakdown['Guru'] || { L: 0, P: 0, Total: 0 };
                       const tendik = s.tendikBreakdown['Guru Tendik'] || s.tendikBreakdown['Tenaga Kependidikan'] || { L: 0, P: 0 };
                       const nonTendik = s.tendikBreakdown['Non Tendik'] || { L: 0, P: 0 };
-                      // Uji Organoleptik = Kepala Sekolah + Guru (yang wajib uji organoleptik makanan)
-                      const ujiOrganoleptik = kepsek.Total + guru.Total;
+                      // Uji Organoleptik = dari jenisTendik "UJI ORGANOLEPTIK" di database
+                      const ujiOrganoleptik = s.tendikBreakdown['UJI ORGANOLEPTIK']?.Total || 0;
                       return (
                         <TableRow key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                           <TableCell className="border border-slate-300 font-medium">{s.namaSekolah}</TableCell>
@@ -1038,7 +1036,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                       <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + ((s.tendikBreakdown['Guru Tendik'] || s.tendikBreakdown['Tenaga Kependidikan'])?.P || 0), 0)}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + (s.tendikBreakdown['Non Tendik']?.L || 0), 0)}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + (s.tendikBreakdown['Non Tendik']?.P || 0), 0)}</TableCell>
-                      <TableCell className="border border-slate-300 text-center bg-amber-50 dark:bg-amber-900/10">{schoolData.guru.reduce((sum, s) => sum + ((s.tendikBreakdown['Kepala Sekolah']?.Total || 0) + (s.tendikBreakdown['Guru']?.Total || 0)), 0)}</TableCell>
+                      <TableCell className="border border-slate-300 text-center bg-amber-50 dark:bg-amber-900/10">{schoolData.guru.reduce((sum, s) => sum + (s.tendikBreakdown['UJI ORGANOLEPTIK']?.Total || 0), 0)}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.totals.guru.totalL}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.totals.guru.totalP}</TableCell>
                       <TableCell className="border border-slate-300 text-center text-blue-700">{schoolData.totals.guru.grandTotal}</TableCell>
