@@ -20,8 +20,15 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Download, FileSpreadsheet, BarChart3, PieChart as PieChartIcon,
-  Users, GraduationCap, Baby, School, FileText, HeartHandshake, BabyIcon
+  Users, GraduationCap, Baby, School, FileText, HeartHandshake, BabyIcon,
+  FileDown, FileType
 } from 'lucide-react';
 
 interface Stats {
@@ -466,15 +473,61 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
     URL.revokeObjectURL(url);
   };
 
+  const exportSekolahToExcel = async (data: SchoolData[], kelasList: string[], filename: string) => {
+    try {
+      const res = await fetch('/api/export/rekap-sekolah', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data, kelasList, filename, format: 'xlsx' }),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filename}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Export Excel error:', error);
+    }
+  };
+
+  const exportSekolahToPDF = async (data: SchoolData[], kelasList: string[], filename: string, title: string) => {
+    try {
+      const res = await fetch('/api/export/rekap-sekolah', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data, kelasList, filename, format: 'pdf', title }),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filename}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Export PDF error:', error);
+    }
+  };
+
   const exportGuruToCSV = () => {
-    const tendikTypes = ['Kepala Sekolah', 'Guru Tendik', 'Guru', 'Tenaga Kependidikan', 'Non Tendik', 'Tidak Diketahui'];
-    const headers = `No,Sekolah,${tendikTypes.map(t => `${t} L,${t} P,${t} Total`).join(',')},Total L,Total P,Total\n`;
+    const tendikTypes = ['Kepala Sekolah', 'Guru', 'Guru Tendik', 'Tenaga Kependidikan', 'Non Tendik'];
+    const headers = `No,Sekolah,${tendikTypes.map(t => `${t} L,${t} P,${t} Total`).join(',')},Uji Organoleptik,Total L,Total P,Total\n`;
     const rows = schoolData.guru.map((s, i) => {
       const tendikValues = tendikTypes.map(t => {
         const tendik = s.tendikBreakdown[t] || { L: 0, P: 0, Total: 0 };
         return `${tendik.L},${tendik.P},${tendik.Total}`;
       }).join(',');
-      return `${i+1},"${s.namaSekolah}",${tendikValues},${s.guruL},${s.guruP},${s.guruTotal}`;
+      // Uji Organoleptik = Kepala Sekolah + Guru (yang wajib uji organoleptik)
+      const kepsek = s.tendikBreakdown['Kepala Sekolah'] || { L: 0, P: 0, Total: 0 };
+      const guru = s.tendikBreakdown['Guru'] || { L: 0, P: 0, Total: 0 };
+      const ujiOrganoleptik = kepsek.Total + guru.Total;
+      return `${i+1},"${s.namaSekolah}",${tendikValues},${ujiOrganoleptik},${s.guruL},${s.guruP},${s.guruTotal}`;
     }).join('\n');
     const blob = new Blob([headers + rows], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -483,6 +536,48 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
     a.download = 'rekapitulasi_guru.csv';
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const exportGuruToExcel = async () => {
+    try {
+      const res = await fetch('/api/export/rekap-guru', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: schoolData.guru, format: 'xlsx' }),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'rekapitulasi_guru.xlsx';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Export Excel error:', error);
+    }
+  };
+
+  const exportGuruToPDF = async () => {
+    try {
+      const res = await fetch('/api/export/rekap-guru', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: schoolData.guru, format: 'pdf' }),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'rekapitulasi_guru.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Export PDF error:', error);
+    }
   };
 
   return (
@@ -850,9 +945,24 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
               <CardDescription>Data guru per jenis tenaga pendidik</CardDescription>
             </div>
             <div className="flex gap-2 items-center">
-              <Button variant="outline" size="sm" onClick={exportGuruToCSV}>
-                <Download className="w-4 h-4 mr-2" />Export
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="w-4 h-4 mr-2" />Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={exportGuruToCSV}>
+                    <FileText className="w-4 h-4 mr-2" />Export CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={exportGuruToExcel}>
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />Export Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={exportGuruToPDF}>
+                    <FileType className="w-4 h-4 mr-2" />Export PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Badge variant="outline">Total: {schoolData.totals.guru.grandTotal.toLocaleString()} guru</Badge>
             </div>
           </CardHeader>
@@ -892,12 +1002,12 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                     </TableRow>
                   ) : (
                     schoolData.guru.map((s, i) => {
-                      const kepsek = s.tendikBreakdown['Kepala Sekolah'] || { L: 0, P: 0 };
-                      const guru = s.tendikBreakdown['Guru'] || { L: 0, P: 0 };
+                      const kepsek = s.tendikBreakdown['Kepala Sekolah'] || { L: 0, P: 0, Total: 0 };
+                      const guru = s.tendikBreakdown['Guru'] || { L: 0, P: 0, Total: 0 };
                       const tendik = s.tendikBreakdown['Guru Tendik'] || s.tendikBreakdown['Tenaga Kependidikan'] || { L: 0, P: 0 };
                       const nonTendik = s.tendikBreakdown['Non Tendik'] || { L: 0, P: 0 };
-                      // Uji Organoleptik = total guru yang sudah diuji (untuk saat ini sama dengan total guru)
-                      const ujiOrganoleptik = s.guruTotal;
+                      // Uji Organoleptik = Kepala Sekolah + Guru (yang wajib uji organoleptik makanan)
+                      const ujiOrganoleptik = kepsek.Total + guru.Total;
                       return (
                         <TableRow key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                           <TableCell className="border border-slate-300 font-medium">{s.namaSekolah}</TableCell>
@@ -928,7 +1038,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                       <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + ((s.tendikBreakdown['Guru Tendik'] || s.tendikBreakdown['Tenaga Kependidikan'])?.P || 0), 0)}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + (s.tendikBreakdown['Non Tendik']?.L || 0), 0)}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + (s.tendikBreakdown['Non Tendik']?.P || 0), 0)}</TableCell>
-                      <TableCell className="border border-slate-300 text-center bg-amber-50 dark:bg-amber-900/10">{schoolData.totals.guru.grandTotal}</TableCell>
+                      <TableCell className="border border-slate-300 text-center bg-amber-50 dark:bg-amber-900/10">{schoolData.guru.reduce((sum, s) => sum + ((s.tendikBreakdown['Kepala Sekolah']?.Total || 0) + (s.tendikBreakdown['Guru']?.Total || 0)), 0)}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.totals.guru.totalL}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.totals.guru.totalP}</TableCell>
                       <TableCell className="border border-slate-300 text-center text-blue-700">{schoolData.totals.guru.grandTotal}</TableCell>
