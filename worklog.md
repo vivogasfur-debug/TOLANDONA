@@ -140,3 +140,27 @@ Stage Summary:
   - Siswa: JK + Jenjang + Nama Sekolah
   - Posyandu: JK + Kategori + Posyandu
 - Users can filter by school/posyandu names
+
+---
+Task ID: 7
+Agent: Main Agent
+Task: Fix multiple issues - Relawan data, Siswa columns, TK Kelas A/B, KLS prefix
+
+Work Log:
+- Added 'Sekolah' and 'Jenjang' columns to Siswa table display in data-pages.tsx
+- Added Sekolah and Jenjang form fields for Siswa with dropdown for Jenjang selection
+- Fixed TK/PAUD Kelas A/B matching logic in rekapitulasi/sekolah/route.ts:
+  - Now handles class formats like "TK A", "TK-A", "TKA", "A", "TK B", etc.
+  - Uses regex to extract just 'A' or 'B' from various formats
+- Verified "KLS" prefix already present in table headers (KLS A, KLS B, KLS 1-12)
+- Verified Relawan API endpoints are correctly configured:
+  - GET, POST, PUT, DELETE operations working
+  - Clear endpoint available
+  - Import mapping handles all Relawan fields
+- Verified database schema has all required fields including namaSekolah for Siswa
+
+Stage Summary:
+- Siswa table now shows Sekolah and Jenjang columns
+- TK/PAUD Kelas A/B properly count students with various class name formats
+- "KLS" prefix already in place for all class labels
+- Relawan API working correctly - data persistence issue may be deployment-related

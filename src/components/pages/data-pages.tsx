@@ -634,6 +634,8 @@ export function DataPage({ type }: DataPageProps) {
           columns: [
             { key: 'nama', label: 'Nama' },
             { key: 'jk', label: 'JK' },
+            { key: 'namaSekolah', label: 'Sekolah' },
+            { key: 'jenjang', label: 'Jenjang' },
             { key: 'kelas', label: 'Kelas' },
             { key: 'nisn', label: 'NISN' },
             { key: 'nik', label: 'NIK' },
@@ -885,6 +887,25 @@ export function DataPage({ type }: DataPageProps) {
 
       {type === 'siswa' && (
         <>
+          <div>
+            <Label className="text-sm font-medium">Sekolah</Label>
+            <Input type="text" value={formNamaSekolah} onChange={(e) => setFormNamaSekolah(e.target.value)} className="mt-1" placeholder="Masukkan nama sekolah" />
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Jenjang</Label>
+            <Select value={formJenjang || undefined} onValueChange={(v) => setFormJenjang(v === 'none' ? '' : v)}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Pilih jenjang" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">-</SelectItem>
+                <SelectItem value="TK">TK/PAUD</SelectItem>
+                <SelectItem value="SD">SD/MI</SelectItem>
+                <SelectItem value="SMP">SMP/MTs</SelectItem>
+                <SelectItem value="SMA">SMA/SMK/MA</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div>
             <Label className="text-sm font-medium">Kelas</Label>
             <Input type="text" value={formKelas} onChange={(e) => setFormKelas(e.target.value)} className="mt-1" placeholder="Masukkan kelas" />

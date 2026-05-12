@@ -162,9 +162,14 @@ export async function GET() {
         data.kelasData.forEach((value: { L: number; P: number }, key: string) => {
           let kelasKey = 'Lainnya';
           
-          // For TK - check for class A and B
+          // For TK - check for class A and B (handle various formats like "TK A", "TK-A", "TKA", "A", etc.)
           const keyUpper = key.toUpperCase().trim();
-          if (classRange.some(k => typeof k === 'string' && k.toUpperCase() === keyUpper)) {
+          
+          // Special handling for TK classes A and B
+          const tkClassMatch = keyUpper.match(/TK\s*-?\s*([AB])|^[AB]$/);
+          if (tkClassMatch && classRange.some(k => k === tkClassMatch[1])) {
+            kelasKey = tkClassMatch[1]; // Extract just 'A' or 'B'
+          } else if (classRange.some(k => typeof k === 'string' && k.toUpperCase() === keyUpper)) {
             kelasKey = classRange.find(k => typeof k === 'string' && k.toUpperCase() === keyUpper) as string;
           } else {
             // For numeric classes
