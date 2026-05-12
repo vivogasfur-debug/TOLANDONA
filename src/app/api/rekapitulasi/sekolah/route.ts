@@ -22,7 +22,7 @@ export async function GET() {
       },
     });
 
-    // Separate by education level
+    // Separate by education level - TK now has class A and B
     const tkSekolah = new Map<string, { siswaL: number; siswaP: number; kelasData: Map<string, { L: number; P: number }> }>();
     const sdSekolah = new Map<string, { siswaL: number; siswaP: number; kelasData: Map<string, { L: number; P: number }> }>();
     const smpSekolah = new Map<string, { siswaL: number; siswaP: number; kelasData: Map<string, { L: number; P: number }> }>();
@@ -128,28 +128,36 @@ export async function GET() {
     // Convert maps to arrays with class breakdown
     const processSchoolData = (
       schoolMap: Map<string, any>, 
-      classRange: number[]
+      classRange: (number | string)[]
     ): any[] => {
       return Array.from(schoolMap.entries()).map(([namaSekolah, data]) => {
         const kelasBreakdown: Record<string, { L: number; P: number; Total: number }> = {};
         
         // Initialize all classes in range
         for (const k of classRange) {
-          kelasBreakdown[`Kelas ${k}`] = { L: 0, P: 0, Total: 0 };
+          const kelasName = typeof k === 'string' ? k : `Kelas ${k}`;
+          kelasBreakdown[kelasName] = { L: 0, P: 0, Total: 0 };
         }
         kelasBreakdown['Lainnya'] = { L: 0, P: 0, Total: 0 };
 
         // Fill in actual data
         data.kelasData.forEach((value: { L: number; P: number }, key: string) => {
-          const classNum = parseInt(key.replace(/\D/g, ''));
           let kelasKey = 'Lainnya';
           
-          if (!isNaN(classNum)) {
-            if (classRange.includes(classNum)) {
-              kelasKey = `Kelas ${classNum}`;
+          // For TK - check for class A and B
+          const keyUpper = key.toUpperCase().trim();
+          if (classRange.some(k => typeof k === 'string' && k.toUpperCase() === keyUpper)) {
+            kelasKey = classRange.find(k => typeof k === 'string' && k.toUpperCase() === keyUpper) as string;
+          } else {
+            // For numeric classes
+            const classNum = parseInt(key.replace(/\D/g, ''));
+            if (!isNaN(classNum)) {
+              if (classRange.includes(classNum)) {
+                kelasKey = `Kelas ${classNum}`;
+              }
+            } else if (key !== '-' && !classRange.some(k => typeof k === 'string')) {
+              kelasKey = key;
             }
-          } else if (key !== '-') {
-            kelasKey = key;
           }
 
           if (!kelasBreakdown[kelasKey]) {
@@ -244,13 +252,13 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       data: {
-        tk: processSchoolData(tkSekolah, []),
+        tk: processSchoolData(tkSekolah, ['Kelas A', 'Kelas B']),
         sd: processSchoolData(sdSekolah, [1, 2, 3, 4, 5, 6]),
         smp: processSchoolData(smpSekolah, [7, 8, 9]),
         sma: processSchoolData(smaSekolah, [10, 11, 12]),
         guru: guruRekap,
         totals: {
-          tk: calculateTotals(processSchoolData(tkSekolah, [])),
+          tk: calculateTotals(processSchoolData(tkSekolah, ['Kelas A', 'Kelas B'])),
           sd: calculateTotals(processSchoolData(sdSekolah, [1, 2, 3, 4, 5, 6])),
           smp: calculateTotals(processSchoolData(smpSekolah, [7, 8, 9])),
           sma: calculateTotals(processSchoolData(smaSekolah, [10, 11, 12])),

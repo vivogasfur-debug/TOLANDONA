@@ -459,7 +459,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Rekapitulasi TK/PAUD</CardTitle>
-              <CardDescription>Data siswa TK/PAUD</CardDescription>
+              <CardDescription>Data siswa per kelas (Kelas A dan B)</CardDescription>
             </div>
             <Badge variant="outline">Total: {schoolData.totals.tk.grandTotal.toLocaleString()} siswa</Badge>
           </CardHeader>
@@ -470,28 +470,44 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                   <TableRow className="bg-slate-50 dark:bg-slate-800/50">
                     <TableHead className="w-12">No</TableHead>
                     <TableHead>Sekolah</TableHead>
-                    <TableHead className="text-center">Laki-laki</TableHead>
-                    <TableHead className="text-center">Perempuan</TableHead>
-                    <TableHead className="text-center">Total</TableHead>
+                    <TableHead className="text-center bg-blue-50 dark:bg-blue-900/20">Kelas A L</TableHead>
+                    <TableHead className="text-center bg-pink-50 dark:bg-pink-900/20">Kelas A P</TableHead>
+                    <TableHead className="text-center bg-blue-50 dark:bg-blue-900/20">Kelas B L</TableHead>
+                    <TableHead className="text-center bg-pink-50 dark:bg-pink-900/20">Kelas B P</TableHead>
+                    <TableHead className="text-center bg-emerald-50 dark:bg-emerald-900/20">Total L</TableHead>
+                    <TableHead className="text-center bg-rose-50 dark:bg-rose-900/20">Total P</TableHead>
+                    <TableHead className="text-center bg-purple-50 dark:bg-purple-900/20 font-bold">Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {schoolData.tk.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} className="text-center py-8 text-slate-500">Tidak ada data TK/PAUD</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={9} className="text-center py-8 text-slate-500">Tidak ada data TK/PAUD</TableCell></TableRow>
                   ) : (
-                    schoolData.tk.map((s, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="text-center">{i + 1}</TableCell>
-                        <TableCell className="font-medium">{s.namaSekolah}</TableCell>
-                        <TableCell className="text-center">{s.siswaL}</TableCell>
-                        <TableCell className="text-center">{s.siswaP}</TableCell>
-                        <TableCell className="text-center font-bold">{s.siswaTotal}</TableCell>
-                      </TableRow>
-                    ))
+                    schoolData.tk.map((s, i) => {
+                      const kelasA = s.kelasBreakdown['Kelas A'] || { L: 0, P: 0 };
+                      const kelasB = s.kelasBreakdown['Kelas B'] || { L: 0, P: 0 };
+                      return (
+                        <TableRow key={i}>
+                          <TableCell className="text-center">{i + 1}</TableCell>
+                          <TableCell className="font-medium">{s.namaSekolah}</TableCell>
+                          <TableCell className="text-center">{kelasA.L}</TableCell>
+                          <TableCell className="text-center">{kelasA.P}</TableCell>
+                          <TableCell className="text-center">{kelasB.L}</TableCell>
+                          <TableCell className="text-center">{kelasB.P}</TableCell>
+                          <TableCell className="text-center font-medium">{s.siswaL}</TableCell>
+                          <TableCell className="text-center font-medium">{s.siswaP}</TableCell>
+                          <TableCell className="text-center font-bold text-emerald-600">{s.siswaTotal}</TableCell>
+                        </TableRow>
+                      );
+                    })
                   )}
                   {schoolData.tk.length > 0 && (
                     <TableRow className="bg-emerald-50 dark:bg-emerald-900/20 font-bold">
                       <TableCell colSpan={2}>Total</TableCell>
+                      <TableCell className="text-center">{schoolData.tk.reduce((sum, s) => sum + (s.kelasBreakdown['Kelas A']?.L || 0), 0)}</TableCell>
+                      <TableCell className="text-center">{schoolData.tk.reduce((sum, s) => sum + (s.kelasBreakdown['Kelas A']?.P || 0), 0)}</TableCell>
+                      <TableCell className="text-center">{schoolData.tk.reduce((sum, s) => sum + (s.kelasBreakdown['Kelas B']?.L || 0), 0)}</TableCell>
+                      <TableCell className="text-center">{schoolData.tk.reduce((sum, s) => sum + (s.kelasBreakdown['Kelas B']?.P || 0), 0)}</TableCell>
                       <TableCell className="text-center">{schoolData.totals.tk.totalL}</TableCell>
                       <TableCell className="text-center">{schoolData.totals.tk.totalP}</TableCell>
                       <TableCell className="text-center text-emerald-600">{schoolData.totals.tk.grandTotal}</TableCell>
