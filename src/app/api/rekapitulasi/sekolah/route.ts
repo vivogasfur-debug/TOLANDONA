@@ -44,14 +44,26 @@ export async function GET() {
     for (const siswa of siswaData) {
       if (!siswa.namaSekolah) continue;
       const schoolName = siswa.namaSekolah.trim();
+      const schoolNameUpper = schoolName.toUpperCase();
       const jenjang = (siswa.jenjang || '').toUpperCase().trim();
       const kelas = siswa.kelas?.trim() || '-';
       const jk = siswa.jk?.toUpperCase() || 'L';
 
       let targetMap: Map<string, any> | null = null;
 
-      // Determine education level
-      if (jenjang.includes('TK') || jenjang.includes('RA') || jenjang.includes('PAUD') || jenjang.includes('KB')) {
+      // Determine education level - check school name first (since jenjang is often null)
+      if (schoolNameUpper.includes('TK') || schoolNameUpper.includes('RA') || 
+          schoolNameUpper.includes('PAUD') || schoolNameUpper.includes('KB')) {
+        targetMap = tkSekolah;
+      } else if (schoolNameUpper.includes('SD') || schoolNameUpper.includes('MI')) {
+        targetMap = sdSekolah;
+      } else if (schoolNameUpper.includes('SMP') || schoolNameUpper.includes('MTS')) {
+        targetMap = smpSekolah;
+      } else if (schoolNameUpper.includes('SMA') || schoolNameUpper.includes('SMK') || 
+                 schoolNameUpper.includes('MA') || schoolNameUpper.includes('SMAS')) {
+        targetMap = smaSekolah;
+      } else if (jenjang.includes('TK') || jenjang.includes('RA') || 
+                 jenjang.includes('PAUD') || jenjang.includes('KB')) {
         targetMap = tkSekolah;
       } else if (jenjang.includes('SD') || jenjang.includes('MI')) {
         targetMap = sdSekolah;
@@ -60,9 +72,15 @@ export async function GET() {
       } else if (jenjang.includes('SMA') || jenjang.includes('SMK') || jenjang.includes('MA')) {
         targetMap = smaSekolah;
       } else {
-        // Try to guess from class number
+        // Try to guess from class number or letter
         const classNum = parseInt(kelas.replace(/\D/g, ''));
-        if (!isNaN(classNum)) {
+        const kelasUpper = kelas.toUpperCase().trim();
+        
+        // Check for TK classes (A, B, or 0-5 years old patterns)
+        if (kelasUpper === 'A' || kelasUpper === 'B' || kelasUpper === 'TK A' || 
+            kelasUpper === 'TK B' || kelasUpper === '0' || kelasUpper === 'NOL') {
+          targetMap = tkSekolah;
+        } else if (!isNaN(classNum)) {
           if (classNum >= 1 && classNum <= 6) {
             targetMap = sdSekolah;
           } else if (classNum >= 7 && classNum <= 9) {

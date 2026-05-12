@@ -867,6 +867,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                     <TableHead colSpan={2} className="border border-slate-300 text-center bg-purple-100 dark:bg-purple-900/30 text-xs">GURU</TableHead>
                     <TableHead colSpan={2} className="border border-slate-300 text-center bg-purple-100 dark:bg-purple-900/30 text-xs">TENDIK</TableHead>
                     <TableHead colSpan={2} className="border border-slate-300 text-center bg-purple-100 dark:bg-purple-900/30 text-xs">NON TENDIK</TableHead>
+                    <TableHead rowSpan={2} className="border border-slate-300 text-center align-middle bg-amber-100 dark:bg-amber-900/30 text-xs min-w-[60px]">UJI ORGANOLEPTIK</TableHead>
                     <TableHead colSpan={2} className="border border-slate-300 text-center bg-emerald-100 dark:bg-emerald-900/30">JUMLAH</TableHead>
                     <TableHead rowSpan={2} className="border border-slate-300 text-center align-middle bg-blue-100 dark:bg-blue-900/30 font-bold min-w-[60px]">TOTAL</TableHead>
                   </TableRow>
@@ -887,7 +888,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                 <TableBody>
                   {schoolData.guru.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={12} className="border border-slate-300 text-center py-8 text-slate-500">Tidak ada data Guru</TableCell>
+                      <TableCell colSpan={14} className="border border-slate-300 text-center py-8 text-slate-500">Tidak ada data Guru</TableCell>
                     </TableRow>
                   ) : (
                     schoolData.guru.map((s, i) => {
@@ -895,6 +896,8 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                       const guru = s.tendikBreakdown['Guru'] || { L: 0, P: 0 };
                       const tendik = s.tendikBreakdown['Guru Tendik'] || s.tendikBreakdown['Tenaga Kependidikan'] || { L: 0, P: 0 };
                       const nonTendik = s.tendikBreakdown['Non Tendik'] || { L: 0, P: 0 };
+                      // Uji Organoleptik = total guru yang sudah diuji (untuk saat ini sama dengan total guru)
+                      const ujiOrganoleptik = s.guruTotal;
                       return (
                         <TableRow key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                           <TableCell className="border border-slate-300 font-medium">{s.namaSekolah}</TableCell>
@@ -906,6 +909,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                           <TableCell className="border border-slate-300 text-center">{tendik.P}</TableCell>
                           <TableCell className="border border-slate-300 text-center">{nonTendik.L}</TableCell>
                           <TableCell className="border border-slate-300 text-center">{nonTendik.P}</TableCell>
+                          <TableCell className="border border-slate-300 text-center font-medium bg-amber-50 dark:bg-amber-900/10">{ujiOrganoleptik}</TableCell>
                           <TableCell className="border border-slate-300 text-center font-medium">{s.guruL}</TableCell>
                           <TableCell className="border border-slate-300 text-center font-medium">{s.guruP}</TableCell>
                           <TableCell className="border border-slate-300 text-center font-bold text-blue-600">{s.guruTotal}</TableCell>
@@ -924,6 +928,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                       <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + ((s.tendikBreakdown['Guru Tendik'] || s.tendikBreakdown['Tenaga Kependidikan'])?.P || 0), 0)}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + (s.tendikBreakdown['Non Tendik']?.L || 0), 0)}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + (s.tendikBreakdown['Non Tendik']?.P || 0), 0)}</TableCell>
+                      <TableCell className="border border-slate-300 text-center bg-amber-50 dark:bg-amber-900/10">{schoolData.totals.guru.grandTotal}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.totals.guru.totalL}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.totals.guru.totalP}</TableCell>
                       <TableCell className="border border-slate-300 text-center text-blue-700">{schoolData.totals.guru.grandTotal}</TableCell>
@@ -958,8 +963,8 @@ function Rekapitulasi3B({ rekap3BData, onExport }: {
     <Card className="border-0 shadow-lg">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle className="flex items-center gap-2"><Baby className="w-5 h-5 text-pink-500" />Rekapitulasi 3B</CardTitle>
-          <CardDescription>Data Balita, Bumil, dan Menyusui per Posyandu</CardDescription>
+          <CardTitle>REKAP 3B (BALITA, BUMIL, MENYUSUI)</CardTitle>
+          <CardDescription>Data per Posyandu</CardDescription>
         </div>
         <Button variant="outline" size="sm" onClick={onExport}>
           <Download className="w-4 h-4 mr-2" />Export CSV
@@ -967,50 +972,55 @@ function Rekapitulasi3B({ rekap3BData, onExport }: {
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="border-collapse border border-slate-300">
             <TableHeader>
+              {/* Main Header Row */}
+              <TableRow className="bg-slate-100 dark:bg-slate-800">
+                <TableHead rowSpan={2} className="border border-slate-300 text-center align-middle bg-slate-200 dark:bg-slate-700 w-12">NO</TableHead>
+                <TableHead rowSpan={2} className="border border-slate-300 text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[200px]">POSYANDU</TableHead>
+                <TableHead colSpan={3} className="border border-slate-300 text-center bg-pink-100 dark:bg-pink-900/30">BALITA</TableHead>
+                <TableHead rowSpan={2} className="border border-slate-300 text-center align-middle bg-purple-100 dark:bg-purple-900/30 min-w-[60px]">BUMIL</TableHead>
+                <TableHead rowSpan={2} className="border border-slate-300 text-center align-middle bg-purple-100 dark:bg-purple-900/30 min-w-[60px]">MENYUSUI</TableHead>
+                <TableHead rowSpan={2} className="border border-slate-300 text-center align-middle bg-purple-100 dark:bg-purple-900/30 min-w-[60px]">LANSIA</TableHead>
+                <TableHead rowSpan={2} className="border border-slate-300 text-center align-middle bg-blue-100 dark:bg-blue-900/30 font-bold min-w-[60px]">TOTAL</TableHead>
+              </TableRow>
+              {/* Sub Header Row */}
               <TableRow className="bg-slate-50 dark:bg-slate-800/50">
-                <TableHead className="w-12">No</TableHead>
-                <TableHead>Posyandu</TableHead>
-                <TableHead className="text-center">Balita L</TableHead>
-                <TableHead className="text-center">Balita P</TableHead>
-                <TableHead className="text-center">Total Balita</TableHead>
-                <TableHead className="text-center">Bumil</TableHead>
-                <TableHead className="text-center">Menyusui</TableHead>
-                <TableHead className="text-center">Lansia</TableHead>
-                <TableHead className="text-center font-bold">Total</TableHead>
+                <TableHead className="border border-slate-300 text-center w-12 bg-pink-50 dark:bg-pink-900/20">L</TableHead>
+                <TableHead className="border border-slate-300 text-center w-12 bg-green-50 dark:bg-green-900/20">P</TableHead>
+                <TableHead className="border border-slate-300 text-center w-12 bg-amber-50 dark:bg-amber-900/20 font-bold">JML</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rekap3BData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-slate-500">Tidak ada data 3B</TableCell>
+                  <TableCell colSpan={9} className="border border-slate-300 text-center py-8 text-slate-500">Tidak ada data 3B</TableCell>
                 </TableRow>
               ) : (
                 rekap3BData.map((item, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="text-center">{i + 1}</TableCell>
-                    <TableCell className="font-medium">{item.posyandu}</TableCell>
-                    <TableCell className="text-center">{item.balitaL}</TableCell>
-                    <TableCell className="text-center">{item.balitaP}</TableCell>
-                    <TableCell className="text-center font-medium">{item.balitaTotal}</TableCell>
-                    <TableCell className="text-center">{item.bumil}</TableCell>
-                    <TableCell className="text-center">{item.menyusui}</TableCell>
-                    <TableCell className="text-center">{item.lansia}</TableCell>
-                    <TableCell className="text-center font-bold text-pink-600">{item.total}</TableCell>
+                  <TableRow key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <TableCell className="border border-slate-300 text-center">{i + 1}</TableCell>
+                    <TableCell className="border border-slate-300 font-medium">{item.posyandu}</TableCell>
+                    <TableCell className="border border-slate-300 text-center">{item.balitaL}</TableCell>
+                    <TableCell className="border border-slate-300 text-center">{item.balitaP}</TableCell>
+                    <TableCell className="border border-slate-300 text-center font-medium bg-amber-50 dark:bg-amber-900/10">{item.balitaTotal}</TableCell>
+                    <TableCell className="border border-slate-300 text-center">{item.bumil}</TableCell>
+                    <TableCell className="border border-slate-300 text-center">{item.menyusui}</TableCell>
+                    <TableCell className="border border-slate-300 text-center">{item.lansia}</TableCell>
+                    <TableCell className="border border-slate-300 text-center font-bold text-blue-600">{item.total}</TableCell>
                   </TableRow>
                 ))
               )}
               {rekap3BData.length > 0 && (
-                <TableRow className="bg-pink-50 dark:bg-pink-900/20 font-bold">
-                  <TableCell colSpan={2}>Total</TableCell>
-                  <TableCell className="text-center">{totals.balitaL}</TableCell>
-                  <TableCell className="text-center">{totals.balitaP}</TableCell>
-                  <TableCell className="text-center">{totals.balitaTotal}</TableCell>
-                  <TableCell className="text-center">{totals.bumil}</TableCell>
-                  <TableCell className="text-center">{totals.menyusui}</TableCell>
-                  <TableCell className="text-center">{totals.lansia}</TableCell>
-                  <TableCell className="text-center text-pink-600">{totals.total}</TableCell>
+                <TableRow className="bg-blue-50 dark:bg-blue-900/20 font-bold">
+                  <TableCell colSpan={2} className="border border-slate-300 text-center">JUMLAH</TableCell>
+                  <TableCell className="border border-slate-300 text-center">{totals.balitaL}</TableCell>
+                  <TableCell className="border border-slate-300 text-center">{totals.balitaP}</TableCell>
+                  <TableCell className="border border-slate-300 text-center bg-amber-50 dark:bg-amber-900/10">{totals.balitaTotal}</TableCell>
+                  <TableCell className="border border-slate-300 text-center">{totals.bumil}</TableCell>
+                  <TableCell className="border border-slate-300 text-center">{totals.menyusui}</TableCell>
+                  <TableCell className="border border-slate-300 text-center">{totals.lansia}</TableCell>
+                  <TableCell className="border border-slate-300 text-center text-blue-700">{totals.total}</TableCell>
                 </TableRow>
               )}
             </TableBody>
