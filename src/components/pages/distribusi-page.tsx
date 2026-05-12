@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -45,7 +45,7 @@ import {
 import {
   PieChart as PieChartIcon, BarChart3, Plus, Pencil, Trash2,
   Download, FileText, FileSpreadsheet, FileType, Calendar,
-  TrendingUp, Users, GraduationCap
+  TrendingUp, Users, GraduationCap, Building2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -70,6 +70,11 @@ interface Distribusi {
   createdAt: Date;
 }
 
+interface SchoolInfo {
+  nama: string;
+  tipe: 'TK' | 'SD' | 'SMP' | 'SMA' | 'UNKNOWN';
+}
+
 interface RekapResponse {
   filteredData: Distribusi[];
   totals: {
@@ -89,6 +94,73 @@ const MONTHS = [
 ];
 
 const COLORS = ['#10b981', '#06b6d4', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+// Function to detect school type from name
+function detectSchoolType(name: string): 'TK' | 'SD' | 'SMP' | 'SMA' | 'UNKNOWN' {
+  const lowerName = name.toLowerCase();
+  
+  // TK/PAUD/RA detection
+  if (
+    lowerName.includes('tk ') || 
+    lowerName.startsWith('tk') ||
+    lowerName.includes(' paud') ||
+    lowerName.startsWith('paud') ||
+    lowerName.includes('ra ') ||
+    lowerName.startsWith('ra') ||
+    lowerName.includes('taman kanak-kanak') ||
+    lowerName.includes('raudhatul athfal')
+  ) {
+    return 'TK';
+  }
+  
+  // SD/MI detection
+  if (
+    lowerName.includes('sd ') ||
+    lowerName.startsWith('sd') ||
+    lowerName.includes(' sd') ||
+    lowerName.includes('mi ') ||
+    lowerName.startsWith('mi') ||
+    lowerName.includes(' mi') ||
+    lowerName.includes('sekolah dasar') ||
+    lowerName.includes('madrasah ibtidaiyah')
+  ) {
+    return 'SD';
+  }
+  
+  // SMP/MTs detection
+  if (
+    lowerName.includes('smp ') ||
+    lowerName.startsWith('smp') ||
+    lowerName.includes(' smp') ||
+    lowerName.includes('mts ') ||
+    lowerName.startsWith('mts') ||
+    lowerName.includes(' mts') ||
+    lowerName.includes('sekolah menengah pertama') ||
+    lowerName.includes('madrasah tsanawiyah')
+  ) {
+    return 'SMP';
+  }
+  
+  // SMA/SMK/MA detection
+  if (
+    lowerName.includes('sma ') ||
+    lowerName.startsWith('sma') ||
+    lowerName.includes(' sma') ||
+    lowerName.includes('smk ') ||
+    lowerName.startsWith('smk') ||
+    lowerName.includes(' smk') ||
+    lowerName.includes('ma ') ||
+    lowerName.startsWith('ma') ||
+    lowerName.includes(' ma ') ||
+    lowerName.includes('sekolah menengah atas') ||
+    lowerName.includes('sekolah menengah kejuruan') ||
+    lowerName.includes('madrasah aliyah')
+  ) {
+    return 'SMA';
+  }
+  
+  return 'UNKNOWN';
+}
 
 export function DistribusiPage() {
   const [activeTab, setActiveTab] = useState('data');
@@ -126,8 +198,13 @@ export function DistribusiPage() {
   const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
   const [filterWeek, setFilterWeek] = useState(1);
 
-  // Schools list
-  const [schools, setSchools] = useState<string[]>([]);
+  // Schools list with type info
+  const [schools, setSchools] = useState<SchoolInfo[]>([]);
+  
+  // Selected school type for dynamic form
+  const selectedSchoolType = useMemo(() => {
+    return detectSchoolType(formData.namaSekolah);
+  }, [formData.namaSekolah]);
 
   useEffect(() => {
     fetchDistribusi();
@@ -323,6 +400,132 @@ export function DistribusiPage() {
       (parseInt(formData.nonTendikL) || 0) + (parseInt(formData.nonTendikP) || 0);
     
     return siswa + guru + (parseInt(formData.ujiOrganoleptik) || 0);
+  };
+
+  // Get school type label
+  const getSchoolTypeLabel = (type: string) => {
+    switch (type) {
+      case 'TK': return 'TK/PAUD/RA';
+      case 'SD': return 'SD/MI';
+      case 'SMP': return 'SMP/MTs';
+      case 'SMA': return 'SMA/SMK/MA';
+      default: return 'Pilih Jenjang';
+    }
+  };
+
+  // Render class input fields based on school type
+  const renderClassFields = () => {
+    const classInput = (label: string, lKey: string, pKey: string) => (
+      <div className="col-span-2">
+        <Label className="text-xs">{label}</Label>
+        <div className="flex gap-1">
+          <Input 
+            type="number" 
+            placeholder="L" 
+            value={formData[lKey as keyof typeof formData] as string} 
+            onChange={(e) => setFormData({...formData, [lKey]: e.target.value})} 
+            className="w-16" 
+            min="0" 
+          />
+          <Input 
+            type="number" 
+            placeholder="P" 
+            value={formData[pKey as keyof typeof formData] as string} 
+            onChange={(e) => setFormData({...formData, [pKey]: e.target.value})} 
+            className="w-16" 
+            min="0" 
+          />
+        </div>
+      </div>
+    );
+
+    const allFields = (
+      <>
+        {/* TK/PAUD - Always shown */}
+        <div className="col-span-full mb-2">
+          <span className="text-sm font-medium text-pink-600">TK/PAUD/RA:</span>
+        </div>
+        {classInput('Kls A', 'klsAL', 'klsAP')}
+        {classInput('Kls B', 'klsBL', 'klsBP')}
+        
+        {/* SD/MI */}
+        <div className="col-span-full mb-2 mt-4">
+          <span className="text-sm font-medium text-cyan-600">SD/MI:</span>
+        </div>
+        {[1,2,3,4,5,6].map(k => classInput(`Kls ${k}`, `kls${k}L`, `kls${k}P`))}
+        
+        {/* SMP/MTs */}
+        <div className="col-span-full mb-2 mt-4">
+          <span className="text-sm font-medium text-green-600">SMP/MTs:</span>
+        </div>
+        {[7,8,9].map(k => classInput(`Kls ${k}`, `kls${k}L`, `kls${k}P`))}
+        
+        {/* SMA/SMK/MA */}
+        <div className="col-span-full mb-2 mt-4">
+          <span className="text-sm font-medium text-purple-600">SMA/SMK/MA:</span>
+        </div>
+        {[10,11,12].map(k => classInput(`Kls ${k}`, `kls${k}L`, `kls${k}P`))}
+      </>
+    );
+
+    switch (selectedSchoolType) {
+      case 'TK':
+        return (
+          <>
+            <div className="col-span-full mb-2">
+              <Badge className="bg-pink-100 text-pink-700 hover:bg-pink-100">
+                TK/PAUD/RA - Kelas A & B
+              </Badge>
+            </div>
+            {classInput('Kls A', 'klsAL', 'klsAP')}
+            {classInput('Kls B', 'klsBL', 'klsBP')}
+          </>
+        );
+      case 'SD':
+        return (
+          <>
+            <div className="col-span-full mb-2">
+              <Badge className="bg-cyan-100 text-cyan-700 hover:bg-cyan-100">
+                SD/MI - Kelas 1-6
+              </Badge>
+            </div>
+            {[1,2,3,4,5,6].map(k => classInput(`Kls ${k}`, `kls${k}L`, `kls${k}P`))}
+          </>
+        );
+      case 'SMP':
+        return (
+          <>
+            <div className="col-span-full mb-2">
+              <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                SMP/MTs - Kelas 7-9
+              </Badge>
+            </div>
+            {[7,8,9].map(k => classInput(`Kls ${k}`, `kls${k}L`, `kls${k}P`))}
+          </>
+        );
+      case 'SMA':
+        return (
+          <>
+            <div className="col-span-full mb-2">
+              <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100">
+                SMA/SMK/MA - Kelas 10-12
+              </Badge>
+            </div>
+            {[10,11,12].map(k => classInput(`Kls ${k}`, `kls${k}L`, `kls${k}P`))}
+          </>
+        );
+      default:
+        return (
+          <>
+            <div className="col-span-full mb-2 p-3 bg-slate-100 rounded-lg">
+              <p className="text-sm text-slate-500 flex items-center gap-2">
+                <Building2 className="w-4 h-4" />
+                Pilih atau ketik nama sekolah terlebih dahulu untuk menampilkan pilihan kelas yang sesuai
+              </p>
+            </div>
+          </>
+        );
+    }
   };
 
   if (loading && !rekapData) {
@@ -562,7 +765,7 @@ export function DistribusiPage() {
           )}
         </TabsContent>
 
-        {/* Other tabs remain similar */}
+        {/* Hasil Tab */}
         <TabsContent value="hasil" className="space-y-6 mt-6">
           <Card className="border-0 shadow-lg">
             <CardHeader>
@@ -706,12 +909,14 @@ export function DistribusiPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {schools.map(s => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                      <SelectItem key={s.nama} value={s.nama}>
+                        {s.nama} {s.tipe !== 'UNKNOWN' && `(${s.tipe})`}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <Input
-                  value={!schools.includes(formData.namaSekolah) ? formData.namaSekolah : ''}
+                  value={!schools.find(s => s.nama === formData.namaSekolah) ? formData.namaSekolah : ''}
                   onChange={(e) => setFormData({ ...formData, namaSekolah: e.target.value })}
                   placeholder="Atau ketik nama sekolah"
                   className="mt-1"
@@ -727,57 +932,22 @@ export function DistribusiPage() {
               </div>
             </div>
 
-            {/* Siswa Section */}
+            {/* School Type Indicator */}
+            {selectedSchoolType !== 'UNKNOWN' && formData.namaSekolah && (
+              <div className="p-3 bg-slate-100 rounded-lg">
+                <span className="text-sm font-medium">
+                  Jenjang Terdeteksi: <Badge variant="outline">{getSchoolTypeLabel(selectedSchoolType)}</Badge>
+                </span>
+              </div>
+            )}
+
+            {/* Siswa Section - Dynamic based on school type */}
             <div className="border rounded-lg p-4 bg-cyan-50 dark:bg-cyan-900/20">
               <h3 className="font-bold mb-3 flex items-center gap-2">
                 <Users className="w-4 h-4" /> SISWA
               </h3>
               <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-                {/* TK/PAUD */}
-                <div className="col-span-2">
-                  <Label className="text-xs">Kls A</Label>
-                  <div className="flex gap-1">
-                    <Input type="number" placeholder="L" value={formData.klsAL} onChange={(e) => setFormData({...formData, klsAL: e.target.value})} className="w-16" min="0" />
-                    <Input type="number" placeholder="P" value={formData.klsAP} onChange={(e) => setFormData({...formData, klsAP: e.target.value})} className="w-16" min="0" />
-                  </div>
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-xs">Kls B</Label>
-                  <div className="flex gap-1">
-                    <Input type="number" placeholder="L" value={formData.klsBL} onChange={(e) => setFormData({...formData, klsBL: e.target.value})} className="w-16" min="0" />
-                    <Input type="number" placeholder="P" value={formData.klsBP} onChange={(e) => setFormData({...formData, klsBP: e.target.value})} className="w-16" min="0" />
-                  </div>
-                </div>
-                {/* SD/MI */}
-                {[1,2,3,4,5,6].map(k => (
-                  <div key={k} className="col-span-2">
-                    <Label className="text-xs">Kls {k}</Label>
-                    <div className="flex gap-1">
-                      <Input type="number" placeholder="L" value={formData[`kls${k}L` as keyof typeof formData]} onChange={(e) => setFormData({...formData, [`kls${k}L`]: e.target.value})} className="w-16" min="0" />
-                      <Input type="number" placeholder="P" value={formData[`kls${k}P` as keyof typeof formData]} onChange={(e) => setFormData({...formData, [`kls${k}P`]: e.target.value})} className="w-16" min="0" />
-                    </div>
-                  </div>
-                ))}
-                {/* SMP/MTs */}
-                {[7,8,9].map(k => (
-                  <div key={k} className="col-span-2">
-                    <Label className="text-xs">Kls {k}</Label>
-                    <div className="flex gap-1">
-                      <Input type="number" placeholder="L" value={formData[`kls${k}L` as keyof typeof formData]} onChange={(e) => setFormData({...formData, [`kls${k}L`]: e.target.value})} className="w-16" min="0" />
-                      <Input type="number" placeholder="P" value={formData[`kls${k}P` as keyof typeof formData]} onChange={(e) => setFormData({...formData, [`kls${k}P`]: e.target.value})} className="w-16" min="0" />
-                    </div>
-                  </div>
-                ))}
-                {/* SMA/SMK/MA */}
-                {[10,11,12].map(k => (
-                  <div key={k} className="col-span-2">
-                    <Label className="text-xs">Kls {k}</Label>
-                    <div className="flex gap-1">
-                      <Input type="number" placeholder="L" value={formData[`kls${k}L` as keyof typeof formData]} onChange={(e) => setFormData({...formData, [`kls${k}L`]: e.target.value})} className="w-16" min="0" />
-                      <Input type="number" placeholder="P" value={formData[`kls${k}P` as keyof typeof formData]} onChange={(e) => setFormData({...formData, [`kls${k}P`]: e.target.value})} className="w-16" min="0" />
-                    </div>
-                  </div>
-                ))}
+                {renderClassFields()}
               </div>
             </div>
 
@@ -786,29 +956,29 @@ export function DistribusiPage() {
               <h3 className="font-bold mb-3 flex items-center gap-2">
                 <GraduationCap className="w-4 h-4" /> GURU
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                <div>
+              <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+                <div className="col-span-2">
                   <Label className="text-xs">Kepala Sekolah</Label>
                   <div className="flex gap-1">
                     <Input type="number" placeholder="L" value={formData.kepsekL} onChange={(e) => setFormData({...formData, kepsekL: e.target.value})} className="w-16" min="0" />
                     <Input type="number" placeholder="P" value={formData.kepsekP} onChange={(e) => setFormData({...formData, kepsekP: e.target.value})} className="w-16" min="0" />
                   </div>
                 </div>
-                <div>
+                <div className="col-span-2">
                   <Label className="text-xs">Guru</Label>
                   <div className="flex gap-1">
                     <Input type="number" placeholder="L" value={formData.guruL} onChange={(e) => setFormData({...formData, guruL: e.target.value})} className="w-16" min="0" />
                     <Input type="number" placeholder="P" value={formData.guruP} onChange={(e) => setFormData({...formData, guruP: e.target.value})} className="w-16" min="0" />
                   </div>
                 </div>
-                <div>
+                <div className="col-span-2">
                   <Label className="text-xs">Tendik</Label>
                   <div className="flex gap-1">
                     <Input type="number" placeholder="L" value={formData.tendikL} onChange={(e) => setFormData({...formData, tendikL: e.target.value})} className="w-16" min="0" />
                     <Input type="number" placeholder="P" value={formData.tendikP} onChange={(e) => setFormData({...formData, tendikP: e.target.value})} className="w-16" min="0" />
                   </div>
                 </div>
-                <div>
+                <div className="col-span-2">
                   <Label className="text-xs">Non Tendik</Label>
                   <div className="flex gap-1">
                     <Input type="number" placeholder="L" value={formData.nonTendikL} onChange={(e) => setFormData({...formData, nonTendikL: e.target.value})} className="w-16" min="0" />
@@ -823,14 +993,22 @@ export function DistribusiPage() {
               <h3 className="font-bold mb-3">UJI ORGANOLEPTIK</h3>
               <div className="w-32">
                 <Label className="text-xs">Jumlah</Label>
-                <Input type="number" value={formData.ujiOrganoleptik} onChange={(e) => setFormData({...formData, ujiOrganoleptik: e.target.value})} min="0" />
+                <Input 
+                  type="number" 
+                  placeholder="0" 
+                  value={formData.ujiOrganoleptik} 
+                  onChange={(e) => setFormData({...formData, ujiOrganoleptik: e.target.value})} 
+                  min="0" 
+                />
               </div>
             </div>
 
             {/* Total */}
-            <div className="flex justify-between items-center p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
-              <span className="font-bold">TOTAL:</span>
-              <span className="text-2xl font-bold text-emerald-600">{calculateFormTotal()}</span>
+            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-lg">Total Jumlah:</span>
+                <span className="text-2xl font-bold text-emerald-600">{calculateFormTotal()}</span>
+              </div>
             </div>
 
             <DialogFooter>
@@ -838,7 +1016,7 @@ export function DistribusiPage() {
                 Batal
               </Button>
               <Button type="submit">
-                {isEditing ? 'Perbarui' : 'Simpan'}
+                {isEditing ? 'Simpan Perubahan' : 'Tambah Data'}
               </Button>
             </DialogFooter>
           </form>
