@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
         tempatLahir: body.tempatLahir || null,
         tanggalLahir: body.tanggalLahir || null,
         umur: body.umur || null,
+        alamat: body.alamat || null,
         hariKerja: body.hariKerja || null,
         bonus: body.bonus || null,
         totalGaji: body.totalGaji || null,

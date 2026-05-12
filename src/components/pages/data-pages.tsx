@@ -676,6 +676,7 @@ export function DataPage({ type }: DataPageProps) {
             { key: 'tempatLahir', label: 'Tempat Lahir' },
             { key: 'tanggalLahir', label: 'Tgl Lahir' },
             { key: 'umur', label: 'Umur' },
+            { key: 'alamat', label: 'Alamat' },
             { key: 'gajiPokok', label: 'Gaji Pokok' },
             { key: 'hariKerja', label: 'Hari Kerja' },
             { key: 'bonus', label: 'Bonus' },

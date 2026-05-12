@@ -116,6 +116,7 @@ model Relawan {
   tempatLahir String?
   tanggalLahir String?
   umur        String?
+  alamat      String?  // Alamat
   hariKerja   String?
   bonus       String?
   totalGaji   String?
