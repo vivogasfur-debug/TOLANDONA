@@ -102,7 +102,7 @@ export async function GET() {
         if (!school.kelasData.has(kelas)) {
           school.kelasData.set(kelas, { L: 0, P: 0 });
         }
-        const kelasEntry = school.kelasData.get(kelas);
+        const kelasEntry = school.kelasData.get(kelas)!;
         if (jk === 'L') kelasEntry.L++;
         else if (jk === 'P') kelasEntry.P++;
       }
@@ -128,7 +128,7 @@ export async function GET() {
           tendikData: new Map<string, { L: number; P: number }>() 
         });
       }
-      const school = guruSekolah.get(schoolName);
+      const school = guruSekolah.get(schoolName)!;
 
       // Update total
       if (jk === 'L') school.guruL++;
@@ -138,7 +138,7 @@ export async function GET() {
       if (!school.tendikData.has(jenisTendik)) {
         school.tendikData.set(jenisTendik, { L: 0, P: 0 });
       }
-      const tendikEntry = school.tendikData.get(jenisTendik);
+      const tendikEntry = school.tendikData.get(jenisTendik)!;
       if (jk === 'L') tendikEntry.L++;
       else if (jk === 'P') tendikEntry.P++;
     }
