@@ -128,10 +128,58 @@ model Relawan {
 model Distribusi {
   id          String   @id @default(cuid())
   namaSekolah String
-  kategori    String   // Siswa, Guru, Uji Organoleptik
-  kelas       String
+  
+  // Siswa - TK/PAUD
+  klsAL       Int      @default(0)
+  klsAP       Int      @default(0)
+  klsBL       Int      @default(0)
+  klsBP       Int      @default(0)
+  
+  // Siswa - SD/MI
+  kls1L       Int      @default(0)
+  kls1P       Int      @default(0)
+  kls2L       Int      @default(0)
+  kls2P       Int      @default(0)
+  kls3L       Int      @default(0)
+  kls3P       Int      @default(0)
+  kls4L       Int      @default(0)
+  kls4P       Int      @default(0)
+  kls5L       Int      @default(0)
+  kls5P       Int      @default(0)
+  kls6L       Int      @default(0)
+  kls6P       Int      @default(0)
+  
+  // Siswa - SMP/MTs
+  kls7L       Int      @default(0)
+  kls7P       Int      @default(0)
+  kls8L       Int      @default(0)
+  kls8P       Int      @default(0)
+  kls9L       Int      @default(0)
+  kls9P       Int      @default(0)
+  
+  // Siswa - SMA/SMK/MA
+  kls10L      Int      @default(0)
+  kls10P      Int      @default(0)
+  kls11L      Int      @default(0)
+  kls11P      Int      @default(0)
+  kls12L      Int      @default(0)
+  kls12P      Int      @default(0)
+  
+  // Guru
+  kepsekL     Int      @default(0)
+  kepsekP     Int      @default(0)
+  guruL       Int      @default(0)
+  guruP       Int      @default(0)
+  tendikL     Int      @default(0)
+  tendikP     Int      @default(0)
+  nonTendikL  Int      @default(0)
+  nonTendikP  Int      @default(0)
+  
+  // Uji Organoleptik
+  ujiOrganoleptik Int  @default(0)
+  
+  // Total & Date
   jumlah      Int
-  total       Int
   tanggal     DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
