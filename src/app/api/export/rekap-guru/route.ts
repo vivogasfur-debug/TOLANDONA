@@ -14,14 +14,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { data, format } = body as { data: GuruData[]; format: 'xlsx' | 'pdf' };
 
-    const tendikTypes = ['Kepala Sekolah', 'Guru', 'Guru Tendik', 'Tenaga Kependidikan', 'Non Tendik'];
+    const tendikTypes = ['Kepala Sekolah', 'Guru', 'Tendik', 'Non Tendik'];
 
     // Prepare data for export
     const exportData = data.map((s, i) => {
       const kepsek = s.tendikBreakdown['Kepala Sekolah'] || { L: 0, P: 0, Total: 0 };
       const guru = s.tendikBreakdown['Guru'] || { L: 0, P: 0, Total: 0 };
-      const guruTendik = s.tendikBreakdown['Guru Tendik'] || { L: 0, P: 0, Total: 0 };
-      const tenagaKependidikan = s.tendikBreakdown['Tenaga Kependidikan'] || { L: 0, P: 0, Total: 0 };
+      const tendik = s.tendikBreakdown['Tendik'] || { L: 0, P: 0, Total: 0 };
       const nonTendik = s.tendikBreakdown['Non Tendik'] || { L: 0, P: 0, Total: 0 };
       // Uji Organoleptik = dari jenisTendik "UJI ORGANOLEPTIK" di database
       const ujiOrganoleptik = s.tendikBreakdown['UJI ORGANOLEPTIK']?.Total || 0;
@@ -33,8 +32,8 @@ export async function POST(request: NextRequest) {
         'Kepsek P': kepsek.P,
         'Guru L': guru.L,
         'Guru P': guru.P,
-        'Tendik L': guruTendik.L + tenagaKependidikan.L,
-        'Tendik P': guruTendik.P + tenagaKependidikan.P,
+        'Tendik L': tendik.L,
+        'Tendik P': tendik.P,
         'Non Tendik L': nonTendik.L,
         'Non Tendik P': nonTendik.P,
         'Uji Organoleptik': ujiOrganoleptik,
@@ -52,8 +51,8 @@ export async function POST(request: NextRequest) {
       'Kepsek P': data.reduce((sum, s) => sum + (s.tendikBreakdown['Kepala Sekolah']?.P || 0), 0),
       'Guru L': data.reduce((sum, s) => sum + (s.tendikBreakdown['Guru']?.L || 0), 0),
       'Guru P': data.reduce((sum, s) => sum + (s.tendikBreakdown['Guru']?.P || 0), 0),
-      'Tendik L': data.reduce((sum, s) => sum + ((s.tendikBreakdown['Guru Tendik']?.L || 0) + (s.tendikBreakdown['Tenaga Kependidikan']?.L || 0)), 0),
-      'Tendik P': data.reduce((sum, s) => sum + ((s.tendikBreakdown['Guru Tendik']?.P || 0) + (s.tendikBreakdown['Tenaga Kependidikan']?.P || 0)), 0),
+      'Tendik L': data.reduce((sum, s) => sum + (s.tendikBreakdown['Tendik']?.L || 0), 0),
+      'Tendik P': data.reduce((sum, s) => sum + (s.tendikBreakdown['Tendik']?.P || 0), 0),
       'Non Tendik L': data.reduce((sum, s) => sum + (s.tendikBreakdown['Non Tendik']?.L || 0), 0),
       'Non Tendik P': data.reduce((sum, s) => sum + (s.tendikBreakdown['Non Tendik']?.P || 0), 0),
       'Uji Organoleptik': data.reduce((sum, s) => sum + (s.tendikBreakdown['UJI ORGANOLEPTIK']?.Total || 0), 0),

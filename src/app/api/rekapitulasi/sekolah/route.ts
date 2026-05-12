@@ -212,8 +212,8 @@ export async function GET() {
     const guruRekap = Array.from(guruSekolah.entries()).map(([namaSekolah, data]) => {
       const tendikBreakdown: Record<string, { L: number; P: number; Total: number }> = {};
 
-      // Categories for tendik - including UJI ORGANOLEPTIK as separate category
-      const categories = ['Kepala Sekolah', 'Guru Tendik', 'Guru', 'Tenaga Kependidikan', 'Non Tendik', 'UJI ORGANOLEPTIK', 'Tidak Diketahui'];
+      // Categories for tendik - using exact names from database
+      const categories = ['Kepala Sekolah', 'Guru', 'Tendik', 'Non Tendik', 'UJI ORGANOLEPTIK', 'Tidak Diketahui'];
 
       // Initialize categories
       categories.forEach(cat => {
@@ -224,20 +224,21 @@ export async function GET() {
       data.tendikData.forEach((value: { L: number; P: number }, key: string) => {
         let category = key;
 
-        // Normalize category names
-        const keyLower = key.toLowerCase();
+        // Normalize category names - map database values to display categories
+        const keyLower = key.toLowerCase().trim();
+
         if (keyLower.includes('uji organoleptik') || keyLower.includes('organoleptik')) {
-          // UJI ORGANOLEPTIK is a separate category - this is the correct handling
+          // UJI ORGANOLEPTIK is a separate category
           category = 'UJI ORGANOLEPTIK';
         } else if (keyLower.includes('kepala') || keyLower.includes('kep.sekolah') || keyLower.includes('ks')) {
           category = 'Kepala Sekolah';
-        } else if (keyLower.includes('tenaga kependidikan') || (keyLower.includes('tendik') && !keyLower.includes('guru'))) {
-          category = 'Tenaga Kependidikan';
-        } else if (keyLower.includes('guru tendik')) {
-          category = 'Guru Tendik';
-        } else if (keyLower.includes('guru') && !keyLower.includes('tendik')) {
+        } else if (keyLower === 'tendik' || keyLower.includes('tenaga kependidikan')) {
+          // TENDIK or Tenaga Kependidikan → Tendik
+          category = 'Tendik';
+        } else if (keyLower === 'guru' || keyLower.includes('guru')) {
+          // GURU or Guru → Guru
           category = 'Guru';
-        } else if (keyLower.includes('non')) {
+        } else if (keyLower.includes('non') || keyLower.includes('non tendik')) {
           category = 'Non Tendik';
         }
 

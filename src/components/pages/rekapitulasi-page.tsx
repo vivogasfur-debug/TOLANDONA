@@ -516,7 +516,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
   };
 
   const exportGuruToCSV = () => {
-    const tendikTypes = ['Kepala Sekolah', 'Guru', 'Guru Tendik', 'Tenaga Kependidikan', 'Non Tendik'];
+    const tendikTypes = ['Kepala Sekolah', 'Guru', 'Tendik', 'Non Tendik'];
     const headers = `No,Sekolah,${tendikTypes.map(t => `${t} L,${t} P,${t} Total`).join(',')},Uji Organoleptik,Total L,Total P,Total\n`;
     const rows = schoolData.guru.map((s, i) => {
       const tendikValues = tendikTypes.map(t => {
@@ -1002,7 +1002,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                     schoolData.guru.map((s, i) => {
                       const kepsek = s.tendikBreakdown['Kepala Sekolah'] || { L: 0, P: 0, Total: 0 };
                       const guru = s.tendikBreakdown['Guru'] || { L: 0, P: 0, Total: 0 };
-                      const tendik = s.tendikBreakdown['Guru Tendik'] || s.tendikBreakdown['Tenaga Kependidikan'] || { L: 0, P: 0 };
+                      const tendik = s.tendikBreakdown['Tendik'] || { L: 0, P: 0 };
                       const nonTendik = s.tendikBreakdown['Non Tendik'] || { L: 0, P: 0 };
                       // Uji Organoleptik = dari jenisTendik "UJI ORGANOLEPTIK" di database
                       const ujiOrganoleptik = s.tendikBreakdown['UJI ORGANOLEPTIK']?.Total || 0;
@@ -1032,8 +1032,8 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                       <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + (s.tendikBreakdown['Kepala Sekolah']?.P || 0), 0)}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + (s.tendikBreakdown['Guru']?.L || 0), 0)}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + (s.tendikBreakdown['Guru']?.P || 0), 0)}</TableCell>
-                      <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + ((s.tendikBreakdown['Guru Tendik'] || s.tendikBreakdown['Tenaga Kependidikan'])?.L || 0), 0)}</TableCell>
-                      <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + ((s.tendikBreakdown['Guru Tendik'] || s.tendikBreakdown['Tenaga Kependidikan'])?.P || 0), 0)}</TableCell>
+                      <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + (s.tendikBreakdown['Tendik']?.L || 0), 0)}</TableCell>
+                      <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + (s.tendikBreakdown['Tendik']?.P || 0), 0)}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + (s.tendikBreakdown['Non Tendik']?.L || 0), 0)}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.guru.reduce((sum, s) => sum + (s.tendikBreakdown['Non Tendik']?.P || 0), 0)}</TableCell>
                       <TableCell className="border border-slate-300 text-center bg-amber-50 dark:bg-amber-900/10">{schoolData.guru.reduce((sum, s) => sum + (s.tendikBreakdown['UJI ORGANOLEPTIK']?.Total || 0), 0)}</TableCell>
