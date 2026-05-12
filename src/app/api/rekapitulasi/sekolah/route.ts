@@ -270,13 +270,13 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       data: {
-        tk: processSchoolData(tkSekolah, ['Kelas A', 'Kelas B']),
+        tk: processSchoolData(tkSekolah, ['A', 'B']),
         sd: processSchoolData(sdSekolah, [1, 2, 3, 4, 5, 6]),
         smp: processSchoolData(smpSekolah, [7, 8, 9]),
         sma: processSchoolData(smaSekolah, [10, 11, 12]),
         guru: guruRekap,
         totals: {
-          tk: calculateTotals(processSchoolData(tkSekolah, ['Kelas A', 'Kelas B'])),
+          tk: calculateTotals(processSchoolData(tkSekolah, ['A', 'B'])),
           sd: calculateTotals(processSchoolData(sdSekolah, [1, 2, 3, 4, 5, 6])),
           smp: calculateTotals(processSchoolData(smpSekolah, [7, 8, 9])),
           sma: calculateTotals(processSchoolData(smaSekolah, [10, 11, 12])),

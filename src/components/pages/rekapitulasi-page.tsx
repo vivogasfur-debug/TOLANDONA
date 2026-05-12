@@ -504,7 +504,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
               <CardDescription>Data siswa TK/PAUD per kelas</CardDescription>
             </div>
             <div className="flex gap-2 items-center">
-              <Button variant="outline" size="sm" onClick={() => exportSekolahToCSV(schoolData.tk, ['Kelas A', 'Kelas B'], 'rekapitulasi_tk')}>
+              <Button variant="outline" size="sm" onClick={() => exportSekolahToCSV(schoolData.tk, ['A', 'B'], 'rekapitulasi_tk')}>
                 <Download className="w-4 h-4 mr-2" />Export
               </Button>
               <Badge variant="outline">Total: {schoolData.totals.tk.grandTotal.toLocaleString()} siswa</Badge>
@@ -517,8 +517,8 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                   {/* Main Header Row */}
                   <TableRow className="bg-slate-100 dark:bg-slate-800">
                     <TableHead rowSpan={2} className="border border-slate-300 text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[200px]">NAMA SEKOLAH</TableHead>
-                    <TableHead colSpan={2} className="border border-slate-300 text-center bg-pink-100 dark:bg-pink-900/30">A</TableHead>
-                    <TableHead colSpan={2} className="border border-slate-300 text-center bg-pink-100 dark:bg-pink-900/30">B</TableHead>
+                    <TableHead colSpan={2} className="border border-slate-300 text-center bg-pink-100 dark:bg-pink-900/30">KLS A</TableHead>
+                    <TableHead colSpan={2} className="border border-slate-300 text-center bg-pink-100 dark:bg-pink-900/30">KLS B</TableHead>
                     <TableHead colSpan={2} className="border border-slate-300 text-center bg-emerald-100 dark:bg-emerald-900/30">JUMLAH</TableHead>
                     <TableHead rowSpan={2} className="border border-slate-300 text-center align-middle bg-blue-100 dark:bg-blue-900/30 font-bold min-w-[60px]">TOTAL</TableHead>
                   </TableRow>
@@ -539,8 +539,8 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                     </TableRow>
                   ) : (
                     schoolData.tk.map((s, i) => {
-                      const kelasA = s.kelasBreakdown['Kelas A'] || { L: 0, P: 0 };
-                      const kelasB = s.kelasBreakdown['Kelas B'] || { L: 0, P: 0 };
+                      const kelasA = s.kelasBreakdown['A'] || { L: 0, P: 0 };
+                      const kelasB = s.kelasBreakdown['B'] || { L: 0, P: 0 };
                       return (
                         <TableRow key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                           <TableCell className="border border-slate-300 font-medium">{s.namaSekolah}</TableCell>
@@ -558,10 +558,10 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                   {schoolData.tk.length > 0 && (
                     <TableRow className="bg-blue-50 dark:bg-blue-900/20 font-bold">
                       <TableCell className="border border-slate-300">JUMLAH</TableCell>
-                      <TableCell className="border border-slate-300 text-center">{schoolData.tk.reduce((sum, s) => sum + (s.kelasBreakdown['Kelas A']?.L || 0), 0)}</TableCell>
-                      <TableCell className="border border-slate-300 text-center">{schoolData.tk.reduce((sum, s) => sum + (s.kelasBreakdown['Kelas A']?.P || 0), 0)}</TableCell>
-                      <TableCell className="border border-slate-300 text-center">{schoolData.tk.reduce((sum, s) => sum + (s.kelasBreakdown['Kelas B']?.L || 0), 0)}</TableCell>
-                      <TableCell className="border border-slate-300 text-center">{schoolData.tk.reduce((sum, s) => sum + (s.kelasBreakdown['Kelas B']?.P || 0), 0)}</TableCell>
+                      <TableCell className="border border-slate-300 text-center">{schoolData.tk.reduce((sum, s) => sum + (s.kelasBreakdown['A']?.L || 0), 0)}</TableCell>
+                      <TableCell className="border border-slate-300 text-center">{schoolData.tk.reduce((sum, s) => sum + (s.kelasBreakdown['A']?.P || 0), 0)}</TableCell>
+                      <TableCell className="border border-slate-300 text-center">{schoolData.tk.reduce((sum, s) => sum + (s.kelasBreakdown['B']?.L || 0), 0)}</TableCell>
+                      <TableCell className="border border-slate-300 text-center">{schoolData.tk.reduce((sum, s) => sum + (s.kelasBreakdown['B']?.P || 0), 0)}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.totals.tk.totalL}</TableCell>
                       <TableCell className="border border-slate-300 text-center">{schoolData.totals.tk.totalP}</TableCell>
                       <TableCell className="border border-slate-300 text-center text-blue-700">{schoolData.totals.tk.grandTotal}</TableCell>
@@ -597,7 +597,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                   <TableRow className="bg-slate-100 dark:bg-slate-800">
                     <TableHead rowSpan={2} className="border border-slate-300 text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[200px]">UNIT PENERIMA MANFAAT</TableHead>
                     {[1, 2, 3, 4, 5, 6].map(k => (
-                      <TableHead key={k} colSpan={2} className="border border-slate-300 text-center bg-pink-100 dark:bg-pink-900/30">{k}</TableHead>
+                      <TableHead key={k} colSpan={2} className="border border-slate-300 text-center bg-pink-100 dark:bg-pink-900/30">KLS {k}</TableHead>
                     ))}
                     <TableHead colSpan={2} className="border border-slate-300 text-center bg-emerald-100 dark:bg-emerald-900/30">JUMLAH</TableHead>
                     <TableHead rowSpan={2} className="border border-slate-300 text-center align-middle bg-blue-100 dark:bg-blue-900/30 font-bold min-w-[60px]">TOTAL</TableHead>
@@ -686,7 +686,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                   <TableRow className="bg-slate-100 dark:bg-slate-800">
                     <TableHead rowSpan={2} className="border border-slate-300 text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[200px]">UNIT PENERIMA MANFAAT</TableHead>
                     {[7, 8, 9].map(k => (
-                      <TableHead key={k} colSpan={2} className="border border-slate-300 text-center bg-pink-100 dark:bg-pink-900/30">{k}</TableHead>
+                      <TableHead key={k} colSpan={2} className="border border-slate-300 text-center bg-pink-100 dark:bg-pink-900/30">KLS {k}</TableHead>
                     ))}
                     <TableHead colSpan={2} className="border border-slate-300 text-center bg-emerald-100 dark:bg-emerald-900/30">JUMLAH</TableHead>
                     <TableHead rowSpan={2} className="border border-slate-300 text-center align-middle bg-blue-100 dark:bg-blue-900/30 font-bold min-w-[60px]">TOTAL</TableHead>
@@ -775,7 +775,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
                   <TableRow className="bg-slate-100 dark:bg-slate-800">
                     <TableHead rowSpan={2} className="border border-slate-300 text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[200px]">UNIT PENERIMA MANFAAT</TableHead>
                     {[10, 11, 12].map(k => (
-                      <TableHead key={k} colSpan={2} className="border border-slate-300 text-center bg-pink-100 dark:bg-pink-900/30">{k}</TableHead>
+                      <TableHead key={k} colSpan={2} className="border border-slate-300 text-center bg-pink-100 dark:bg-pink-900/30">KLS {k}</TableHead>
                     ))}
                     <TableHead colSpan={2} className="border border-slate-300 text-center bg-emerald-100 dark:bg-emerald-900/30">JUMLAH</TableHead>
                     <TableHead rowSpan={2} className="border border-slate-300 text-center align-middle bg-blue-100 dark:bg-blue-900/30 font-bold min-w-[60px]">TOTAL</TableHead>
