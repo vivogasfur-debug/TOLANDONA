@@ -156,6 +156,49 @@ export function RekapitulasiPage() {
     URL.revokeObjectURL(url);
   };
 
+  const exportToExcel = async (data: Array<{ name: string; value: number }>, filename: string, title: string) => {
+    try {
+      const res = await fetch('/api/export/simple', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data, filename, format: 'xlsx', title }),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filename}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Export Excel error:', error);
+    }
+  };
+
+  const exportToPDF = async (data: Array<{ name: string; value: number }>, filename: string, title: string) => {
+    try {
+      const res = await fetch('/api/export/simple', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data, filename, format: 'pdf', title }),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filename}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Export PDF error:', error);
+    }
+  };
+
+  // 3B Export Functions
   const export3BToCSV = () => {
     const headers = 'No,Posyandu,Balita 6-11 Bulan L,Balita 6-11 Bulan P,Total Balita 6-11 Bulan,Balita 1-5 Tahun L,Balita 1-5 Tahun P,Total Balita 1-5 Tahun,Bumil,Menyusui,Total\n';
     const rows = rekap3BData.map((s, i) =>
@@ -168,6 +211,48 @@ export function RekapitulasiPage() {
     a.download = 'rekapitulasi_3b.csv';
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const export3BToExcel = async () => {
+    try {
+      const res = await fetch('/api/export/rekap-3b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: rekap3BData, format: 'xlsx' }),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'rekapitulasi_3b.xlsx';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Export Excel error:', error);
+    }
+  };
+
+  const export3BToPDF = async () => {
+    try {
+      const res = await fetch('/api/export/rekap-3b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: rekap3BData, format: 'pdf' }),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'rekapitulasi_3b.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Export PDF error:', error);
+    }
   };
 
   if (loading) {
@@ -216,7 +301,7 @@ export function RekapitulasiPage() {
 
         {/* Tab Umum */}
         <TabsContent value="umum" className="space-y-6 mt-6">
-          <RekapitulasiUmum stats={stats} exportToCSV={exportToCSV} />
+          <RekapitulasiUmum stats={stats} exportToCSV={exportToCSV} exportToExcel={exportToExcel} exportToPDF={exportToPDF} />
         </TabsContent>
 
         {/* Tab Sekolah */}
@@ -226,7 +311,7 @@ export function RekapitulasiPage() {
 
         {/* Tab 3B */}
         <TabsContent value="tigab" className="space-y-6 mt-6">
-          <Rekapitulasi3B rekap3BData={rekap3BData} onExport={export3BToCSV} />
+          <Rekapitulasi3B rekap3BData={rekap3BData} onExportCSV={export3BToCSV} onExportExcel={export3BToExcel} onExportPDF={export3BToPDF} />
         </TabsContent>
       </Tabs>
     </div>
@@ -234,9 +319,11 @@ export function RekapitulasiPage() {
 }
 
 // Rekapitulasi Umum Component
-function RekapitulasiUmum({ stats, exportToCSV }: { 
-  stats: Stats | null; 
+function RekapitulasiUmum({ stats, exportToCSV, exportToExcel, exportToPDF }: {
+  stats: Stats | null;
   exportToCSV: (data: Array<{ name: string; value: number }>, filename: string) => void;
+  exportToExcel: (data: Array<{ name: string; value: number }>, filename: string, title: string) => void;
+  exportToPDF: (data: Array<{ name: string; value: number }>, filename: string, title: string) => void;
 }) {
   return (
     <>
@@ -256,9 +343,24 @@ function RekapitulasiUmum({ stats, exportToCSV }: {
               <CardTitle className="flex items-center gap-2"><GraduationCap className="w-5 h-5 text-emerald-500" />Distribusi Guru per Sekolah</CardTitle>
               <CardDescription>Top 10 sekolah dengan guru terbanyak</CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={() => exportToCSV(stats?.guruSekolah || [], 'guru-per-sekolah')}>
-              <Download className="w-4 h-4 mr-2" />Export
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => exportToCSV(stats?.guruSekolah || [], 'guru-per-sekolah')}>
+                  <FileText className="w-4 h-4 mr-2" />Export CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportToExcel(stats?.guruSekolah || [], 'guru-per-sekolah', 'Distribusi Guru per Sekolah')}>
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />Export Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportToPDF(stats?.guruSekolah || [], 'guru-per-sekolah', 'Distribusi Guru per Sekolah')}>
+                  <FileType className="w-4 h-4 mr-2" />Export PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={350}>
@@ -281,9 +383,24 @@ function RekapitulasiUmum({ stats, exportToCSV }: {
               <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5 text-cyan-500" />Distribusi Siswa per Jenjang</CardTitle>
               <CardDescription>Jumlah siswa berdasarkan jenjang pendidikan</CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={() => exportToCSV(stats?.siswaJenjang || [], 'siswa-per-jenjang')}>
-              <Download className="w-4 h-4 mr-2" />Export
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => exportToCSV(stats?.siswaJenjang || [], 'siswa-per-jenjang')}>
+                  <FileText className="w-4 h-4 mr-2" />Export CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportToExcel(stats?.siswaJenjang || [], 'siswa-per-jenjang', 'Distribusi Siswa per Jenjang')}>
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />Export Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportToPDF(stats?.siswaJenjang || [], 'siswa-per-jenjang', 'Distribusi Siswa per Jenjang')}>
+                  <FileType className="w-4 h-4 mr-2" />Export PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={350}>
@@ -306,9 +423,24 @@ function RekapitulasiUmum({ stats, exportToCSV }: {
               <CardTitle className="flex items-center gap-2"><Baby className="w-5 h-5 text-pink-500" />Kategori Posyandu</CardTitle>
               <CardDescription>Distribusi berdasarkan kategori</CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={() => exportToCSV(stats?.posyanduKategori || [], 'kategori-posyandu')}>
-              <Download className="w-4 h-4 mr-2" />Export
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => exportToCSV(stats?.posyanduKategori || [], 'kategori-posyandu')}>
+                  <FileText className="w-4 h-4 mr-2" />Export CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportToExcel(stats?.posyanduKategori || [], 'kategori-posyandu', 'Kategori Posyandu')}>
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />Export Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportToPDF(stats?.posyanduKategori || [], 'kategori-posyandu', 'Kategori Posyandu')}>
+                  <FileType className="w-4 h-4 mr-2" />Export PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -329,9 +461,24 @@ function RekapitulasiUmum({ stats, exportToCSV }: {
               <CardTitle className="flex items-center gap-2"><PieChartIcon className="w-5 h-5 text-purple-500" />Jenis Tendik Guru</CardTitle>
               <CardDescription>Distribusi berdasarkan jenis tenaga pendidik</CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={() => exportToCSV(stats?.jenisTendik || [], 'jenis-tendik')}>
-              <Download className="w-4 h-4 mr-2" />Export
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => exportToCSV(stats?.jenisTendik || [], 'jenis-tendik')}>
+                  <FileText className="w-4 h-4 mr-2" />Export CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportToExcel(stats?.jenisTendik || [], 'jenis-tendik', 'Jenis Tendik Guru')}>
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />Export Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportToPDF(stats?.jenisTendik || [], 'jenis-tendik', 'Jenis Tendik Guru')}>
+                  <FileType className="w-4 h-4 mr-2" />Export PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -599,9 +746,24 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
               <CardDescription>Data siswa TK/PAUD per kelas</CardDescription>
             </div>
             <div className="flex gap-2 items-center">
-              <Button variant="outline" size="sm" onClick={() => exportSekolahToCSV(schoolData.tk, ['A', 'B'], 'rekapitulasi_tk')}>
-                <Download className="w-4 h-4 mr-2" />Export
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="w-4 h-4 mr-2" />Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => exportSekolahToCSV(schoolData.tk, ['A', 'B'], 'rekapitulasi_tk')}>
+                    <FileText className="w-4 h-4 mr-2" />Export CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportSekolahToExcel(schoolData.tk, ['A', 'B'], 'rekapitulasi_tk')}>
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />Export Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportSekolahToPDF(schoolData.tk, ['A', 'B'], 'rekapitulasi_tk', 'Rekap TK/PAUD')}>
+                    <FileType className="w-4 h-4 mr-2" />Export PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Badge variant="outline">Total: {schoolData.totals.tk.grandTotal.toLocaleString()} siswa</Badge>
             </div>
           </CardHeader>
@@ -678,9 +840,24 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
               <CardDescription>Data siswa per kelas (Kelas 1-6)</CardDescription>
             </div>
             <div className="flex gap-2 items-center">
-              <Button variant="outline" size="sm" onClick={() => exportSekolahToCSV(schoolData.sd, ['Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Kelas 5', 'Kelas 6'], 'rekapitulasi_sd')}>
-                <Download className="w-4 h-4 mr-2" />Export
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="w-4 h-4 mr-2" />Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => exportSekolahToCSV(schoolData.sd, ['Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Kelas 5', 'Kelas 6'], 'rekapitulasi_sd')}>
+                    <FileText className="w-4 h-4 mr-2" />Export CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportSekolahToExcel(schoolData.sd, ['Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Kelas 5', 'Kelas 6'], 'rekapitulasi_sd')}>
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />Export Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportSekolahToPDF(schoolData.sd, ['Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Kelas 5', 'Kelas 6'], 'rekapitulasi_sd', 'Rekap SD/MI')}>
+                    <FileType className="w-4 h-4 mr-2" />Export PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Badge variant="outline">Total: {schoolData.totals.sd.grandTotal.toLocaleString()} siswa</Badge>
             </div>
           </CardHeader>
@@ -767,9 +944,24 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
               <CardDescription>Data siswa per kelas (Kelas 7-9)</CardDescription>
             </div>
             <div className="flex gap-2 items-center">
-              <Button variant="outline" size="sm" onClick={() => exportSekolahToCSV(schoolData.smp, ['Kelas 7', 'Kelas 8', 'Kelas 9'], 'rekapitulasi_smp')}>
-                <Download className="w-4 h-4 mr-2" />Export
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="w-4 h-4 mr-2" />Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => exportSekolahToCSV(schoolData.smp, ['Kelas 7', 'Kelas 8', 'Kelas 9'], 'rekapitulasi_smp')}>
+                    <FileText className="w-4 h-4 mr-2" />Export CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportSekolahToExcel(schoolData.smp, ['Kelas 7', 'Kelas 8', 'Kelas 9'], 'rekapitulasi_smp')}>
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />Export Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportSekolahToPDF(schoolData.smp, ['Kelas 7', 'Kelas 8', 'Kelas 9'], 'rekapitulasi_smp', 'Rekap SMP/MTs')}>
+                    <FileType className="w-4 h-4 mr-2" />Export PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Badge variant="outline">Total: {schoolData.totals.smp.grandTotal.toLocaleString()} siswa</Badge>
             </div>
           </CardHeader>
@@ -856,9 +1048,24 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
               <CardDescription>Data siswa per kelas (Kelas 10-12)</CardDescription>
             </div>
             <div className="flex gap-2 items-center">
-              <Button variant="outline" size="sm" onClick={() => exportSekolahToCSV(schoolData.sma, ['Kelas 10', 'Kelas 11', 'Kelas 12'], 'rekapitulasi_sma')}>
-                <Download className="w-4 h-4 mr-2" />Export
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="w-4 h-4 mr-2" />Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => exportSekolahToCSV(schoolData.sma, ['Kelas 10', 'Kelas 11', 'Kelas 12'], 'rekapitulasi_sma')}>
+                    <FileText className="w-4 h-4 mr-2" />Export CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportSekolahToExcel(schoolData.sma, ['Kelas 10', 'Kelas 11', 'Kelas 12'], 'rekapitulasi_sma')}>
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />Export Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportSekolahToPDF(schoolData.sma, ['Kelas 10', 'Kelas 11', 'Kelas 12'], 'rekapitulasi_sma', 'Rekap SMA/SMK/MA')}>
+                    <FileType className="w-4 h-4 mr-2" />Export PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Badge variant="outline">Total: {schoolData.totals.sma.grandTotal.toLocaleString()} siswa</Badge>
             </div>
           </CardHeader>
@@ -1055,9 +1262,11 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
 }
 
 // Rekapitulasi 3B Component
-function Rekapitulasi3B({ rekap3BData, onExport }: {
+function Rekapitulasi3B({ rekap3BData, onExportCSV, onExportExcel, onExportPDF }: {
   rekap3BData: Rekap3BData[];
-  onExport: () => void;
+  onExportCSV: () => void;
+  onExportExcel: () => void;
+  onExportPDF: () => void;
 }) {
   const totals = rekap3BData.reduce((acc, item) => ({
     balita06L: acc.balita06L + item.balita06L,
@@ -1078,9 +1287,24 @@ function Rekapitulasi3B({ rekap3BData, onExport }: {
           <CardTitle>REKAP 3B (BALITA, BUMIL, MENYUSUI)</CardTitle>
           <CardDescription>Data per Posyandu</CardDescription>
         </div>
-        <Button variant="outline" size="sm" onClick={onExport}>
-          <Download className="w-4 h-4 mr-2" />Export CSV
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />Export
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onExportCSV}>
+              <FileText className="w-4 h-4 mr-2" />Export CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onExportExcel}>
+              <FileSpreadsheet className="w-4 h-4 mr-2" />Export Excel
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onExportPDF}>
+              <FileType className="w-4 h-4 mr-2" />Export PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
