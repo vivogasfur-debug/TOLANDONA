@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   reactStrictMode: false,
+  // Allow cross-origin requests from preview domains
+  allowedDevOrigins: [
+    'preview-chat-37ce5563-ffba-4ebb-b141-ff8f9e5d919e.space-z.ai',
+    '.space-z.ai',
+    'localhost',
+  ],
 };
 
 export default nextConfig;
