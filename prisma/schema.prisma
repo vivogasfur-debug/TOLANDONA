@@ -123,3 +123,15 @@ model Relawan {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// Distribusi Data
+model Distribusi {
+  id          String   @id @default(cuid())
+  namaSekolah String
+  kelas       String
+  jumlah      Int
+  total       Int
+  tanggal     DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

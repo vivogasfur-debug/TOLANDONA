@@ -4,59 +4,285 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Treemap, RadarChart, PolarGrid, PolarAngleAxis,
-  PolarRadiusAxis, Radar, Legend
+  LineChart, Line, Legend
 } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  PieChart as PieChartIcon, BarChart3, MapPin, TrendingUp,
-  Users, GraduationCap, Baby, School
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  PieChart as PieChartIcon, BarChart3, Plus, Pencil, Trash2,
+  Download, FileText, FileSpreadsheet, FileType, Calendar, School,
+  TrendingUp, Filter, RefreshCw
 } from 'lucide-react';
+import { toast } from 'sonner';
 
-interface Stats {
-  totalGuru: number;
-  totalSiswa: number;
-  totalPosyandu: number;
-  guruGender: Array<{ name: string; value: number }>;
-  siswaGender: Array<{ name: string; value: number }>;
-  posyanduGender: Array<{ name: string; value: number }>;
-  guruSekolah: Array<{ name: string; value: number }>;
-  siswaSekolah: Array<{ name: string; value: number }>;
-  siswaJenjang: Array<{ name: string; value: number }>;
-  posyanduList: Array<{ name: string; value: number }>;
-  posyanduKategori: Array<{ name: string; value: number }>;
-  jenisTendik: Array<{ name: string; value: number }>;
+interface Distribusi {
+  id: string;
+  namaSekolah: string;
+  kelas: string;
+  jumlah: number;
+  total: number;
+  tanggal: Date;
+  createdAt: Date;
 }
 
-const COLORS = ['#10b981', '#06b6d4', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6', '#f97316', '#84cc16'];
+interface RekapData {
+  namaSekolah: string;
+  distribusi: Array<{
+    kelas: string;
+    jumlah: number;
+    total: number;
+    tanggal: Date;
+  }>;
+  totalJumlah: number;
+  totalAll: number;
+}
+
+interface RekapResponse {
+  rekap: RekapData[];
+  filteredData: Distribusi[];
+  grandTotal: { jumlah: number; total: number };
+  years: number[];
+  weeklySummary: Array<{ month: number; monthName: string; totalJumlah: number; totalAll: number; count: number }>;
+  monthlySummary: Array<{ month: number; monthName: string; totalJumlah: number; totalAll: number; count: number }>;
+  yearlySummary: Array<{ year: number; totalJumlah: number; totalAll: number; count: number }>;
+}
+
+const KELAS_OPTIONS = [
+  'TK A', 'TK B', 'Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Kelas 5', 'Kelas 6',
+  'Kelas 7', 'Kelas 8', 'Kelas 9', 'Kelas 10', 'Kelas 11', 'Kelas 12'
+];
+
+const MONTHS = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
+
+const COLORS = ['#10b981', '#06b6d4', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'];
 
 export function DistribusiPage() {
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [activeTab, setActiveTab] = useState('data');
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('guru');
+  const [distribusiData, setDistribusiData] = useState<Distribusi[]>([]);
+  const [rekapData, setRekapData] = useState<RekapResponse | null>(null);
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 });
+  
+  // Form state
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    namaSekolah: '',
+    kelas: '',
+    jumlah: '',
+    total: '',
+    tanggal: new Date().toISOString().split('T')[0],
+  });
+
+  // Filter state
+  const [filterPeriod, setFilterPeriod] = useState('all');
+  const [filterYear, setFilterYear] = useState(new Date().getFullYear());
+  const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
+  const [filterWeek, setFilterWeek] = useState(1);
+
+  // Schools list from database
+  const [schools, setSchools] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchStats();
+    fetchDistribusi();
+    fetchRekap();
+    fetchSchools();
   }, []);
 
-  const fetchStats = async () => {
+  useEffect(() => {
+    fetchRekap();
+  }, [filterPeriod, filterYear, filterMonth, filterWeek]);
+
+  const fetchDistribusi = async (page = 1) => {
     try {
-      const res = await fetch('/api/stats');
+      setLoading(true);
+      const res = await fetch(`/api/distribusi?page=${page}&limit=${pagination.limit}`);
       const data = await res.json();
       if (data.success) {
-        setStats(data.stats);
+        setDistribusiData(data.data);
+        setPagination(data.pagination);
       }
     } catch (error) {
-      console.error('Failed to fetch stats:', error);
+      console.error('Failed to fetch distribusi:', error);
+      toast.error('Gagal memuat data distribusi');
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
+  const fetchRekap = async () => {
+    try {
+      const params = new URLSearchParams({
+        period: filterPeriod,
+        year: filterYear.toString(),
+        month: filterMonth.toString(),
+        week: filterWeek.toString(),
+      });
+      const res = await fetch(`/api/distribusi/rekap?${params}`);
+      const data = await res.json();
+      if (data.success) {
+        setRekapData(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch rekap:', error);
+    }
+  };
+
+  const fetchSchools = async () => {
+    try {
+      const res = await fetch('/api/sekolah');
+      const data = await res.json();
+      if (data.success) {
+        setSchools(data.sekolah || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch schools:', error);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.namaSekolah || !formData.kelas || !formData.jumlah || !formData.total) {
+      toast.error('Semua field harus diisi');
+      return;
+    }
+
+    try {
+      const url = isEditing ? `/api/distribusi/${editingId}` : '/api/distribusi';
+      const method = isEditing ? 'PUT' : 'POST';
+      
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message);
+        setIsDialogOpen(false);
+        resetForm();
+        fetchDistribusi();
+        fetchRekap();
+      } else {
+        toast.error(data.error);
+      }
+    } catch (error) {
+      console.error('Error saving distribusi:', error);
+      toast.error('Gagal menyimpan data');
+    }
+  };
+
+  const handleEdit = (item: Distribusi) => {
+    setIsEditing(true);
+    setEditingId(item.id);
+    setFormData({
+      namaSekolah: item.namaSekolah,
+      kelas: item.kelas,
+      jumlah: item.jumlah.toString(),
+      total: item.total.toString(),
+      tanggal: new Date(item.tanggal).toISOString().split('T')[0],
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Yakin ingin menghapus data ini?')) return;
+    
+    try {
+      const res = await fetch(`/api/distribusi/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message);
+        fetchDistribusi();
+        fetchRekap();
+      }
+    } catch (error) {
+      console.error('Error deleting distribusi:', error);
+      toast.error('Gagal menghapus data');
+    }
+  };
+
+  const resetForm = () => {
+    setIsEditing(false);
+    setEditingId(null);
+    setFormData({
+      namaSekolah: '',
+      kelas: '',
+      jumlah: '',
+      total: '',
+      tanggal: new Date().toISOString().split('T')[0],
+    });
+  };
+
+  const exportToCSV = () => {
+    const headers = 'No,Sekolah,Kelas,Jumlah,Total,Tanggal\n';
+    const rows = distribusiData.map((d, i) => 
+      `${i + 1},"${d.namaSekolah}","${d.kelas}",${d.jumlah},${d.total},"${new Date(d.tanggal).toLocaleDateString('id-ID')}"`
+    ).join('\n');
+    downloadFile(headers + rows, 'distribusi.csv', 'text/csv');
+  };
+
+  const exportToExcel = async () => {
+    toast.info('Export Excel sedang diproses...');
+    // Would need to implement Excel export API
+  };
+
+  const exportToPDF = async () => {
+    toast.info('Export PDF sedang diproses...');
+    // Would need to implement PDF export API
+  };
+
+  const downloadFile = (content: string, filename: string, type: string) => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  if (loading && !rekapData) {
     return (
       <div className="p-6 space-y-6">
         <Skeleton className="h-8 w-64" />
@@ -75,383 +301,504 @@ export function DistribusiPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">Distribusi Data</h1>
-            <p className="text-sm text-slate-500">Analisis distribusi data berdasarkan lokasi dan kategori</p>
+            <p className="text-sm text-slate-500">Kelola data distribusi dan rekapitulasi</p>
           </div>
+        </div>
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Download className="w-4 h-4 mr-2" />Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={exportToCSV}>
+                <FileText className="w-4 h-4 mr-2" />Export CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportToExcel}>
+                <FileSpreadsheet className="w-4 h-4 mr-2" />Export Excel
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportToPDF}>
+                <FileType className="w-4 h-4 mr-2" />Export PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button onClick={() => { resetForm(); setIsDialogOpen(true); }}>
+            <Plus className="w-4 h-4 mr-2" />Tambah Data
+          </Button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
-          <TabsTrigger value="guru" className="flex items-center gap-2">
-            <GraduationCap className="w-4 h-4" />
-            Guru
+      {/* Main Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-5 max-w-2xl">
+          <TabsTrigger value="data" className="gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Data
           </TabsTrigger>
-          <TabsTrigger value="siswa" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Siswa
+          <TabsTrigger value="hasil" className="gap-2">
+            <TrendingUp className="w-4 h-4" />
+            Hasil
           </TabsTrigger>
-          <TabsTrigger value="posyandu" className="flex items-center gap-2">
-            <Baby className="w-4 h-4" />
-            Posyandu
+          <TabsTrigger value="mingguan" className="gap-2">
+            <Calendar className="w-4 h-4" />
+            Mingguan
+          </TabsTrigger>
+          <TabsTrigger value="bulanan" className="gap-2">
+            <Calendar className="w-4 h-4" />
+            Bulanan
+          </TabsTrigger>
+          <TabsTrigger value="tahunan" className="gap-2">
+            <Calendar className="w-4 h-4" />
+            Tahunan
           </TabsTrigger>
         </TabsList>
 
-        {/* Guru Tab */}
-        <TabsContent value="guru" className="space-y-6">
+        {/* Data Tab */}
+        <TabsContent value="data" className="space-y-6 mt-6">
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle>Data Distribusi</CardTitle>
+              <CardDescription>Daftar data distribusi yang telah diinput</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50 dark:bg-slate-800/50">
+                      <TableHead>No</TableHead>
+                      <TableHead>Nama Sekolah</TableHead>
+                      <TableHead>Kelas</TableHead>
+                      <TableHead className="text-center">Jumlah</TableHead>
+                      <TableHead className="text-center">Total</TableHead>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead className="text-center">Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {distribusiData.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                          Belum ada data distribusi
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      distribusiData.map((item, index) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{(pagination.page - 1) * pagination.limit + index + 1}</TableCell>
+                          <TableCell className="font-medium">{item.namaSekolah}</TableCell>
+                          <TableCell>{item.kelas}</TableCell>
+                          <TableCell className="text-center">{item.jumlah}</TableCell>
+                          <TableCell className="text-center font-bold">{item.total}</TableCell>
+                          <TableCell>{new Date(item.tanggal).toLocaleDateString('id-ID')}</TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex justify-center gap-2">
+                              <Button size="icon" variant="ghost" onClick={() => handleEdit(item)}>
+                                <Pencil className="w-4 h-4 text-blue-500" />
+                              </Button>
+                              <Button size="icon" variant="ghost" onClick={() => handleDelete(item.id)}>
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {/* Pagination */}
+              {pagination.totalPages > 1 && (
+                <div className="flex justify-center gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={pagination.page === 1}
+                    onClick={() => fetchDistribusi(pagination.page - 1)}
+                  >
+                    Sebelumnya
+                  </Button>
+                  <span className="flex items-center px-4">
+                    Hal {pagination.page} dari {pagination.totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={pagination.page === pagination.totalPages}
+                    onClick={() => fetchDistribusi(pagination.page + 1)}
+                  >
+                    Selanjutnya
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Hasil Tab (All Results) */}
+        <TabsContent value="hasil" className="space-y-6 mt-6">
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle>Rekapitulasi Hasil Distribusi</CardTitle>
+              <CardDescription>Ringkasan hasil distribusi per sekolah</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50 dark:bg-slate-800/50">
+                      <TableHead>No</TableHead>
+                      <TableHead>Nama Sekolah</TableHead>
+                      <TableHead className="text-center">Total Jumlah</TableHead>
+                      <TableHead className="text-center">Grand Total</TableHead>
+                      <TableHead className="text-center">Jumlah Transaksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rekapData?.rekap.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                          Tidak ada data
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      rekapData?.rekap.map((item, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell className="font-medium">{item.namaSekolah}</TableCell>
+                          <TableCell className="text-center">{item.totalJumlah}</TableCell>
+                          <TableCell className="text-center font-bold text-emerald-600">{item.totalAll}</TableCell>
+                          <TableCell className="text-center">{item.distribusi.length}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                    {rekapData && rekapData.rekap.length > 0 && (
+                      <TableRow className="bg-emerald-50 dark:bg-emerald-900/20 font-bold">
+                        <TableCell colSpan={2}>TOTAL</TableCell>
+                        <TableCell className="text-center">{rekapData.grandTotal.jumlah}</TableCell>
+                        <TableCell className="text-center text-emerald-600">{rekapData.grandTotal.total}</TableCell>
+                        <TableCell className="text-center">{rekapData.filteredData.length}</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Mingguan Tab */}
+        <TabsContent value="mingguan" className="space-y-6 mt-6">
+          <div className="flex flex-wrap gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <Label>Tahun:</Label>
+              <Select value={filterYear.toString()} onValueChange={(v) => setFilterYear(parseInt(v))}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {rekapData?.years.map(y => (
+                    <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                  )) || <SelectItem value={filterYear.toString()}>{filterYear}</SelectItem>}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label>Bulan:</Label>
+              <Select value={filterMonth.toString()} onValueChange={(v) => setFilterMonth(parseInt(v))}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((m, i) => (
+                    <SelectItem key={i + 1} value={(i + 1).toString()}>{m}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label>Minggu:</Label>
+              <Select value={filterWeek.toString()} onValueChange={(v) => setFilterWeek(parseInt(v))}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5].map(w => (
+                    <SelectItem key={w} value={w.toString()}>Minggu {w}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle>Rekapitulasi Mingguan</CardTitle>
+              <CardDescription>
+                Data distribusi Minggu {filterWeek} {MONTHS[filterMonth - 1]} {filterYear}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50 dark:bg-slate-800/50">
+                      <TableHead>No</TableHead>
+                      <TableHead>Nama Sekolah</TableHead>
+                      <TableHead className="text-center">Total Jumlah</TableHead>
+                      <TableHead className="text-center">Grand Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rekapData?.rekap.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                          Tidak ada data untuk periode ini
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      rekapData?.rekap.map((item, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell className="font-medium">{item.namaSekolah}</TableCell>
+                          <TableCell className="text-center">{item.totalJumlah}</TableCell>
+                          <TableCell className="text-center font-bold text-emerald-600">{item.totalAll}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                    {rekapData && rekapData.rekap.length > 0 && (
+                      <TableRow className="bg-emerald-50 dark:bg-emerald-900/20 font-bold">
+                        <TableCell colSpan={2}>TOTAL</TableCell>
+                        <TableCell className="text-center">{rekapData.grandTotal.jumlah}</TableCell>
+                        <TableCell className="text-center text-emerald-600">{rekapData.grandTotal.total}</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Bulanan Tab */}
+        <TabsContent value="bulanan" className="space-y-6 mt-6">
+          <div className="flex flex-wrap gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <Label>Tahun:</Label>
+              <Select value={filterYear.toString()} onValueChange={(v) => setFilterYear(parseInt(v))}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {rekapData?.years.map(y => (
+                    <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                  )) || <SelectItem value={filterYear.toString()}>{filterYear}</SelectItem>}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Sekolah Distribution */}
             <Card className="border-0 shadow-lg">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <School className="w-5 h-5 text-emerald-500" />
-                  Distribusi per Sekolah
-                </CardTitle>
-                <CardDescription>Lokasi penyebaran guru berdasarkan sekolah</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={400}>
-                  <BarChart data={stats?.guruSekolah?.slice(0, 10) || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={80} />
-                    <YAxis />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'rgba(255,255,255,0.95)',
-                        border: 'none',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                      }}
-                    />
-                    <Bar dataKey="value" name="Jumlah Guru" radius={[4, 4, 0, 0]}>
-                      {(stats?.guruSekolah?.slice(0, 10) || []).map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Gender Distribution */}
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <PieChartIcon className="w-5 h-5 text-teal-500" />
-                  Distribusi Gender
-                </CardTitle>
-                <CardDescription>Perbandingan guru laki-laki dan perempuan</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={400}>
-                  <PieChart>
-                    <Pie
-                      data={stats?.guruGender || []}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={80}
-                      outerRadius={120}
-                      paddingAngle={5}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name === 'L' ? 'Laki-laki' : 'Perempuan'} (${(percent * 100).toFixed(1)}%)`}
-                    >
-                      {(stats?.guruGender || []).map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={index === 0 ? '#10b981' : '#f472b6'} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Jenis Tendik */}
-            <Card className="border-0 shadow-lg lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-purple-500" />
-                  Jenis Tenaga Pendidik
-                </CardTitle>
-                <CardDescription>Distribusi berdasarkan jenis tenaga pendidik</CardDescription>
+                <CardTitle>Grafik Bulanan</CardTitle>
+                <CardDescription>Tren distribusi tahun {filterYear}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={stats?.jenisTendik || []} layout="vertical">
+                  <BarChart data={rekapData?.monthlySummary || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 11 }} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'rgba(255,255,255,0.95)',
-                        border: 'none',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                      }}
-                    />
-                    <Bar dataKey="value" name="Jumlah" radius={[0, 4, 4, 0]}>
-                      {(stats?.jenisTendik || []).map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Bar>
+                    <XAxis dataKey="monthName" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={70} />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="totalAll" name="Total" fill="#10b981" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="count" name="Jumlah Transaksi" fill="#06b6d4" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle>Tabel Bulanan</CardTitle>
+                <CardDescription>Ringkasan per bulan tahun {filterYear}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="max-h-80 overflow-y-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50 dark:bg-slate-800/50 sticky top-0">
+                        <TableHead>Bulan</TableHead>
+                        <TableHead className="text-center">Total</TableHead>
+                        <TableHead className="text-center">Transaksi</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rekapData?.monthlySummary.filter(m => m.count > 0).map((item, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{item.monthName}</TableCell>
+                          <TableCell className="text-center font-bold text-emerald-600">{item.totalAll}</TableCell>
+                          <TableCell className="text-center">{item.count}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
-        {/* Siswa Tab */}
-        <TabsContent value="siswa" className="space-y-6">
+        {/* Tahunan Tab */}
+        <TabsContent value="tahunan" className="space-y-6 mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Jenjang Distribution */}
             <Card className="border-0 shadow-lg">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <School className="w-5 h-5 text-cyan-500" />
-                  Distribusi per Jenjang
-                </CardTitle>
-                <CardDescription>Penyebaran siswa berdasarkan jenjang pendidikan</CardDescription>
+                <CardTitle>Grafik Tahunan</CardTitle>
+                <CardDescription>Tren distribusi per tahun</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={stats?.siswaJenjang || []}>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={rekapData?.yearlySummary || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <XAxis dataKey="year" />
                     <YAxis />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'rgba(255,255,255,0.95)',
-                        border: 'none',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                      }}
-                    />
-                    <Bar dataKey="value" name="Jumlah Siswa" radius={[4, 4, 0, 0]}>
-                      {(stats?.siswaJenjang || []).map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Gender Distribution */}
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <PieChartIcon className="w-5 h-5 text-blue-500" />
-                  Distribusi Gender
-                </CardTitle>
-                <CardDescription>Perbandingan siswa laki-laki dan perempuan</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <PieChart>
-                    <Pie
-                      data={stats?.siswaGender || []}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={80}
-                      outerRadius={120}
-                      paddingAngle={5}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name === 'L' ? 'Laki-laki' : 'Perempuan'} (${(percent * 100).toFixed(1)}%)`}
-                    >
-                      {(stats?.siswaGender || []).map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={index === 0 ? '#06b6d4' : '#f472b6'} />
-                      ))}
-                    </Pie>
                     <Tooltip />
                     <Legend />
-                  </PieChart>
+                    <Line type="monotone" dataKey="totalAll" name="Total" stroke="#10b981" strokeWidth={3} dot={{ fill: '#10b981', strokeWidth: 2 }} />
+                    <Line type="monotone" dataKey="count" name="Jumlah Transaksi" stroke="#06b6d4" strokeWidth={3} dot={{ fill: '#06b6d4', strokeWidth: 2 }} />
+                  </LineChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
-            {/* School Distribution */}
-            <Card className="border-0 shadow-lg lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-teal-500" />
-                  Distribusi per Sekolah
-                </CardTitle>
-                <CardDescription>Top 10 sekolah dengan siswa terbanyak</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={stats?.siswaSekolah?.slice(0, 10) || []} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" width={200} tick={{ fontSize: 10 }} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'rgba(255,255,255,0.95)',
-                        border: 'none',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                      }}
-                    />
-                    <Bar dataKey="value" name="Jumlah Siswa" radius={[0, 4, 4, 0]}>
-                      {(stats?.siswaSekolah?.slice(0, 10) || []).map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Posyandu Tab */}
-        <TabsContent value="posyandu" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Kategori Distribution */}
             <Card className="border-0 shadow-lg">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <PieChartIcon className="w-5 h-5 text-pink-500" />
-                  Distribusi Kategori
-                </CardTitle>
-                <CardDescription>Penyebaran berdasarkan kategori posyandu</CardDescription>
+                <CardTitle>Tabel Tahunan</CardTitle>
+                <CardDescription>Ringkasan per tahun</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <PieChart>
-                    <Pie
-                      data={stats?.posyanduKategori || []}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      paddingAngle={5}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                    >
-                      {(stats?.posyanduKategori || []).map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Gender Distribution */}
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-rose-500" />
-                  Distribusi Gender
-                </CardTitle>
-                <CardDescription>Perbandingan data laki-laki dan perempuan</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <PieChart>
-                    <Pie
-                      data={stats?.posyanduGender || []}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={80}
-                      outerRadius={120}
-                      paddingAngle={5}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name === 'L' ? 'Laki-laki' : 'Perempuan'} (${(percent * 100).toFixed(1)}%)`}
-                    >
-                      {(stats?.posyanduGender || []).map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={index === 0 ? '#ec4899' : '#f472b6'} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Posyandu Location Distribution */}
-            <Card className="border-0 shadow-lg lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-orange-500" />
-                  Distribusi per Lokasi Posyandu
-                </CardTitle>
-                <CardDescription>Top 10 lokasi posyandu dengan data terbanyak</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={stats?.posyanduList?.slice(0, 10) || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={80} />
-                    <YAxis />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'rgba(255,255,255,0.95)',
-                        border: 'none',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                      }}
-                    />
-                    <Bar dataKey="value" name="Jumlah Data" radius={[4, 4, 0, 0]}>
-                      {(stats?.posyanduList?.slice(0, 10) || []).map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50 dark:bg-slate-800/50">
+                      <TableHead>Tahun</TableHead>
+                      <TableHead className="text-center">Total</TableHead>
+                      <TableHead className="text-center">Transaksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rekapData?.yearlySummary.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">{item.year}</TableCell>
+                        <TableCell className="text-center font-bold text-emerald-600">{item.totalAll}</TableCell>
+                        <TableCell className="text-center">{item.count}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
       </Tabs>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-emerald-600 dark:text-emerald-400">Total Sekolah (Guru)</p>
-                <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-300">
-                  {stats?.guruSekolah?.length || 0}
-                </p>
-              </div>
-              <School className="w-10 h-10 text-emerald-400" />
+      {/* Add/Edit Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? 'Edit Data Distribusi' : 'Tambah Data Distribusi'}</DialogTitle>
+            <DialogDescription>
+              {isEditing ? 'Perbarui data distribusi' : 'Masukkan data distribusi baru'}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="namaSekolah">Nama Sekolah</Label>
+              <Select value={formData.namaSekolah} onValueChange={(v) => setFormData({ ...formData, namaSekolah: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih sekolah" />
+                </SelectTrigger>
+                <SelectContent>
+                  {schools.map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {schools.length === 0 && (
+                <p className="text-xs text-slate-500">Ketik nama sekolah manual</p>
+              )}
+              {!schools.includes(formData.namaSekolah) && formData.namaSekolah && (
+                <Input
+                  value={formData.namaSekolah}
+                  onChange={(e) => setFormData({ ...formData, namaSekolah: e.target.value })}
+                  placeholder="Nama sekolah"
+                />
+              )}
             </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-cyan-600 dark:text-cyan-400">Total Sekolah (Siswa)</p>
-                <p className="text-3xl font-bold text-cyan-700 dark:text-cyan-300">
-                  {stats?.siswaSekolah?.length || 0}
-                </p>
-              </div>
-              <School className="w-10 h-10 text-cyan-400" />
+            
+            <div className="space-y-2">
+              <Label htmlFor="kelas">Kelas</Label>
+              <Select value={formData.kelas} onValueChange={(v) => setFormData({ ...formData, kelas: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih kelas" />
+                </SelectTrigger>
+                <SelectContent>
+                  {KELAS_OPTIONS.map(k => (
+                    <SelectItem key={k} value={k}>{k}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-pink-600 dark:text-pink-400">Total Lokasi Posyandu</p>
-                <p className="text-3xl font-bold text-pink-700 dark:text-pink-300">
-                  {stats?.posyanduList?.length || 0}
-                </p>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="jumlah">Jumlah</Label>
+                <Input
+                  id="jumlah"
+                  type="number"
+                  value={formData.jumlah}
+                  onChange={(e) => setFormData({ ...formData, jumlah: e.target.value })}
+                  placeholder="0"
+                  min="0"
+                />
               </div>
-              <MapPin className="w-10 h-10 text-pink-400" />
+              
+              <div className="space-y-2">
+                <Label htmlFor="total">Total</Label>
+                <Input
+                  id="total"
+                  type="number"
+                  value={formData.total}
+                  onChange={(e) => setFormData({ ...formData, total: e.target.value })}
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="tanggal">Tanggal</Label>
+              <Input
+                id="tanggal"
+                type="date"
+                value={formData.tanggal}
+                onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
+              />
+            </div>
+            
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Batal
+              </Button>
+              <Button type="submit">
+                {isEditing ? 'Perbarui' : 'Simpan'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
