@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface Rekap3BData {
   posyandu: string;
@@ -48,7 +50,7 @@ export async function POST(request: NextRequest) {
     }), { balita06L: 0, balita06P: 0, balita06Total: 0, balita15L: 0, balita15P: 0, balita15Total: 0, bumil: 0, menyusui: 0, total: 0 });
 
     exportData.push({
-      'No': '',
+      'No': '' as unknown as number,
       'Posyandu': 'JUMLAH',
       'Balita 6-11 Bulan L': totals.balita06L,
       'Balita 6-11 Bulan P': totals.balita06P,
@@ -91,12 +93,62 @@ export async function POST(request: NextRequest) {
         },
       });
     } else if (format === 'pdf') {
-      // For PDF, create HTML that can be printed
-      const html = generatePDFHtml(exportData);
+      // Create PDF file - landscape for wider table
+      const doc = new jsPDF('landscape');
+      
+      // Add title
+      doc.setFontSize(14);
+      doc.text('REKAPITULASI 3B (BALITA, BUMIL, MENYUSUI)', doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+      
+      // Prepare table data
+      const headers = [['No', 'Posyandu', 'Balita 6-11 L', 'Balita 6-11 P', 'Total 6-11', 'Balita 1-5 L', 'Balita 1-5 P', 'Total 1-5', 'Bumil', 'Menyusui', 'Total']];
+      const tableData = exportData.map(row => [
+        row['No'] || '',
+        row['Posyandu'],
+        row['Balita 6-11 Bulan L'],
+        row['Balita 6-11 Bulan P'],
+        row['Total Balita 6-11 Bulan'],
+        row['Balita 1-5 Tahun L'],
+        row['Balita 1-5 Tahun P'],
+        row['Total Balita 1-5 Tahun'],
+        row['Bumil'],
+        row['Menyusui'],
+        row['Total'],
+      ]);
+      
+      autoTable(doc, {
+        head: headers,
+        body: tableData,
+        startY: 22,
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [74, 85, 104], textColor: 255, fontStyle: 'bold' },
+        columnStyles: {
+          0: { cellWidth: 10, halign: 'center' },
+          1: { cellWidth: 50 },
+          2: { cellWidth: 22, halign: 'center' },
+          3: { cellWidth: 22, halign: 'center' },
+          4: { cellWidth: 20, halign: 'center' },
+          5: { cellWidth: 22, halign: 'center' },
+          6: { cellWidth: 22, halign: 'center' },
+          7: { cellWidth: 20, halign: 'center' },
+          8: { cellWidth: 18, halign: 'center' },
+          9: { cellWidth: 20, halign: 'center' },
+          10: { cellWidth: 18, halign: 'center' },
+        },
+        didParseCell: function(data) {
+          if (data.row.index === tableData.length - 1) {
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.fillColor = [237, 242, 247];
+          }
+        },
+      });
 
-      return new NextResponse(html, {
+      const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+
+      return new NextResponse(pdfBuffer, {
         headers: {
-          'Content-Type': 'text/html',
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': 'attachment; filename="rekapitulasi_3b.pdf"',
         },
       });
     }
@@ -106,46 +158,4 @@ export async function POST(request: NextRequest) {
     console.error('Export error:', error);
     return NextResponse.json({ success: false, error: 'Export failed' }, { status: 500 });
   }
-}
-
-function generatePDFHtml(data: Record<string, unknown>[]): string {
-  const headers = ['No', 'Posyandu', 'Balita 6-11 L', 'Balita 6-11 P', 'Total 6-11', 'Balita 1-5 L', 'Balita 1-5 P', 'Total 1-5', 'Bumil', 'Menyusui', 'Total'];
-
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Rekapitulasi 3B</title>
-  <style>
-    body { font-family: Arial, sans-serif; font-size: 10px; margin: 20px; }
-    h1 { text-align: center; font-size: 14px; margin-bottom: 15px; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #333; padding: 4px 6px; text-align: center; }
-    th { background-color: #4a5568; color: white; font-weight: bold; font-size: 9px; }
-    td:first-child, th:first-child { width: 30px; }
-    td:nth-child(2), th:nth-child(2) { text-align: left; }
-    tr:last-child { background-color: #edf2f7; font-weight: bold; }
-  </style>
-</head>
-<body>
-  <h1>REKAPITULASI 3B (BALITA, BUMIL, MENYUSUI)</h1>
-  <table>
-    <thead>
-      <tr>
-        ${headers.map(h => `<th>${h}</th>`).join('')}
-      </tr>
-    </thead>
-    <tbody>
-      ${data.map(row => `
-        <tr>
-          ${headers.map(h => `<td>${row[h] ?? ''}</td>`).join('')}
-        </tr>
-      `).join('')}
-    </tbody>
-  </table>
-  <script>window.print();</script>
-</body>
-</html>
-  `;
 }

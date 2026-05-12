@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface GuruData {
   namaSekolah: string;
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     // Add total row
     const totalRow = {
-      'No': '',
+      'No': '' as unknown as number,
       'Sekolah': 'JUMLAH',
       'Kepsek L': data.reduce((sum, s) => sum + (s.tendikBreakdown['Kepala Sekolah']?.L || 0), 0),
       'Kepsek P': data.reduce((sum, s) => sum + (s.tendikBreakdown['Kepala Sekolah']?.P || 0), 0),
@@ -95,13 +97,68 @@ export async function POST(request: NextRequest) {
         },
       });
     } else if (format === 'pdf') {
-      // For PDF, we'll create a simple HTML table and return it
-      // The frontend will handle the PDF generation using browser print
-      const html = generatePDFHtml(exportData);
+      // Create PDF file - landscape orientation for wide table
+      const doc = new jsPDF('landscape');
       
-      return new NextResponse(html, {
+      // Add title
+      doc.setFontSize(14);
+      doc.text('REKAPITULASI GURU PER SEKOLAH', doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+      
+      // Prepare table data
+      const headers = [['No', 'Sekolah', 'Kepsek L', 'Kepsek P', 'Guru L', 'Guru P', 'Tendik L', 'Tendik P', 'Non Tendik L', 'Non Tendik P', 'Uji Org.', 'Jumlah L', 'Jumlah P', 'Total']];
+      const tableData = exportData.map(row => [
+        row['No'] || '',
+        row['Sekolah'],
+        row['Kepsek L'],
+        row['Kepsek P'],
+        row['Guru L'],
+        row['Guru P'],
+        row['Tendik L'],
+        row['Tendik P'],
+        row['Non Tendik L'],
+        row['Non Tendik P'],
+        row['Uji Organoleptik'],
+        row['Jumlah L'],
+        row['Jumlah P'],
+        row['Total'],
+      ]);
+      
+      autoTable(doc, {
+        head: headers,
+        body: tableData,
+        startY: 22,
+        styles: { fontSize: 7, cellPadding: 2 },
+        headStyles: { fillColor: [74, 85, 104], textColor: 255, fontStyle: 'bold', fontSize: 7 },
+        columnStyles: {
+          0: { cellWidth: 8, halign: 'center' },
+          1: { cellWidth: 45 },
+          2: { cellWidth: 14, halign: 'center' },
+          3: { cellWidth: 14, halign: 'center' },
+          4: { cellWidth: 14, halign: 'center' },
+          5: { cellWidth: 14, halign: 'center' },
+          6: { cellWidth: 14, halign: 'center' },
+          7: { cellWidth: 14, halign: 'center' },
+          8: { cellWidth: 16, halign: 'center' },
+          9: { cellWidth: 16, halign: 'center' },
+          10: { cellWidth: 14, halign: 'center' },
+          11: { cellWidth: 14, halign: 'center' },
+          12: { cellWidth: 14, halign: 'center' },
+          13: { cellWidth: 12, halign: 'center' },
+        },
+        didParseCell: function(data) {
+          if (data.row.index === tableData.length - 1) {
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.fillColor = [237, 242, 247];
+          }
+        },
+      });
+
+      const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+
+      return new NextResponse(pdfBuffer, {
         headers: {
-          'Content-Type': 'text/html',
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': 'attachment; filename="rekapitulasi_guru.pdf"',
         },
       });
     }
@@ -111,47 +168,4 @@ export async function POST(request: NextRequest) {
     console.error('Export error:', error);
     return NextResponse.json({ success: false, error: 'Export failed' }, { status: 500 });
   }
-}
-
-function generatePDFHtml(data: Record<string, unknown>[]): string {
-  const headers = ['No', 'Sekolah', 'Kepsek L', 'Kepsek P', 'Guru L', 'Guru P', 'Tendik L', 'Tendik P', 'Non Tendik L', 'Non Tendik P', 'Uji Organoleptik', 'Jumlah L', 'Jumlah P', 'Total'];
-  
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Rekapitulasi Guru</title>
-  <style>
-    body { font-family: Arial, sans-serif; font-size: 10px; margin: 20px; }
-    h1 { text-align: center; font-size: 16px; margin-bottom: 20px; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #333; padding: 4px 6px; text-align: center; }
-    th { background-color: #4a5568; color: white; font-weight: bold; }
-    td:last-child { font-weight: bold; }
-    tr:last-child { background-color: #edf2f7; font-weight: bold; }
-    td:first-child, th:first-child { width: 30px; }
-    td:nth-child(2), th:nth-child(2) { text-align: left; }
-  </style>
-</head>
-<body>
-  <h1>REKAPITULASI GURU PER SEKOLAH</h1>
-  <table>
-    <thead>
-      <tr>
-        ${headers.map(h => `<th>${h}</th>`).join('')}
-      </tr>
-    </thead>
-    <tbody>
-      ${data.map(row => `
-        <tr>
-          ${headers.map(h => `<td>${row[h] ?? ''}</td>`).join('')}
-        </tr>
-      `).join('')}
-    </tbody>
-  </table>
-  <script>window.print();</script>
-</body>
-</html>
-  `;
 }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +23,7 @@ export async function POST(request: NextRequest) {
     // Add total row
     const total = data.reduce((sum, item) => sum + item.value, 0);
     exportData.push({
-      'No': '',
+      'No': '' as unknown as number,
       'Nama': 'TOTAL',
       'Jumlah': total,
     });
@@ -48,12 +50,41 @@ export async function POST(request: NextRequest) {
         },
       });
     } else if (format === 'pdf') {
-      // For PDF, create HTML that can be printed
-      const html = generatePDFHtml(exportData, title);
+      // Create PDF file
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(16);
+      doc.text(title.toUpperCase(), doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+      
+      // Add table
+      const tableData = exportData.map(row => [row.No || '', row.Nama, row.Jumlah]);
+      
+      autoTable(doc, {
+        head: [['No', 'Nama', 'Jumlah']],
+        body: tableData,
+        startY: 30,
+        styles: { fontSize: 10, cellPadding: 3 },
+        headStyles: { fillColor: [74, 85, 104], textColor: 255, fontStyle: 'bold' },
+        columnStyles: {
+          0: { cellWidth: 15, halign: 'center' },
+          1: { cellWidth: 80 },
+          2: { cellWidth: 30, halign: 'center' },
+        },
+        didParseCell: function(data) {
+          if (data.row.index === tableData.length - 1) {
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.fillColor = [237, 242, 247];
+          }
+        },
+      });
 
-      return new NextResponse(html, {
+      const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+
+      return new NextResponse(pdfBuffer, {
         headers: {
-          'Content-Type': 'text/html',
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="${filename}.pdf"`,
         },
       });
     }
@@ -63,46 +94,4 @@ export async function POST(request: NextRequest) {
     console.error('Export error:', error);
     return NextResponse.json({ success: false, error: 'Export failed' }, { status: 500 });
   }
-}
-
-function generatePDFHtml(data: Record<string, unknown>[], title: string): string {
-  const headers = ['No', 'Nama', 'Jumlah'];
-
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>${title}</title>
-  <style>
-    body { font-family: Arial, sans-serif; font-size: 12px; margin: 20px; }
-    h1 { text-align: center; font-size: 16px; margin-bottom: 20px; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #333; padding: 8px; text-align: center; }
-    th { background-color: #4a5568; color: white; font-weight: bold; }
-    td:first-child, th:first-child { width: 50px; }
-    td:nth-child(2), th:nth-child(2) { text-align: left; }
-    tr:last-child { background-color: #edf2f7; font-weight: bold; }
-  </style>
-</head>
-<body>
-  <h1>${title.toUpperCase()}</h1>
-  <table>
-    <thead>
-      <tr>
-        ${headers.map(h => `<th>${h}</th>`).join('')}
-      </tr>
-    </thead>
-    <tbody>
-      ${data.map(row => `
-        <tr>
-          ${headers.map(h => `<td>${row[h] ?? ''}</td>`).join('')}
-        </tr>
-      `).join('')}
-    </tbody>
-  </table>
-  <script>window.print();</script>
-</body>
-</html>
-  `;
 }
