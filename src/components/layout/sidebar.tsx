@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
@@ -22,15 +22,24 @@ interface SidebarProps {
   onNavigate: (page: string) => void;
   isOpen: boolean;
   onClose: () => void;
+  isAdmin?: boolean;
 }
 
-const menuItems = [
+interface MenuItem {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  gradient: string;
+  adminOnly?: boolean;
+}
+
+const allMenuItems: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, gradient: 'from-emerald-500 to-teal-600' },
   { id: 'data', label: 'Data', icon: Database, gradient: 'from-cyan-500 to-blue-600' },
   { id: 'rekapitulasi', label: 'Rekapitulasi', icon: BarChart3, gradient: 'from-purple-500 to-pink-600' },
   { id: 'distribusi', label: 'Distribusi', icon: PieChart, gradient: 'from-orange-500 to-red-600' },
-  { id: 'users', label: 'Pengguna', icon: UserCog, gradient: 'from-violet-500 to-purple-600' },
-  { id: 'pengaturan', label: 'Pengaturan', icon: Settings, gradient: 'from-gray-500 to-slate-600' },
+  { id: 'users', label: 'Pengguna', icon: UserCog, gradient: 'from-violet-500 to-purple-600', adminOnly: true },
+  { id: 'pengaturan', label: 'Pengaturan', icon: Settings, gradient: 'from-gray-500 to-slate-600', adminOnly: true },
 ];
 
 const dataSubmenu = [
@@ -40,9 +49,14 @@ const dataSubmenu = [
   { id: 'relawan', label: 'Data Relawan', icon: HeartHandshake, color: 'text-amber-500' },
 ];
 
-export function Sidebar({ currentPage, onNavigate, isOpen, onClose }: SidebarProps) {
+export function Sidebar({ currentPage, onNavigate, isOpen, onClose, isAdmin = false }: SidebarProps) {
   const [isMobile, setIsMobile] = useState(false);
   const isDataSubmenu = ['guru', 'siswa', 'posyandu', 'relawan'].includes(currentPage);
+
+  // Filter menu items based on role
+  const menuItems = useMemo(() => {
+    return allMenuItems.filter(item => !item.adminOnly || isAdmin);
+  }, [isAdmin]);
 
   // Detect mobile screen - only run on client
   useEffect(() => {

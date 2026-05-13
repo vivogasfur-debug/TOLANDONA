@@ -9,11 +9,22 @@ interface User {
   role: string;
 }
 
+// Define page access by role
+const PAGE_PERMISSIONS: Record<string, string[]> = {
+  admin: ['dashboard', 'guru', 'siswa', 'posyandu', 'relawan', 'rekapitulasi', 'distribusi', 'users', 'pengaturan'],
+  user: ['dashboard', 'guru', 'siswa', 'posyandu', 'relawan', 'rekapitulasi', 'distribusi'],
+};
+
+// Pages that require admin role
+const ADMIN_ONLY_PAGES = ['users', 'pengaturan'];
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
+  hasAccess: (page: string) => boolean;
+  isAdmin: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,8 +77,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const hasAccess = (page: string): boolean => {
+    if (!user) return false;
+    const allowedPages = PAGE_PERMISSIONS[user.role] || [];
+    return allowedPages.includes(page);
+  };
+
+  const isAdmin = (): boolean => {
+    return user?.role === 'admin';
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, hasAccess, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

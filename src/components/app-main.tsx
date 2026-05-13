@@ -15,10 +15,32 @@ import { UsersPage } from '@/components/pages/users-page';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ShieldX, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+// Unauthorized Page Component
+function UnauthorizedPage() {
+  return (
+    <div className="flex-1 flex items-center justify-center p-6">
+      <div className="text-center">
+        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+          <ShieldX className="w-10 h-10 text-red-500" />
+        </div>
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Akses Ditolak</h2>
+        <p className="text-slate-500 dark:text-slate-400 mb-6">
+          Anda tidak memiliki izin untuk mengakses halaman ini.
+        </p>
+        <Button onClick={() => window.location.reload()} variant="outline" className="gap-2">
+          <ArrowLeft className="w-4 h-4" />
+          Kembali ke Dashboard
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 function AppContent() {
-  const { user, loading } = useAuth();
+  const { user, loading, hasAccess, isAdmin } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -66,6 +88,12 @@ function AppContent() {
   }
 
   const handleNavigate = (page: string) => {
+    // Check if user has access to the page
+    if (!hasAccess(page)) {
+      // Redirect to dashboard if no access
+      setCurrentPage('dashboard');
+      return;
+    }
     setCurrentPage(page);
     // Close sidebar on mobile after navigation
     if (isMobile) {
@@ -74,6 +102,11 @@ function AppContent() {
   };
 
   const renderPage = () => {
+    // Check access before rendering page
+    if (!hasAccess(currentPage)) {
+      return <UnauthorizedPage />;
+    }
+
     switch (currentPage) {
       case 'dashboard':
         return <DashboardPage />;
@@ -103,6 +136,7 @@ function AppContent() {
         onNavigate={handleNavigate}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        isAdmin={isAdmin()}
       />
 
       {/* Main Content - with left margin on desktop for sidebar */}
