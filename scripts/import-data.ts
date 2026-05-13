@@ -115,6 +115,37 @@ async function main() {
     console.log('Posyandu data imported!');
   }
   
+  // Import Relawan
+  const relawanPath = path.join(uploadDir, 'data pm tolandona fix - Relawan.csv');
+  if (fs.existsSync(relawanPath)) {
+    const rows = parseCSV(fs.readFileSync(relawanPath, 'utf-8'));
+    console.log(`Importing ${rows.length} Relawan records...`);
+    
+    for (const row of rows) {
+      try {
+        await db.relawan.create({
+          data: {
+            originalId: row.ID || null,
+            nama: row.Nama || '',
+            divisi: row.Divisi || null,
+            jabatan: row.Jabatan || null,
+            gajiPokok: row['Gaji Pokok'] || null,
+            jk: row.JK || null,
+            nik: row.NIK || null,
+            tempatLahir: row['TEMPAT Lahir'] || row['Tempat Lahir'] || null,
+            tanggalLahir: row['Tgl LAHIR'] || row['Tanggal Lahir'] || null,
+            umur: row.Umur || null,
+            alamat: row.Alamat || null,
+            hariKerja: row['Hari Kerja'] || null,
+            bonus: row.Bonus || null,
+            totalGaji: row['Total Gaji'] || null,
+          }
+        });
+      } catch (e) {}
+    }
+    console.log('Relawan data imported!');
+  }
+  
   // Create admin user
   try {
     await db.user.create({

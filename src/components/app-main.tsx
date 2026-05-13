@@ -12,6 +12,7 @@ import { RekapitulasiPage } from '@/components/pages/rekapitulasi-page';
 import { DistribusiPage } from '@/components/pages/distribusi-page';
 import { PengaturanPage } from '@/components/pages/pengaturan-page';
 import { UsersPage } from '@/components/pages/users-page';
+import { PayrollPage } from '@/components/pages/payroll-page';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -119,6 +120,8 @@ function AppContent() {
         return <RekapitulasiPage />;
       case 'distribusi':
         return <DistribusiPage />;
+      case 'payroll':
+        return <PayrollPage />;
       case 'users':
         return <UsersPage />;
       case 'pengaturan':

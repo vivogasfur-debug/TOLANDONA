@@ -122,6 +122,28 @@ model Relawan {
   totalGaji   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
+  payroll     Payroll[]
+}
+
+// Payroll Record for tracking salary payments
+model Payroll {
+  id          String   @id @default(cuid())
+  relawanId   String
+  bulan       Int      // 1-12
+  tahun       Int      // e.g., 2024
+  gajiPokok   Int      @default(0)
+  hariKerja   Int      @default(0)
+  bonus       Int      @default(0)
+  potongan    Int      @default(0)
+  totalGaji   Int      @default(0)
+  status      String   @default("pending") // pending, paid
+  tanggalBayar DateTime?
+  keterangan  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  relawan     Relawan  @relation(fields: [relawanId], references: [id])
 }
 
 // Distribusi Data
