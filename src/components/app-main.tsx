@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 import { SettingsProvider } from '@/lib/settings-context';
@@ -22,6 +22,31 @@ function AppContent() {
   const { theme, toggleTheme } = useTheme();
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile screen
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Close sidebar when clicking outside on mobile
+  useEffect(() => {
+    if (!sidebarOpen || !isMobile) return;
+    
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSidebarOpen(false);
+      }
+    };
+    
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [sidebarOpen, isMobile]);
 
   if (loading) {
     return (
@@ -39,6 +64,14 @@ function AppContent() {
   if (!user) {
     return <LoginPage onLogin={() => {}} />;
   }
+
+  const handleNavigate = (page: string) => {
+    setCurrentPage(page);
+    // Close sidebar on mobile after navigation
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  };
 
   const renderPage = () => {
     switch (currentPage) {
@@ -67,7 +100,7 @@ function AppContent() {
       {/* Sidebar */}
       <Sidebar
         currentPage={currentPage}
-        onNavigate={setCurrentPage}
+        onNavigate={handleNavigate}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />

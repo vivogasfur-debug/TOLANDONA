@@ -116,7 +116,34 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    /* Prevent horizontal scroll */
+    overflow-x: hidden;
+  }
   body {
     @apply bg-background text-foreground;
+    /* Prevent horizontal scroll */
+    overflow-x: hidden;
+    /* Safe area insets for mobile devices */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Safe area padding utility */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/* Hide scrollbar for mobile sidebar */
+@media (max-width: 1023px) {
+  .overflow-y-auto::-webkit-scrollbar {
+    display: none;
+  }
+  .overflow-y-auto {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }

@@ -44,7 +44,7 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onClose }: SidebarPro
   const [isMobile, setIsMobile] = useState(false);
   const isDataSubmenu = ['guru', 'siswa', 'posyandu', 'relawan'].includes(currentPage);
 
-  // Detect mobile screen
+  // Detect mobile screen - only run on client
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024);
@@ -53,6 +53,13 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onClose }: SidebarPro
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Close mobile sidebar when page changes
+  useEffect(() => {
+    if (isMobile && isOpen) {
+      onClose();
+    }
+  }, [currentPage]);
 
   // Navigation items renderer
   const renderNavItems = (isMobileView: boolean) => (
@@ -64,10 +71,7 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onClose }: SidebarPro
         transition={{ delay: index * 0.05 }}
       >
         <button
-          onClick={() => {
-            onNavigate(item.id === 'data' ? 'guru' : item.id);
-            if (isMobileView) onClose();
-          }}
+          onClick={() => onNavigate(item.id === 'data' ? 'guru' : item.id)}
           className={cn(
             'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300',
             'hover:bg-white/10 group relative overflow-hidden',
@@ -86,10 +90,7 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onClose }: SidebarPro
             {dataSubmenu.map((subItem) => (
               <button
                 key={subItem.id}
-                onClick={() => {
-                  onNavigate(subItem.id);
-                  if (isMobileView) onClose();
-                }}
+                onClick={() => onNavigate(subItem.id)}
                 className={cn(
                   'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200',
                   'hover:bg-white/5',
@@ -163,28 +164,29 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onClose }: SidebarPro
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] lg:hidden"
               onClick={onClose}
             />
             
             {/* Sidebar */}
             <motion.aside
-              initial={{ x: -280 }}
+              initial={{ x: -300 }}
               animate={{ x: 0 }}
-              exit={{ x: -280 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed lg:hidden left-0 top-0 z-50 h-full w-72 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 shadow-2xl shadow-emerald-500/10 flex flex-col"
+              exit={{ x: -300 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed lg:hidden left-0 top-0 z-[110] h-full w-72 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 shadow-2xl shadow-emerald-500/10 flex flex-col"
             >
               {/* Close button */}
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
+                className="absolute top-4 right-4 p-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors z-[120]"
               >
                 <X className="w-5 h-5" />
               </button>
 
               {/* Logo section */}
-              <div className="p-6 border-b border-white/10">
+              <div className="p-6 border-b border-white/10 pt-16">
                 {renderLogo()}
               </div>
 
@@ -194,7 +196,7 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onClose }: SidebarPro
               </nav>
 
               {/* Footer */}
-              <div className="p-4 border-t border-white/10">
+              <div className="p-4 border-t border-white/10 pb-safe">
                 {renderFooter()}
               </div>
             </motion.aside>
