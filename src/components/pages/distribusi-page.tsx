@@ -45,7 +45,7 @@ import {
 import {
   PieChart as PieChartIcon, BarChart3, Plus, Pencil, Trash2,
   Download, FileText, FileSpreadsheet, FileType, Calendar,
-  TrendingUp, Users, GraduationCap, Building2
+  TrendingUp, Users, GraduationCap, Building2, RefreshCw, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -200,6 +200,7 @@ export function DistribusiPage() {
 
   // Schools list with type info
   const [schools, setSchools] = useState<SchoolInfo[]>([]);
+  const [loadingSchoolData, setLoadingSchoolData] = useState(false);
   
   // Selected school type for dynamic form
   const selectedSchoolType = useMemo(() => {
@@ -260,6 +261,75 @@ export function DistribusiPage() {
       }
     } catch (error) {
       console.error('Failed to fetch schools:', error);
+    }
+  };
+
+  // Fetch school data (siswa & guru) for auto-fill
+  const fetchSchoolData = async (namaSekolah: string) => {
+    if (!namaSekolah || isEditing) return;
+    
+    try {
+      setLoadingSchoolData(true);
+      const encodedName = encodeURIComponent(namaSekolah);
+      const res = await fetch(`/api/sekolah/${encodedName}`);
+      const result = await res.json();
+      
+      if (result.success && result.data) {
+        const d = result.data;
+        toast.success(`Data ditemukan: ${d.totalSiswa} siswa, ${d.totalGuru} guru`);
+        
+        // Auto-fill form with fetched data
+        setFormData(prev => ({
+          ...prev,
+          // TK/PAUD
+          klsAL: d.klsAL?.toString() || prev.klsAL,
+          klsAP: d.klsAP?.toString() || prev.klsAP,
+          klsBL: d.klsBL?.toString() || prev.klsBL,
+          klsBP: d.klsBP?.toString() || prev.klsBP,
+          // SD/MI
+          kls1L: d.kls1L?.toString() || prev.kls1L,
+          kls1P: d.kls1P?.toString() || prev.kls1P,
+          kls2L: d.kls2L?.toString() || prev.kls2L,
+          kls2P: d.kls2P?.toString() || prev.kls2P,
+          kls3L: d.kls3L?.toString() || prev.kls3L,
+          kls3P: d.kls3P?.toString() || prev.kls3P,
+          kls4L: d.kls4L?.toString() || prev.kls4L,
+          kls4P: d.kls4P?.toString() || prev.kls4P,
+          kls5L: d.kls5L?.toString() || prev.kls5L,
+          kls5P: d.kls5P?.toString() || prev.kls5P,
+          kls6L: d.kls6L?.toString() || prev.kls6L,
+          kls6P: d.kls6P?.toString() || prev.kls6P,
+          // SMP/MTs
+          kls7L: d.kls7L?.toString() || prev.kls7L,
+          kls7P: d.kls7P?.toString() || prev.kls7P,
+          kls8L: d.kls8L?.toString() || prev.kls8L,
+          kls8P: d.kls8P?.toString() || prev.kls8P,
+          kls9L: d.kls9L?.toString() || prev.kls9L,
+          kls9P: d.kls9P?.toString() || prev.kls9P,
+          // SMA/SMK/MA
+          kls10L: d.kls10L?.toString() || prev.kls10L,
+          kls10P: d.kls10P?.toString() || prev.kls10P,
+          kls11L: d.kls11L?.toString() || prev.kls11L,
+          kls11P: d.kls11P?.toString() || prev.kls11P,
+          kls12L: d.kls12L?.toString() || prev.kls12L,
+          kls12P: d.kls12P?.toString() || prev.kls12P,
+          // Guru
+          kepsekL: d.kepsekL?.toString() || prev.kepsekL,
+          kepsekP: d.kepsekP?.toString() || prev.kepsekP,
+          guruL: d.guruL?.toString() || prev.guruL,
+          guruP: d.guruP?.toString() || prev.guruP,
+          tendikL: d.tendikL?.toString() || prev.tendikL,
+          tendikP: d.tendikP?.toString() || prev.tendikP,
+          nonTendikL: d.nonTendikL?.toString() || prev.nonTendikL,
+          nonTendikP: d.nonTendikP?.toString() || prev.nonTendikP,
+        }));
+      } else {
+        toast.info('Tidak ada data siswa/guru di database untuk sekolah ini');
+      }
+    } catch (error) {
+      console.error('Failed to fetch school data:', error);
+    } finally {
+      setLoadingSchoolData(false);
     }
   };
 
@@ -903,7 +973,14 @@ export function DistribusiPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Nama Sekolah</Label>
-                <Select value={formData.namaSekolah} onValueChange={(v) => setFormData({ ...formData, namaSekolah: v })}>
+                <Select 
+                  value={formData.namaSekolah} 
+                  onValueChange={(v) => {
+                    setFormData({ ...formData, namaSekolah: v });
+                    // Auto-fetch school data when school is selected
+                    fetchSchoolData(v);
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih sekolah" />
                   </SelectTrigger>
@@ -915,12 +992,31 @@ export function DistribusiPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Input
-                  value={!schools.find(s => s.nama === formData.namaSekolah) ? formData.namaSekolah : ''}
-                  onChange={(e) => setFormData({ ...formData, namaSekolah: e.target.value })}
-                  placeholder="Atau ketik nama sekolah"
-                  className="mt-1"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={!schools.find(s => s.nama === formData.namaSekolah) ? formData.namaSekolah : ''}
+                    onChange={(e) => setFormData({ ...formData, namaSekolah: e.target.value })}
+                    onBlur={(e) => {
+                      if (e.target.value) fetchSchoolData(e.target.value);
+                    }}
+                    placeholder="Atau ketik nama sekolah"
+                    className="flex-1"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => fetchSchoolData(formData.namaSekolah)}
+                    disabled={!formData.namaSekolah || loadingSchoolData}
+                    title="Ambil data dari database"
+                  >
+                    {loadingSchoolData ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Tanggal</Label>
