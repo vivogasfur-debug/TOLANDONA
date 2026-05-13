@@ -93,14 +93,18 @@ export async function GET(
       kepsek: { L: 0, P: 0 },
       guru: { L: 0, P: 0 },
       tendik: { L: 0, P: 0 },
-      nonTendik: { L: 0, P: 0 }
+      nonTendik: { L: 0, P: 0 },
+      ujiOrganoleptik: 0
     };
 
     guruData.forEach((g) => {
       const jk = (g.jk === 'L' || g.jk === 'Laki-laki') ? 'L' : 'P';
       const tendik = g.jenisTendik?.toLowerCase() || '';
 
-      if (tendik.includes('kepala') || tendik.includes('kepsek')) {
+      if (tendik.includes('organoleptik')) {
+        // Uji Organoleptik - hitung total tanpa membedakan gender
+        guruCount.ujiOrganoleptik++;
+      } else if (tendik.includes('kepala') || tendik.includes('kepsek')) {
         guruCount.kepsek[jk as 'L' | 'P']++;
       } else if (tendik.includes('guru') && !tendik.includes('tendik')) {
         guruCount.guru[jk as 'L' | 'P']++;
@@ -159,9 +163,12 @@ export async function GET(
       nonTendikL: guruCount.nonTendik.L,
       nonTendikP: guruCount.nonTendik.P,
 
+      // Uji Organoleptik
+      ujiOrganoleptik: guruCount.ujiOrganoleptik,
+
       // Summary
       totalSiswa: siswaData.length,
-      totalGuru: guruData.length
+      totalGuru: guruData.length - guruCount.ujiOrganoleptik // Kurangi uji organoleptik dari total guru
     };
 
     return NextResponse.json({

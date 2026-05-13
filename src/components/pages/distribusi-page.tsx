@@ -276,7 +276,8 @@ export function DistribusiPage() {
       
       if (result.success && result.data) {
         const d = result.data;
-        toast.success(`Data ditemukan: ${d.totalSiswa} siswa, ${d.totalGuru} guru`);
+        const ujiMsg = d.ujiOrganoleptik > 0 ? `, ${d.ujiOrganoleptik} uji organoleptik` : '';
+        toast.success(`Data ditemukan: ${d.totalSiswa} siswa, ${d.totalGuru} guru${ujiMsg}`);
         
         // Auto-fill form with fetched data
         setFormData(prev => ({
@@ -322,6 +323,8 @@ export function DistribusiPage() {
           tendikP: d.tendikP?.toString() || prev.tendikP,
           nonTendikL: d.nonTendikL?.toString() || prev.nonTendikL,
           nonTendikP: d.nonTendikP?.toString() || prev.nonTendikP,
+          // Uji Organoleptik
+          ujiOrganoleptik: d.ujiOrganoleptik?.toString() || prev.ujiOrganoleptik,
         }));
       } else {
         toast.info('Tidak ada data siswa/guru di database untuk sekolah ini');
