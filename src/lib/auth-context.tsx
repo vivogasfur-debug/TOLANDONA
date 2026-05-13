@@ -12,11 +12,14 @@ interface User {
 // Define page access by role
 const PAGE_PERMISSIONS: Record<string, string[]> = {
   admin: ['dashboard', 'guru', 'siswa', 'posyandu', 'relawan', 'rekapitulasi', 'distribusi', 'users', 'pengaturan'],
-  user: ['dashboard', 'guru', 'siswa', 'posyandu', 'relawan', 'rekapitulasi', 'distribusi'],
+  user: ['dashboard', 'rekapitulasi', 'distribusi'],
 };
 
 // Pages that require admin role
 const ADMIN_ONLY_PAGES = ['users', 'pengaturan'];
+
+// Data pages that are restricted to admin only
+const DATA_PAGES = ['guru', 'siswa', 'posyandu', 'relawan'];
 
 interface AuthContextType {
   user: User | null;

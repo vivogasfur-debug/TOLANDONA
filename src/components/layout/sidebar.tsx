@@ -35,7 +35,7 @@ interface MenuItem {
 
 const allMenuItems: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, gradient: 'from-emerald-500 to-teal-600' },
-  { id: 'data', label: 'Data', icon: Database, gradient: 'from-cyan-500 to-blue-600' },
+  { id: 'data', label: 'Data', icon: Database, gradient: 'from-cyan-500 to-blue-600', adminOnly: true },
   { id: 'rekapitulasi', label: 'Rekapitulasi', icon: BarChart3, gradient: 'from-purple-500 to-pink-600' },
   { id: 'distribusi', label: 'Distribusi', icon: PieChart, gradient: 'from-orange-500 to-red-600' },
   { id: 'users', label: 'Pengguna', icon: UserCog, gradient: 'from-violet-500 to-purple-600', adminOnly: true },
