@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { bulan, tahun, relawanData } = body;
+    const { bulan, tahun } = body;
 
     if (!bulan || !tahun) {
       return NextResponse.json(
@@ -101,27 +101,42 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       return NextResponse.json(
-        { success: false, error: 'Payroll untuk periode ini sudah ada' },
+        { success: false, error: 'Payroll untuk periode ini sudah ada. Hapus payroll lama terlebih dahulu.' },
         { status: 400 }
       );
     }
 
-    // Get all relawan
-    const relawanList = relawanData || await db.relawan.findMany();
+    // Get all relawan from database
+    const relawanList = await db.relawan.findMany();
 
     if (relawanList.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Tidak ada data relawan' },
+        { success: false, error: 'Tidak ada data relawan di database. Silakan tambah data relawan terlebih dahulu.' },
         { status: 400 }
       );
     }
 
-    // Create payroll records
+    // Create payroll records from relawan data
     const payrollRecords = [];
     for (const relawan of relawanList) {
-      const gajiPokok = parseInt(relawan.gajiPokok?.replace(/\D/g, '') || '0');
-      const hariKerja = parseInt(relawan.hariKerja || '0');
-      const bonus = parseInt(relawan.bonus?.replace(/\D/g, '') || '0');
+      // Parse gajiPokok - handle both string with non-digits and direct number
+      let gajiPokok = 0;
+      if (relawan.gajiPokok) {
+        const cleaned = relawan.gajiPokok.replace(/[^\d]/g, '');
+        gajiPokok = parseInt(cleaned) || 0;
+      }
+
+      // Parse hariKerja
+      const hariKerja = parseInt(relawan.hariKerja || '0') || 0;
+
+      // Parse bonus
+      let bonus = 0;
+      if (relawan.bonus) {
+        const cleaned = relawan.bonus.replace(/[^\d]/g, '');
+        bonus = parseInt(cleaned) || 0;
+      }
+
+      // Calculate total gaji: gajiPokok * hariKerja + bonus
       const totalGaji = gajiPokok * hariKerja + bonus;
 
       const record = await db.payroll.create({
@@ -135,6 +150,15 @@ export async function POST(request: NextRequest) {
           potongan: 0,
           totalGaji,
           status: 'pending',
+        },
+        include: {
+          relawan: {
+            select: {
+              nama: true,
+              divisi: true,
+              jabatan: true,
+            }
+          }
         }
       });
       payrollRecords.push(record);
@@ -142,7 +166,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Berhasil membuat ${payrollRecords.length} record payroll`,
+      message: `Berhasil membuat payroll untuk ${payrollRecords.length} relawan`,
       data: payrollRecords,
     });
 
