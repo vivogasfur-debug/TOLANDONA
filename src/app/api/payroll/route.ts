@@ -81,11 +81,24 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Helper function to parse string currency/number safely
+function parseStringToNumber(value: string | null | undefined): number {
+  if (!value) return 0;
+  try {
+    const cleaned = String(value).replace(/[^\d]/g, '');
+    return parseInt(cleaned) || 0;
+  } catch {
+    return 0;
+  }
+}
+
 // POST - Buat payroll baru (generate dari data relawan)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { bulan, tahun } = body;
+
+    console.log('Generate payroll request:', { bulan, tahun });
 
     if (!bulan || !tahun) {
       return NextResponse.json(
@@ -94,9 +107,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const bulanNum = parseInt(String(bulan));
+    const tahunNum = parseInt(String(tahun));
+
+    if (isNaN(bulanNum) || isNaN(tahunNum)) {
+      return NextResponse.json(
+        { success: false, error: 'Bulan dan tahun harus berupa angka yang valid' },
+        { status: 400 }
+      );
+    }
+
     // Check if payroll already exists for this period
     const existing = await db.payroll.findFirst({
-      where: { bulan: parseInt(bulan), tahun: parseInt(tahun) }
+      where: { bulan: bulanNum, tahun: tahunNum }
     });
 
     if (existing) {
@@ -108,6 +131,7 @@ export async function POST(request: NextRequest) {
 
     // Get all relawan from database
     const relawanList = await db.relawan.findMany();
+    console.log('Found relawan:', relawanList.length);
 
     if (relawanList.length === 0) {
       return NextResponse.json(
@@ -119,31 +143,27 @@ export async function POST(request: NextRequest) {
     // Create payroll records from relawan data
     const payrollRecords = [];
     for (const relawan of relawanList) {
-      // Parse gajiPokok - handle both string with non-digits and direct number
-      let gajiPokok = 0;
-      if (relawan.gajiPokok) {
-        const cleaned = relawan.gajiPokok.replace(/[^\d]/g, '');
-        gajiPokok = parseInt(cleaned) || 0;
-      }
+      console.log('Processing relawan:', relawan.nama, {
+        gajiPokok: relawan.gajiPokok,
+        hariKerja: relawan.hariKerja,
+        bonus: relawan.bonus
+      });
 
-      // Parse hariKerja
-      const hariKerja = parseInt(relawan.hariKerja || '0') || 0;
-
-      // Parse bonus
-      let bonus = 0;
-      if (relawan.bonus) {
-        const cleaned = relawan.bonus.replace(/[^\d]/g, '');
-        bonus = parseInt(cleaned) || 0;
-      }
+      // Parse values safely
+      const gajiPokok = parseStringToNumber(relawan.gajiPokok);
+      const hariKerja = parseStringToNumber(relawan.hariKerja);
+      const bonus = parseStringToNumber(relawan.bonus);
 
       // Calculate total gaji: gajiPokok * hariKerja + bonus
       const totalGaji = gajiPokok * hariKerja + bonus;
 
+      console.log('Calculated:', { gajiPokok, hariKerja, bonus, totalGaji });
+
       const record = await db.payroll.create({
         data: {
           relawanId: relawan.id,
-          bulan: parseInt(bulan),
-          tahun: parseInt(tahun),
+          bulan: bulanNum,
+          tahun: tahunNum,
           gajiPokok,
           hariKerja,
           bonus,
@@ -164,6 +184,8 @@ export async function POST(request: NextRequest) {
       payrollRecords.push(record);
     }
 
+    console.log('Created payroll records:', payrollRecords.length);
+
     return NextResponse.json({
       success: true,
       message: `Berhasil membuat payroll untuk ${payrollRecords.length} relawan`,
@@ -173,7 +195,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Create payroll error:', error);
     return NextResponse.json(
-      { success: false, error: 'Terjadi kesalahan pada server' },
+      { success: false, error: `Terjadi kesalahan pada server: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500 }
     );
   }
