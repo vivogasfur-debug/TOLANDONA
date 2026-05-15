@@ -192,6 +192,15 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </h1>
           </div>
 
+          {/* Right side logos */}
+          <div className="flex justify-center gap-4 mb-6">
+            <img 
+              src="/uploads/Lambang-Yayasan-Kemala-Bhyangkari-3-500x500.png" 
+              alt="Logo Yayasan Kemala Bhyangkari" 
+              className="w-16 h-16 object-contain"
+            />
+          </div>
+
           <Card className="border-0 shadow-2xl shadow-slate-200/50 dark:shadow-slate-900/50">
             <CardHeader className="space-y-1 pb-4">
               <CardTitle className="text-lg font-bold text-center">
@@ -216,7 +225,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="admin@tolandona.go.id"
+                      placeholder="email@contoh.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-10"
@@ -263,9 +272,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   )}
                 </Button>
 
-                <div className="text-center text-sm text-slate-500 dark:text-slate-400">
-                  Demo: admin@tolandona.go.id / admin123
-                </div>
+
               </form>
             </CardContent>
           </Card>
