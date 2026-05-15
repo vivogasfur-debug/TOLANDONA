@@ -7,21 +7,35 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const search = searchParams.get('search') || '';
+    const tanggal = searchParams.get('tanggal'); // Filter by specific date
 
     const skip = (page - 1) * limit;
 
-    const where = search
-      ? {
-          namaSekolah: { contains: search },
-        }
-      : {};
+    // Build where clause
+    const where: Record<string, unknown> = {};
+    
+    if (search) {
+      where.namaSekolah = { contains: search };
+    }
+    
+    // Filter by specific date
+    if (tanggal) {
+      const date = new Date(tanggal);
+      const startOfDay = new Date(date.setHours(0, 0, 0, 0));
+      const endOfDay = new Date(date.setHours(23, 59, 59, 999));
+      
+      where.tanggal = {
+        gte: startOfDay,
+        lte: endOfDay,
+      };
+    }
 
     const [data, total] = await Promise.all([
       db.distribusi.findMany({
         where,
         orderBy: { tanggal: 'desc' },
-        skip,
-        take: limit,
+        skip: tanggal ? 0 : skip, // Don't paginate when filtering by date
+        take: tanggal ? limit : limit,
       }),
       db.distribusi.count({ where }),
     ]);
