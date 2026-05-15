@@ -256,3 +256,27 @@ model BeritaAcara {
   @@index([status])
   @@index([kategori])
 }
+
+// Berita Acara Distribusi - Food Package Receipt Minutes
+model BeritaAcaraDistribusi {
+  id                String   @id @default(cuid())
+  nomor             String   // Nomor berita acara
+  tanggal           DateTime // Tanggal penerimaan
+  jam               String?  // Jam penerimaan
+  namaSekolah       String   // Nama sekolah penerima
+  jumlahPaket       Int      // Jumlah paket makanan
+  kondisi           String?  // Kondisi paket (baik/rusak)
+  sppgNama          String?  // Nama SPPG penyerah
+  sppgInstansi      String?  // Instansi SPPG
+  penerimaNama      String?  // Nama penerima di sekolah
+  penerimaJabatan   String?  // Jabatan penerima
+  keterangan        String?  // Keterangan tambahan
+  status            String   @default("draft") // draft, selesai
+  distribusiId      String?  // Reference to Distribusi
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([tanggal])
+  @@index([namaSekolah])
+  @@index([status])
+}

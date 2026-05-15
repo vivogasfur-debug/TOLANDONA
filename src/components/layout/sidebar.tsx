@@ -15,6 +15,7 @@ import {
   Wallet,
   Salad,
   FileText,
+  Package,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -38,6 +39,7 @@ const allMenuItems: MenuItem[] = [
   { id: 'data', label: 'Data', icon: Database, gradient: 'from-cyan-500 to-blue-600', adminOnly: true },
   { id: 'rekapitulasi', label: 'Rekapitulasi', icon: BarChart3, gradient: 'from-purple-500 to-pink-600' },
   { id: 'distribusi', label: 'Distribusi', icon: PieChart, gradient: 'from-orange-500 to-red-600' },
+  { id: 'badistribusi', label: 'BA Distribusi', icon: Package, gradient: 'from-amber-500 to-orange-600' },
   { id: 'payroll', label: 'Payroll', icon: Wallet, gradient: 'from-teal-500 to-cyan-600' },
   { id: 'ahligizi', label: 'Ahli Gizi', icon: Salad, gradient: 'from-green-500 to-emerald-600' },
   { id: 'beritaacara', label: 'Berita Acara', icon: FileText, gradient: 'from-indigo-500 to-purple-600' },
