@@ -61,9 +61,9 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 p-4">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         <StatsCard
           title="Total Guru"
           value={stats?.totalGuru || 0}
@@ -107,7 +107,7 @@ export function DashboardPage() {
       </div>
 
       {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Gender Distribution */}
         <Card className="border-0 shadow-lg">
           <CardHeader>
@@ -162,7 +162,7 @@ export function DashboardPage() {
       </div>
 
       {/* Charts Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Siswa Jenjang */}
         <Card className="border-0 shadow-lg">
           <CardHeader>
@@ -289,25 +289,25 @@ function StatsCard({ title, value, icon: Icon, gradient, trend, trendUp }: {
       className="relative overflow-hidden"
     >
       <Card className="border-0 shadow-lg">
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
-              <p className="text-3xl font-bold mt-1">{value.toLocaleString()}</p>
-              <div className="flex items-center gap-1 mt-2">
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{title}</p>
+              <p className="text-xl font-bold mt-0.5">{value.toLocaleString()}</p>
+              <div className="flex items-center gap-1 mt-1">
                 {trendUp ? (
-                  <ArrowUpRight className="w-4 h-4 text-emerald-500" />
+                  <ArrowUpRight className="w-3 h-3 text-emerald-500" />
                 ) : (
-                  <ArrowDownRight className="w-4 h-4 text-red-500" />
+                  <ArrowDownRight className="w-3 h-3 text-red-500" />
                 )}
-                <span className={`text-sm font-medium ${trendUp ? 'text-emerald-500' : 'text-red-500'}`}>
+                <span className={`text-xs font-medium ${trendUp ? 'text-emerald-500' : 'text-red-500'}`}>
                   {trend}
                 </span>
-                <span className="text-xs text-slate-400">dari bulan lalu</span>
+                <span className="text-[10px] text-slate-400">dari bulan lalu</span>
               </div>
             </div>
-            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg`}>
-              <Icon className="w-7 h-7 text-white" />
+            <div className={`w-11 h-11 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg`}>
+              <Icon className="w-5 h-5 text-white" />
             </div>
           </div>
         </CardContent>
@@ -319,15 +319,15 @@ function StatsCard({ title, value, icon: Icon, gradient, trend, trendUp }: {
 function GenderPieChart({ data, title, color }: { data: Array<{ name: string; value: number }>; title: string; color: string }) {
   return (
     <div className="text-center">
-      <p className="text-sm font-medium mb-2">{title}</p>
-      <ResponsiveContainer width="100%" height={120}>
+      <p className="text-xs font-medium mb-1">{title}</p>
+      <ResponsiveContainer width="100%" height={100}>
         <PieChart>
           <Pie
             data={data}
             cx="50%"
             cy="50%"
-            innerRadius={25}
-            outerRadius={45}
+            innerRadius={20}
+            outerRadius={38}
             paddingAngle={2}
             dataKey="value"
           >
@@ -338,9 +338,9 @@ function GenderPieChart({ data, title, color }: { data: Array<{ name: string; va
           <Tooltip />
         </PieChart>
       </ResponsiveContainer>
-      <div className="flex justify-center gap-2 text-xs">
+      <div className="flex justify-center gap-1.5 text-xs">
         {data.map((item, index) => (
-          <Badge key={item.name} variant="outline" className="text-[10px]">
+          <Badge key={item.name} variant="outline" className="text-[9px] px-1.5 py-0">
             {item.name}: {item.value}
           </Badge>
         ))}

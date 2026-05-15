@@ -129,7 +129,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-4xl font-bold text-center mb-4"
+            className="text-2xl font-bold text-center mb-3"
           >
             {settings.siteName}
           </motion.h1>
@@ -138,7 +138,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="text-lg text-white/80 text-center max-w-md"
+            className="text-sm text-white/80 text-center max-w-md"
           >
             {settings.siteSubtitle}
           </motion.p>
@@ -147,19 +147,19 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="mt-12 grid grid-cols-3 gap-8"
+            className="mt-10 grid grid-cols-3 gap-6"
           >
             <div className="text-center">
-              <div className="text-3xl font-bold">{stats.totalGuru.toLocaleString()}</div>
-              <div className="text-sm text-white/60">Guru</div>
+              <div className="text-xl font-bold">{stats.totalGuru.toLocaleString()}</div>
+              <div className="text-xs text-white/60">Guru</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold">{stats.totalSiswa.toLocaleString()}</div>
-              <div className="text-sm text-white/60">Siswa</div>
+              <div className="text-xl font-bold">{stats.totalSiswa.toLocaleString()}</div>
+              <div className="text-xs text-white/60">Siswa</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold">{stats.totalPosyandu.toLocaleString()}</div>
-              <div className="text-sm text-white/60">Posyandu</div>
+              <div className="text-xl font-bold">{stats.totalPosyandu.toLocaleString()}</div>
+              <div className="text-xs text-white/60">Posyandu</div>
             </div>
           </motion.div>
         </div>
@@ -187,14 +187,14 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               ) : null}
               {!settings.logoUrl && <Database className="w-8 h-8 text-white" />}
             </div>
-            <h1 className="text-xl font-bold text-slate-800 dark:text-white">
+            <h1 className="text-base font-bold text-slate-800 dark:text-white">
               {settings.siteName}
             </h1>
           </div>
 
           <Card className="border-0 shadow-2xl shadow-slate-200/50 dark:shadow-slate-900/50">
             <CardHeader className="space-y-1 pb-4">
-              <CardTitle className="text-2xl font-bold text-center">
+              <CardTitle className="text-lg font-bold text-center">
                 Selamat Datang
               </CardTitle>
               <CardDescription className="text-center">

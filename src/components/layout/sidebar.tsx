@@ -85,15 +85,15 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onClose, isAdmin = fa
         <button
           onClick={() => onNavigate(item.id)}
           className={cn(
-            'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300',
+            'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all duration-300',
             'hover:bg-white/10 group relative overflow-hidden',
             currentPage === item.id
               ? 'bg-gradient-to-r ' + item.gradient + ' text-white shadow-lg'
               : 'text-slate-300'
           )}
         >
-          <item.icon className="w-5 h-5" />
-          <span className="font-medium">{item.label}</span>
+          <item.icon className="w-4 h-4" />
+          <span className="font-medium text-sm">{item.label}</span>
         </button>
       </motion.div>
     ))
@@ -101,8 +101,8 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onClose, isAdmin = fa
 
   // Logo component
   const renderLogo = () => (
-    <div className="flex items-center gap-3">
-      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 overflow-hidden">
+    <div className="flex items-center gap-2.5">
+      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 overflow-hidden">
         {showLogo ? (
           <img 
             key={settings.logoUrl}
@@ -112,25 +112,25 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onClose, isAdmin = fa
             onError={() => setLogoError(true)}
           />
         ) : (
-          <Database className="w-6 h-6 text-white" />
+          <Database className="w-5 h-5 text-white" />
         )}
       </div>
       <div>
-        <h1 className="text-lg font-bold text-white">SIDATA</h1>
-        <p className="text-xs text-slate-400">Kec. Tolandona</p>
+        <h1 className="text-base font-bold text-white">SIDATA</h1>
+        <p className="text-[10px] text-slate-400">Kec. Tolandona</p>
       </div>
     </div>
   );
 
   // Footer component
   const renderFooter = () => (
-    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10">
-      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
-        <span className="text-sm font-bold text-white">TL</span>
+    <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-gradient-to-r from-emerald-500/10 to-teal-500/10">
+      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+        <span className="text-xs font-bold text-white">TL</span>
       </div>
       <div>
-        <p className="text-sm font-medium text-white">Tolandona</p>
-        <p className="text-xs text-slate-400">Buton Tengah</p>
+        <p className="text-xs font-medium text-white">Tolandona</p>
+        <p className="text-[10px] text-slate-400">Buton Tengah</p>
       </div>
     </div>
   );
@@ -138,19 +138,19 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onClose, isAdmin = fa
   return (
     <>
       {/* Desktop Sidebar - Always visible */}
-      <aside className="hidden lg:flex fixed left-0 top-0 z-40 h-full w-72 flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 shadow-2xl shadow-emerald-500/10">
+      <aside className="hidden lg:flex fixed left-0 top-0 z-40 h-full w-64 flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 shadow-2xl shadow-emerald-500/10">
         {/* Logo section */}
-        <div className="p-6 border-b border-white/10">
+        <div className="p-4 border-b border-white/10">
           {renderLogo()}
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto">
           {renderNavItems(false)}
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-white/10">
+        <div className="p-3 border-t border-white/10">
           {renderFooter()}
         </div>
       </aside>
@@ -175,28 +175,28 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onClose, isAdmin = fa
               animate={{ x: 0 }}
               exit={{ x: -300 }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed lg:hidden left-0 top-0 z-[110] h-full w-72 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 shadow-2xl shadow-emerald-500/10 flex flex-col"
+              className="fixed lg:hidden left-0 top-0 z-[110] h-full w-64 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 shadow-2xl shadow-emerald-500/10 flex flex-col"
             >
               {/* Close button */}
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors z-[120]"
+                className="absolute top-3 right-3 p-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors z-[120]"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
 
               {/* Logo section */}
-              <div className="p-6 border-b border-white/10 pt-16">
+              <div className="p-4 border-b border-white/10 pt-12">
                 {renderLogo()}
               </div>
 
               {/* Navigation */}
-              <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+              <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto">
                 {renderNavItems(true)}
               </nav>
 
               {/* Footer */}
-              <div className="p-4 border-t border-white/10 pb-safe">
+              <div className="p-3 border-t border-white/10 pb-safe">
                 {renderFooter()}
               </div>
             </motion.aside>

@@ -667,27 +667,27 @@ export function PayrollPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-            <Wallet className="w-6 h-6 text-white" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
+            <Wallet className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Payroll Relawan</h1>
-            <p className="text-sm text-slate-500">Sistem penggajian 2 mingguan (26 periode/tahun)</p>
+            <h1 className="text-lg font-bold">Payroll Relawan</h1>
+            <p className="text-xs text-slate-500">Sistem penggajian 2 mingguan (26 periode/tahun)</p>
           </div>
         </div>
       </div>
 
       {/* Period Selector */}
       <Card className="border-0 shadow-lg">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-slate-400" />
-              <span className="font-medium">Periode:</span>
+        <CardContent className="p-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-4 h-4 text-slate-400" />
+              <span className="font-medium text-sm">Periode:</span>
             </div>
             
             {/* Navigation */}
@@ -748,7 +748,7 @@ export function PayrollPage() {
 
       {/* Summary Cards */}
       {currentSummary && payrollData.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <Card className="border-0 shadow-lg">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">

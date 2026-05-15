@@ -64,10 +64,10 @@ export function Header({ onMenuClick, theme, onThemeToggle }: HeaderProps) {
         {/* Center - Title */}
         <div className="absolute left-1/2 -translate-x-1/2 hidden md:block">
           <div className="text-center">
-            <h1 className="text-sm font-semibold text-slate-800 dark:text-white truncate max-w-xs">
+            <h1 className="text-xs font-semibold text-slate-800 dark:text-white truncate max-w-xs">
               {settings.siteName}
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">
               {settings.siteSubtitle}
             </p>
           </div>
@@ -112,10 +112,10 @@ export function Header({ onMenuClick, theme, onThemeToggle }: HeaderProps) {
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:block text-left">
-                  <p className="text-sm font-medium text-slate-800 dark:text-white">
+                  <p className="text-xs font-medium text-slate-800 dark:text-white">
                     {user?.name || 'Admin'}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
                     {user?.role || 'Administrator'}
                   </p>
                 </div>
@@ -124,8 +124,8 @@ export function Header({ onMenuClick, theme, onThemeToggle }: HeaderProps) {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{user?.name}</p>
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
+                  <p className="text-xs font-medium">{user?.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{user?.email}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

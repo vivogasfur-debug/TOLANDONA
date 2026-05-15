@@ -118,6 +118,8 @@
   }
   html {
     scroll-behavior: smooth;
+    /* Smaller base font size for better aesthetics */
+    font-size: 15px;
     /* Enable scrolling on mobile */
     overflow-x: hidden;
     overflow-y: auto;
@@ -134,7 +136,14 @@
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    /* Better line height for smaller fonts */
+    line-height: 1.5;
   }
+  /* Smaller heading sizes */
+  h1 { @apply text-xl font-bold; }
+  h2 { @apply text-lg font-semibold; }
+  h3 { @apply text-base font-semibold; }
+  h4 { @apply text-sm font-medium; }
 }
 
 /* Safe area padding utility */

@@ -509,9 +509,9 @@ export function AhliGiziPage() {
   return (
     <div className="flex-1 p-4 md:p-8 space-y-8 bg-gradient-to-br from-slate-50 via-white to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 min-h-screen">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
+          <h1 className="text-lg md:text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
               <Salad className="w-5 h-5 text-white" />
             </div>
@@ -521,7 +521,7 @@ export function AhliGiziPage() {
             Kalkulator nutrisi untuk menghitung gizi makanan harian Anda
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           {/* Date Picker */}
           <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-2xl p-1.5 shadow-lg border-2 border-slate-200 dark:border-slate-700">
             <Button
@@ -564,7 +564,7 @@ export function AhliGiziPage() {
       </div>
 
       {/* Date Display & Age Group Selector */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         {/* Date Info */}
         <motion.div
           key={selectedDate}
@@ -617,7 +617,7 @@ export function AhliGiziPage() {
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{ageGroups[selectedAgeGroup].icon}</span>
+            <span className="text-xl">{ageGroups[selectedAgeGroup].icon}</span>
             <div>
               <h3 className="font-bold text-sm text-emerald-700 dark:text-emerald-300">
                 Kategori: {ageGroups[selectedAgeGroup].label}
@@ -691,7 +691,7 @@ export function AhliGiziPage() {
       </AnimatePresence>
 
       {/* Daily Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
           { label: 'Kalori', value: totals.calories, unit: 'kkal', target: dailyTargets.calories, icon: Flame, gradient: 'from-orange-400 via-red-500 to-rose-600', bgLight: 'bg-orange-50', bgDark: 'dark:bg-orange-950/30' },
           { label: 'Protein', value: totals.protein, unit: 'g', target: dailyTargets.protein, icon: Beef, gradient: 'from-rose-400 via-pink-500 to-fuchsia-600', bgLight: 'bg-rose-50', bgDark: 'dark:bg-rose-950/30' },
@@ -729,7 +729,7 @@ export function AhliGiziPage() {
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Food Database */}
         <div className="lg:col-span-2">
           <Card className="h-full shadow-xl border-2 border-slate-200/50 dark:border-slate-700/50">
