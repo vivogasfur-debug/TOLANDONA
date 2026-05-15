@@ -117,24 +117,87 @@
     @apply border-border outline-ring/50;
   }
   html {
-    /* Prevent horizontal scroll */
+    scroll-behavior: smooth;
+    /* Enable scrolling on mobile */
     overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   body {
     @apply bg-background text-foreground;
-    /* Prevent horizontal scroll */
-    overflow-x: hidden;
     /* Safe area insets for mobile devices */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+    /* Enable scrolling on mobile */
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
 /* Safe area padding utility */
 .pb-safe {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/* Mobile scrolling fix */
+@media (max-width: 1023px) {
+  html, body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    height: auto !important;
+    min-height: 100vh;
+  }
+  
+  /* Allow content to expand naturally */
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Force horizontal scroll for all overflow-x-auto elements */
+.overflow-x-auto {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Visible scrollbar */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 12px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #10b981;
+  border-radius: 6px;
+  border: 2px solid #e5e7eb;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #059669;
+}
+
+.dark .overflow-x-auto::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.dark .overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #10b981;
+  border-color: #374151;
+}
+
+.dark .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #34d399;
 }
 
 /* Hide scrollbar for mobile sidebar */
@@ -146,4 +209,58 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+}
+
+/* Print styles for payslip */
+@media print {
+  /* Hide everything except payslip content */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Show only payslip content and its parents */
+  #payslip-content,
+  #payslip-content * {
+    visibility: visible;
+  }
+  
+  /* Position payslip at top-left */
+  #payslip-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  
+  /* Remove shadows and borders for print */
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+  
+  /* Ensure proper colors for print */
+  .print\:bg-white {
+    background-color: white !important;
+  }
+  
+  .print\:text-black {
+    color: black !important;
+  }
+  
+  /* Remove rounded corners for print */
+  .print\:rounded-none {
+    border-radius: 0 !important;
+  }
+  
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+}
+
+/* Dialog scrollable content fix */
+[data-slot="dialog-content"].overflow-y-auto {
+  max-height: 90vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }

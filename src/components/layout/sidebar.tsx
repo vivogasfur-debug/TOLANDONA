@@ -3,19 +3,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useSettings } from '@/lib/settings-context';
 import {
   LayoutDashboard,
   Database,
   BarChart3,
   PieChart,
   Settings,
-  GraduationCap,
-  Users,
-  Baby,
   UserCog,
   X,
-  HeartHandshake,
   Wallet,
+  Salad,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -40,25 +38,23 @@ const allMenuItems: MenuItem[] = [
   { id: 'rekapitulasi', label: 'Rekapitulasi', icon: BarChart3, gradient: 'from-purple-500 to-pink-600' },
   { id: 'distribusi', label: 'Distribusi', icon: PieChart, gradient: 'from-orange-500 to-red-600' },
   { id: 'payroll', label: 'Payroll', icon: Wallet, gradient: 'from-teal-500 to-cyan-600' },
+  { id: 'ahligizi', label: 'Ahli Gizi', icon: Salad, gradient: 'from-green-500 to-emerald-600' },
   { id: 'users', label: 'Pengguna', icon: UserCog, gradient: 'from-violet-500 to-purple-600', adminOnly: true },
   { id: 'pengaturan', label: 'Pengaturan', icon: Settings, gradient: 'from-gray-500 to-slate-600', adminOnly: true },
 ];
 
-const dataSubmenu = [
-  { id: 'guru', label: 'Data Guru', icon: GraduationCap, color: 'text-emerald-500' },
-  { id: 'siswa', label: 'Data Siswa', icon: Users, color: 'text-cyan-500' },
-  { id: 'posyandu', label: 'Data Posyandu', icon: Baby, color: 'text-pink-500' },
-  { id: 'relawan', label: 'Data Relawan', icon: HeartHandshake, color: 'text-amber-500' },
-];
-
 export function Sidebar({ currentPage, onNavigate, isOpen, onClose, isAdmin = false }: SidebarProps) {
+  const { settings } = useSettings();
   const [isMobile, setIsMobile] = useState(false);
-  const isDataSubmenu = ['guru', 'siswa', 'posyandu', 'relawan'].includes(currentPage);
+  const [logoError, setLogoError] = useState(false);
 
   // Filter menu items based on role
   const menuItems = useMemo(() => {
     return allMenuItems.filter(item => !item.adminOnly || isAdmin);
   }, [isAdmin]);
+  
+  // Derive showLogo state from settings and error
+  const showLogo = settings.logoUrl && !logoError;
 
   // Detect mobile screen - only run on client
   useEffect(() => {
@@ -87,11 +83,11 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onClose, isAdmin = fa
         transition={{ delay: index * 0.05 }}
       >
         <button
-          onClick={() => onNavigate(item.id === 'data' ? 'guru' : item.id)}
+          onClick={() => onNavigate(item.id)}
           className={cn(
             'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300',
             'hover:bg-white/10 group relative overflow-hidden',
-            (item.id === 'data' && isDataSubmenu) || currentPage === item.id
+            currentPage === item.id
               ? 'bg-gradient-to-r ' + item.gradient + ' text-white shadow-lg'
               : 'text-slate-300'
           )}
@@ -99,28 +95,6 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onClose, isAdmin = fa
           <item.icon className="w-5 h-5" />
           <span className="font-medium">{item.label}</span>
         </button>
-
-        {/* Data submenu */}
-        {item.id === 'data' && (
-          <div className="ml-4 mt-2 space-y-1">
-            {dataSubmenu.map((subItem) => (
-              <button
-                key={subItem.id}
-                onClick={() => onNavigate(subItem.id)}
-                className={cn(
-                  'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200',
-                  'hover:bg-white/5',
-                  currentPage === subItem.id
-                    ? 'bg-white/10 text-white'
-                    : 'text-slate-400'
-                )}
-              >
-                <subItem.icon className={cn('w-4 h-4', subItem.color)} />
-                <span className="text-sm">{subItem.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
       </motion.div>
     ))
   );
@@ -128,8 +102,18 @@ export function Sidebar({ currentPage, onNavigate, isOpen, onClose, isAdmin = fa
   // Logo component
   const renderLogo = () => (
     <div className="flex items-center gap-3">
-      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-        <Database className="w-6 h-6 text-white" />
+      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 overflow-hidden">
+        {showLogo ? (
+          <img 
+            key={settings.logoUrl}
+            src={settings.logoUrl} 
+            alt="Logo" 
+            className="w-full h-full object-contain p-1"
+            onError={() => setLogoError(true)}
+          />
+        ) : (
+          <Database className="w-6 h-6 text-white" />
+        )}
       </div>
       <div>
         <h1 className="text-lg font-bold text-white">SIDATA</h1>

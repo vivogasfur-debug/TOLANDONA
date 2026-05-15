@@ -7,12 +7,13 @@ import { SettingsProvider } from '@/lib/settings-context';
 import { ThemeProvider, useTheme } from '@/components/layout/theme-provider';
 import { LoginPage } from '@/components/pages/login-page';
 import { DashboardPage } from '@/components/pages/dashboard-page';
-import { DataPage } from '@/components/pages/data-pages';
+import { DataPageUnified } from '@/components/pages/data-page-unified';
 import { RekapitulasiPage } from '@/components/pages/rekapitulasi-page';
 import { DistribusiPage } from '@/components/pages/distribusi-page';
 import { PengaturanPage } from '@/components/pages/pengaturan-page';
 import { UsersPage } from '@/components/pages/users-page';
 import { PayrollPage } from '@/components/pages/payroll-page';
+import { AhliGiziPage } from '@/components/pages/ahli-gizi-page';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -111,17 +112,16 @@ function AppContent() {
     switch (currentPage) {
       case 'dashboard':
         return <DashboardPage />;
-      case 'guru':
-      case 'siswa':
-      case 'posyandu':
-      case 'relawan':
-        return <DataPage type={currentPage} />;
+      case 'data':
+        return <DataPageUnified />;
       case 'rekapitulasi':
         return <RekapitulasiPage />;
       case 'distribusi':
         return <DistribusiPage />;
       case 'payroll':
         return <PayrollPage />;
+      case 'ahligizi':
+        return <AhliGiziPage />;
       case 'users':
         return <UsersPage />;
       case 'pengaturan':
@@ -143,14 +143,14 @@ function AppContent() {
       />
 
       {/* Main Content - with left margin on desktop for sidebar */}
-      <div className="flex-1 flex flex-col min-h-screen lg:ml-72">
+      <div className="flex-1 flex flex-col min-h-screen lg:ml-72 min-w-0">
         <Header
           onMenuClick={() => setSidebarOpen(true)}
           theme={theme}
           onThemeToggle={toggleTheme}
         />
 
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentPage}

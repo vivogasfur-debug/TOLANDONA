@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth-context';
 import { useSettings } from '@/lib/settings-context';
@@ -15,6 +15,44 @@ interface LoginPageProps {
   onLogin: () => void;
 }
 
+interface Stats {
+  totalGuru: number;
+  totalSiswa: number;
+  totalPosyandu: number;
+  totalRelawan: number;
+}
+
+// Logo component with fallback
+function LogoImage({ src, size = 'large' }: { src?: string; size?: 'large' | 'small' }) {
+  const [error, setError] = useState(false);
+  
+  const sizeClasses = size === 'large' 
+    ? 'w-24 h-24 rounded-2xl' 
+    : 'w-16 h-16 rounded-xl';
+  
+  const iconSize = size === 'large' ? 'w-12 h-12' : 'w-8 h-8';
+  
+  if (!src || error) {
+    return (
+      <div className={`${sizeClasses} bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-2xl`}>
+        <Database className={`${iconSize} text-white`} />
+      </div>
+    );
+  }
+  
+  return (
+    <div className={`${sizeClasses} bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-2xl overflow-hidden`}>
+      <img 
+        key={src}
+        src={src} 
+        alt="Logo" 
+        className="w-full h-full object-contain p-2"
+        onError={() => setError(true)}
+      />
+    </div>
+  );
+}
+
 export function LoginPage({ onLogin }: LoginPageProps) {
   const { login } = useAuth();
   const { settings } = useSettings();
@@ -23,6 +61,33 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [stats, setStats] = useState<Stats>({
+    totalGuru: 0,
+    totalSiswa: 0,
+    totalPosyandu: 0,
+    totalRelawan: 0,
+  });
+
+  // Fetch stats from database
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/stats');
+        const data = await response.json();
+        if (data.success) {
+          setStats({
+            totalGuru: data.stats.totalGuru,
+            totalSiswa: data.stats.totalSiswa,
+            totalPosyandu: data.stats.totalPosyandu,
+            totalRelawan: data.stats.totalRelawan,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+      }
+    };
+    fetchStats();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,9 +121,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', damping: 20 }}
-            className="w-24 h-24 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center mb-8 shadow-2xl"
           >
-            <Database className="w-12 h-12 text-white" />
+            <LogoImage src={settings.logoUrl} size="large" />
           </motion.div>
 
           <motion.h1
@@ -86,15 +150,15 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             className="mt-12 grid grid-cols-3 gap-8"
           >
             <div className="text-center">
-              <div className="text-3xl font-bold">856</div>
+              <div className="text-3xl font-bold">{stats.totalGuru.toLocaleString()}</div>
               <div className="text-sm text-white/60">Guru</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold">1600</div>
+              <div className="text-3xl font-bold">{stats.totalSiswa.toLocaleString()}</div>
               <div className="text-sm text-white/60">Siswa</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold">1836</div>
+              <div className="text-3xl font-bold">{stats.totalPosyandu.toLocaleString()}</div>
               <div className="text-sm text-white/60">Posyandu</div>
             </div>
           </motion.div>
@@ -110,8 +174,18 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         >
           {/* Mobile logo */}
           <div className="lg:hidden flex flex-col items-center mb-8">
-            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-4 shadow-lg">
-              <Database className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-4 shadow-lg overflow-hidden">
+              {settings.logoUrl ? (
+                <img 
+                  src={settings.logoUrl} 
+                  alt="Logo" 
+                  className="w-full h-full object-contain p-1"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              ) : null}
+              {!settings.logoUrl && <Database className="w-8 h-8 text-white" />}
             </div>
             <h1 className="text-xl font-bold text-slate-800 dark:text-white">
               {settings.siteName}

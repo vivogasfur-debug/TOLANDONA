@@ -33,7 +33,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Search, Download, Upload, ChevronLeft, ChevronRight, GraduationCap, Users, Baby, FileSpreadsheet, Loader2, Check, Trash2, AlertTriangle, Edit, Plus, HeartHandshake
+  Search, Download, Upload, ChevronLeft, ChevronRight, GraduationCap, Users, Baby, FileSpreadsheet, Loader2, Check, Trash2, AlertTriangle, Edit, Plus, HeartHandshake, ChevronLeftCircle, ChevronRightCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -1064,35 +1064,71 @@ export function DataPage({ type }: DataPageProps) {
       </Card>
 
       {/* Table */}
-      <Card className="border-0 shadow-lg overflow-hidden">
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="p-6 space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex gap-4">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-4 w-10" />
-                  <Skeleton className="h-4 w-40" />
-                  <Skeleton className="h-4 w-20" />
-                </div>
-              ))}
+      <Card className="border-0 shadow-lg">
+        <CardContent className="p-0 relative">
+          <div className="flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b">
+            <span className="text-sm text-slate-500">Geser tabel untuk melihat semua kolom</span>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  const container = document.getElementById('table-scroll-container');
+                  if (container) container.scrollBy({ left: -300, behavior: 'smooth' });
+                }}
+                className="gap-1"
+              >
+                <ChevronLeftCircle className="w-4 h-4" />
+                Kiri
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  const container = document.getElementById('table-scroll-container');
+                  if (container) container.scrollBy({ left: 300, behavior: 'smooth' });
+                }}
+                className="gap-1"
+              >
+                Kanan
+                <ChevronRightCircle className="w-4 h-4" />
+              </Button>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-100 dark:bg-slate-800">
-                    <TableHead className="w-12 text-center font-semibold">#</TableHead>
+          </div>
+          <div 
+            id="table-scroll-container" 
+            className="overflow-x-auto" 
+            style={{ 
+              WebkitOverflowScrolling: 'touch',
+              msOverflowStyle: '-ms-autohiding-scrollbar'
+            }}
+          >
+            {loading ? (
+              <div className="p-6 space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex gap-4">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-10" />
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <table className="min-w-max w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-100 dark:bg-slate-800">
+                    <th className="w-12 text-center font-semibold p-3 border-b">#</th>
                     {config.columns.map((col) => (
-                      <TableHead key={col.key} className="whitespace-nowrap font-semibold">{col.label}</TableHead>
+                      <th key={col.key} className="whitespace-nowrap font-semibold p-3 border-b text-left">{col.label}</th>
                     ))}
-                    <TableHead className="w-32 text-center font-semibold bg-slate-100 dark:bg-slate-800">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+                    <th className="text-center font-semibold p-3 border-b w-28 bg-red-50 dark:bg-red-900/20">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {data.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={config.columns.length + 2} className="text-center py-8 text-slate-500">
+                    <tr>
+                      <td colSpan={config.columns.length + 2} className="text-center py-8 text-slate-500">
                         <div className="flex flex-col items-center gap-2">
                           <FileSpreadsheet className="w-12 h-12 text-slate-300" />
                           <p>Tidak ada data ditemukan</p>
@@ -1101,36 +1137,36 @@ export function DataPage({ type }: DataPageProps) {
                             Tambah Data
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ) : (
                     data.map((item, index) => (
-                      <TableRow key={item.id} className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                        <TableCell className="text-center text-slate-400">
+                      <tr key={item.id} className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                        <td className="text-center text-slate-400 p-2 border-b">
                           {(pagination.page - 1) * pagination.limit + index + 1}
-                        </TableCell>
+                        </td>
                         {config.columns.map((col) => (
-                          <TableCell key={col.key} className="max-w-[200px] truncate">
+                          <td key={col.key} className="max-w-[200px] truncate p-2 border-b">
                             {renderCell(item, col.key)}
-                          </TableCell>
+                          </td>
                         ))}
-                        <TableCell>
-                          <div className="flex gap-2 justify-center">
-                            <Button variant="outline" size="sm" onClick={() => openEditDialog(item)} className="h-8 w-8 p-0 border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700" title="Edit">
+                        <td className="p-2 border-b bg-red-50/50 dark:bg-red-900/10">
+                          <div className="flex gap-1 justify-center">
+                            <Button variant="ghost" size="sm" onClick={() => openEditDialog(item)} className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50 hover:text-blue-700" title="Edit">
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button variant="outline" size="sm" onClick={() => openDeleteDialog(item)} className="h-8 w-8 p-0 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" title="Hapus">
+                            <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(item)} className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700" title="Hapus">
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
-                        </TableCell>
-                      </TableRow>
+                        </td>
+                      </tr>
                     ))
                   )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                </tbody>
+              </table>
+            )}
+          </div>
         </CardContent>
       </Card>
 

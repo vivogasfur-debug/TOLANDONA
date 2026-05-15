@@ -500,7 +500,7 @@ function RekapitulasiUmum({ stats, exportToCSV, exportToExcel, exportToPDF }: {
           <CardDescription>Rekapitulasi lengkap semua data</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="table-scroll-wrapper">
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50 dark:bg-slate-800/50">
@@ -768,7 +768,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
             </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <div className="table-scroll-wrapper">
               <Table className="border-collapse border border-slate-300">
                 <TableHeader>
                   {/* Main Header Row */}
@@ -862,7 +862,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
             </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <div className="table-scroll-wrapper">
               <Table className="border-collapse border border-slate-300">
                 <TableHeader>
                   {/* Main Header Row */}
@@ -966,7 +966,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
             </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <div className="table-scroll-wrapper">
               <Table className="border-collapse border border-slate-300">
                 <TableHeader>
                   {/* Main Header Row */}
@@ -1070,7 +1070,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
             </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <div className="table-scroll-wrapper">
               <Table className="border-collapse border border-slate-300">
                 <TableHeader>
                   {/* Main Header Row */}
@@ -1174,7 +1174,7 @@ function RekapitulasiSekolahDetail({ schoolData }: { schoolData: RekapSekolahDat
             </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            <div className="table-scroll-wrapper">
               <Table className="border-collapse border border-slate-300">
                 <TableHeader>
                   {/* Main Header Row */}
@@ -1307,7 +1307,7 @@ function Rekapitulasi3B({ rekap3BData, onExportCSV, onExportExcel, onExportPDF }
         </DropdownMenu>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="table-scroll-wrapper">
           <Table className="border-collapse border border-slate-300">
             <TableHeader>
               {/* Main Header Row */}

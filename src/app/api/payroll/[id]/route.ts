@@ -45,26 +45,55 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { gajiPokok, hariKerja, bonus, potongan, status, keterangan } = body;
+    const { gajiHarian, hariKerja, bonus, potongan, status, keterangan } = body;
 
-    // Calculate total
-    const gaji = parseInt(gajiPokok) || 0;
-    const hari = parseInt(hariKerja) || 0;
-    const b = parseInt(bonus) || 0;
-    const p = parseInt(potongan) || 0;
-    const totalGaji = gaji * hari + b - p;
+    // Build update data
+    const updateData: Record<string, unknown> = {};
+
+    // If status is provided (for simple status toggle)
+    if (status !== undefined) {
+      updateData.status = status;
+      if (status === 'paid') {
+        updateData.tanggalBayar = new Date();
+      } else {
+        updateData.tanggalBayar = null;
+      }
+    }
+
+    // If financial data is provided, recalculate total
+    if (gajiHarian !== undefined || hariKerja !== undefined || bonus !== undefined || potongan !== undefined) {
+      // Get existing record first
+      const existing = await db.payroll.findUnique({ where: { id } });
+      if (!existing) {
+        return NextResponse.json(
+          { success: false, error: 'Data payroll tidak ditemukan' },
+          { status: 404 }
+        );
+      }
+
+      const gaji = gajiHarian !== undefined ? parseInt(gajiHarian) : existing.gajiHarian;
+      const hari = hariKerja !== undefined ? parseInt(hariKerja) : existing.hariKerja;
+      const b = bonus !== undefined ? parseInt(bonus) : existing.bonus;
+      const p = potongan !== undefined ? parseInt(potongan) : existing.potongan;
+
+      updateData.gajiHarian = gaji;
+      updateData.hariKerja = hari;
+      updateData.bonus = b;
+      updateData.potongan = p;
+      updateData.totalGaji = gaji * hari + b - p;
+    }
+
+    if (keterangan !== undefined) {
+      updateData.keterangan = keterangan;
+    }
 
     const payroll = await db.payroll.update({
       where: { id },
-      data: {
-        gajiPokok: gaji,
-        hariKerja: hari,
-        bonus: b,
-        potongan: p,
-        totalGaji,
-        status: status || 'pending',
-        keterangan,
-        tanggalBayar: status === 'paid' ? new Date() : null,
+      data: updateData,
+      include: {
+        relawan: {
+          select: { nama: true, divisi: true, jabatan: true }
+        }
       }
     });
 

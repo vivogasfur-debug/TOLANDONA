@@ -126,24 +126,26 @@ model Relawan {
   payroll     Payroll[]
 }
 
-// Payroll Record for tracking salary payments
+// Payroll Record for tracking salary payments (2 mingguan)
 model Payroll {
-  id          String   @id @default(cuid())
-  relawanId   String
-  bulan       Int      // 1-12
-  tahun       Int      // e.g., 2024
-  gajiPokok   Int      @default(0)
-  hariKerja   Int      @default(0)
-  bonus       Int      @default(0)
-  potongan    Int      @default(0)
-  totalGaji   Int      @default(0)
-  status      String   @default("pending") // pending, paid
-  tanggalBayar DateTime?
-  keterangan  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  relawanId      String
+  periode        Int      // 1-26 (2 mingguan dalam setahun)
+  tahun          Int      // e.g., 2024
+  tanggalMulai   DateTime // Tanggal mulai periode
+  tanggalSelesai DateTime // Tanggal selesai periode
+  gajiHarian     Int      @default(0) // Gaji per hari
+  hariKerja      Int      @default(0) // Jumlah hari kerja (maks 14)
+  bonus          Int      @default(0)
+  potongan       Int      @default(0)
+  totalGaji      Int      @default(0)
+  status         String   @default("pending") // pending, paid
+  tanggalBayar   DateTime?
+  keterangan     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
   
-  relawan     Relawan  @relation(fields: [relawanId], references: [id])
+  relawan        Relawan  @relation(fields: [relawanId], references: [id])
 }
 
 // Distribusi Data
@@ -205,4 +207,27 @@ model Distribusi {
   tanggal     DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// Food Diary Entry - Ahli Gizi
+model FoodDiary {
+  id          String   @id @default(cuid())
+  date        DateTime // Tanggal pencatatan
+  ageGroup    String   // "dewasa" atau "anak"
+  foodId      Int      // ID makanan dari database lokal
+  foodName    String   // Nama makanan
+  category    String   // Kategori makanan
+  amount      Int      // Jumlah dalam gram
+  calories    Int      // Kalori
+  protein     Float    // Protein dalam gram
+  carbs       Float    // Karbohidrat dalam gram
+  fat         Float    // Lemak dalam gram
+  fiber       Float    // Serat dalam gram
+  mealType    String?  // Jenis makanan: sarapan, makanSiang, makanMalam, snack
+  notes       String?  // Catatan tambahan
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([date])
+  @@index([ageGroup])
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,7 @@ import { useTheme } from '@/components/layout/theme-provider';
 import { toast } from 'sonner';
 import {
   Settings, Palette, Type, Image as ImageIcon, FileText, Moon, Sun,
-  Save, RotateCcw, Check, FileSpreadsheet, GripVertical, GraduationCap, Users, Baby
+  Save, RotateCcw, Check, FileSpreadsheet, GripVertical, GraduationCap, Users, Baby, Upload, X, Loader2
 } from 'lucide-react';
 
 const colorPresets = [
@@ -48,6 +48,8 @@ export function PengaturanPage() {
     logoUrl: settings.logoUrl,
     footerText: settings.footerText,
   });
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Export settings
   const [exportSettings, setExportSettings] = useState<Record<string, ExportHeader[]>>({
@@ -110,6 +112,85 @@ export function PengaturanPage() {
       footerText: '© 2025 Kecamatan Tolandona - Kabupaten Buton Tengah',
     });
     toast.info('Pengaturan direset ke nilai default');
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Tipe file tidak didukung. Gunakan JPG, PNG, GIF, WebP, atau SVG');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Ukuran file terlalu besar. Maksimal 2MB');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        // Update form data with new logo URL
+        const newLogoUrl = data.url;
+        setFormData(prev => ({ ...prev, logoUrl: newLogoUrl }));
+        
+        // Auto-save to database
+        const saveResult = await updateSettings({ 
+          ...formData, 
+          logoUrl: newLogoUrl 
+        });
+        
+        if (saveResult.success) {
+          toast.success('Logo berhasil diupload dan disimpan!', {
+            icon: <Check className="w-4 h-4" />,
+          });
+        } else {
+          toast.warning('Logo diupload tapi gagal disimpan. Klik Simpan manual.');
+        }
+      } else {
+        toast.error(data.error || 'Gagal mengupload logo');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Gagal mengupload logo');
+    } finally {
+      setUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    setFormData(prev => ({ ...prev, logoUrl: '' }));
+    
+    // Auto-save to database
+    const saveResult = await updateSettings({ 
+      ...formData, 
+      logoUrl: '' 
+    });
+    
+    if (saveResult.success) {
+      toast.success('Logo berhasil dihapus!');
+    } else {
+      toast.info('Logo dihapus dari tampilan. Klik Simpan untuk menyimpan.');
+    }
   };
 
   const handleExportHeaderChange = (type: string, index: number, field: 'label' | 'enabled', value: string | boolean) => {
@@ -280,18 +361,71 @@ export function PengaturanPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="logoUrl">URL Logo</Label>
+                  <Label>Logo</Label>
+                  
+                  {/* Logo Preview */}
+                  {formData.logoUrl && (
+                    <div className="relative w-24 h-24 mb-3 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-50 dark:bg-slate-800">
+                      <img 
+                        src={formData.logoUrl} 
+                        alt="Logo Preview" 
+                        className="w-full h-full object-contain p-2"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemoveLogo}
+                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Upload Button */}
                   <div className="flex gap-2">
-                    <Input
-                      id="logoUrl"
-                      value={formData.logoUrl}
-                      onChange={(e) => setFormData(prev => ({ ...prev, logoUrl: e.target.value }))}
-                      placeholder="https://example.com/logo.png"
-                      className="flex-1"
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+                      className="hidden"
                     />
-                    <ImageIcon className="w-4 h-4 self-center text-slate-400" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="flex-1"
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Mengupload...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload Logo
+                        </>
+                      )}
+                    </Button>
                   </div>
-                  <p className="text-xs text-slate-500">Masukkan URL gambar logo (kosongkan untuk menggunakan default)</p>
+                  
+                  {/* URL Input */}
+                  <div className="mt-3">
+                    <Label htmlFor="logoUrl" className="text-xs text-slate-500">Atau masukkan URL logo:</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        id="logoUrl"
+                        value={formData.logoUrl}
+                        onChange={(e) => setFormData(prev => ({ ...prev, logoUrl: e.target.value }))}
+                        placeholder="https://example.com/logo.png"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                  
+                  <p className="text-xs text-slate-500">Format: JPG, PNG, GIF, WebP, SVG. Maksimal 2MB</p>
                 </div>
               </CardContent>
             </Card>
@@ -603,7 +737,7 @@ export function PengaturanPage() {
                   {/* Preview */}
                   <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
                     <p className="text-sm font-medium mb-2">Preview Export:</p>
-                    <div className="overflow-x-auto">
+                    <div className="table-scroll-wrapper">
                       <div className="flex gap-4 text-sm">
                         {exportSettings[activeTab]
                           ?.filter(h => h.enabled)

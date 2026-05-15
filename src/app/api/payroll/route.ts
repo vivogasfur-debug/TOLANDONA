@@ -5,15 +5,15 @@ import { db } from '@/lib/db';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const bulan = searchParams.get('bulan');
+    const periode = searchParams.get('periode');
     const tahun = searchParams.get('tahun');
     const status = searchParams.get('status');
 
     // Build filter
     const where: Record<string, unknown> = {};
-    if (bulan) where.bulan = parseInt(bulan);
-    if (tahun) where.tahun = parseInt(tahun);
-    if (status) where.status = status;
+    if (periode && periode !== 'all') where.periode = parseInt(periode);
+    if (tahun && tahun !== 'all') where.tahun = parseInt(tahun);
+    if (status && status !== 'all') where.status = status;
 
     // Get payroll data with relawan info
     const payroll = await db.payroll.findMany({
@@ -28,29 +28,25 @@ export async function GET(request: NextRequest) {
             jk: true,
             nik: true,
             alamat: true,
+            gajiPokok: true,
           }
         }
       },
       orderBy: [
-        { tahun: 'desc' },
-        { bulan: 'desc' },
         { relawan: { nama: 'asc' } }
       ]
     });
 
-    // Get summary
-    const summary = await db.payroll.aggregate({
-      where,
-      _sum: {
-        gajiPokok: true,
-        bonus: true,
-        potongan: true,
-        totalGaji: true,
-      },
-      _count: {
-        id: true,
-      }
-    });
+    // Calculate summary
+    const summary = {
+      totalRecords: payroll.length,
+      totalGajiPokok: payroll.reduce((sum, p) => sum + (p.gajiHarian * p.hariKerja), 0),
+      totalBonus: payroll.reduce((sum, p) => sum + p.bonus, 0),
+      totalPotongan: payroll.reduce((sum, p) => sum + p.potongan, 0),
+      grandTotal: payroll.reduce((sum, p) => sum + p.totalGaji, 0),
+      paidCount: payroll.filter(p => p.status === 'paid').length,
+      pendingCount: payroll.filter(p => p.status === 'pending').length,
+    };
 
     // Get distinct years for filter
     const years = await db.payroll.findMany({
@@ -62,13 +58,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: payroll,
-      summary: {
-        totalRecords: summary._count.id,
-        totalGajiPokok: summary._sum.gajiPokok || 0,
-        totalBonus: summary._sum.bonus || 0,
-        totalPotongan: summary._sum.potongan || 0,
-        grandTotal: summary._sum.totalGaji || 0,
-      },
+      summary,
       years: years.map(y => y.tahun),
     });
 
@@ -96,30 +86,30 @@ function parseStringToNumber(value: string | null | undefined): number {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { bulan, tahun } = body;
+    const { periode, tahun, tanggalMulai, tanggalSelesai } = body;
 
-    console.log('Generate payroll request:', { bulan, tahun });
+    console.log('Generate payroll request:', { periode, tahun, tanggalMulai, tanggalSelesai });
 
-    if (!bulan || !tahun) {
+    if (!periode || !tahun) {
       return NextResponse.json(
-        { success: false, error: 'Bulan dan tahun harus diisi' },
+        { success: false, error: 'Periode dan tahun harus diisi' },
         { status: 400 }
       );
     }
 
-    const bulanNum = parseInt(String(bulan));
+    const periodeNum = parseInt(String(periode));
     const tahunNum = parseInt(String(tahun));
 
-    if (isNaN(bulanNum) || isNaN(tahunNum)) {
+    if (isNaN(periodeNum) || isNaN(tahunNum) || periodeNum < 1 || periodeNum > 26) {
       return NextResponse.json(
-        { success: false, error: 'Bulan dan tahun harus berupa angka yang valid' },
+        { success: false, error: 'Periode harus antara 1-26 dan tahun harus valid' },
         { status: 400 }
       );
     }
 
     // Check if payroll already exists for this period
     const existing = await db.payroll.findFirst({
-      where: { bulan: bulanNum, tahun: tahunNum }
+      where: { periode: periodeNum, tahun: tahunNum }
     });
 
     if (existing) {
@@ -140,31 +130,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Parse dates
+    const mulai = tanggalMulai ? new Date(tanggalMulai) : new Date(tahunNum, 0, 1 + ((periodeNum - 1) * 14));
+    const selesai = tanggalSelesai ? new Date(tanggalSelesai) : new Date(mulai.getTime() + 13 * 24 * 60 * 60 * 1000);
+
     // Create payroll records from relawan data
     const payrollRecords = [];
     for (const relawan of relawanList) {
-      console.log('Processing relawan:', relawan.nama, {
-        gajiPokok: relawan.gajiPokok,
-        hariKerja: relawan.hariKerja,
-        bonus: relawan.bonus
-      });
+      // Parse values safely - gajiPokok from relawan becomes gajiHarian
+      const gajiHarian = parseStringToNumber(relawan.gajiPokok);
+      const hariKerja = 0; // Default 0, to be filled by user
+      const bonus = 0; // Default 0
 
-      // Parse values safely
-      const gajiPokok = parseStringToNumber(relawan.gajiPokok);
-      const hariKerja = parseStringToNumber(relawan.hariKerja);
-      const bonus = parseStringToNumber(relawan.bonus);
-
-      // Calculate total gaji: gajiPokok * hariKerja + bonus
-      const totalGaji = gajiPokok * hariKerja + bonus;
-
-      console.log('Calculated:', { gajiPokok, hariKerja, bonus, totalGaji });
+      // Calculate total gaji: gajiHarian * hariKerja + bonus
+      const totalGaji = gajiHarian * hariKerja + bonus;
 
       const record = await db.payroll.create({
         data: {
           relawanId: relawan.id,
-          bulan: bulanNum,
+          periode: periodeNum,
           tahun: tahunNum,
-          gajiPokok,
+          tanggalMulai: mulai,
+          tanggalSelesai: selesai,
+          gajiHarian,
           hariKerja,
           bonus,
           potongan: 0,
@@ -189,6 +177,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: `Berhasil membuat payroll untuk ${payrollRecords.length} relawan`,
+      count: payrollRecords.length,
       data: payrollRecords,
     });
 
@@ -205,19 +194,19 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const bulan = searchParams.get('bulan');
+    const periode = searchParams.get('periode');
     const tahun = searchParams.get('tahun');
 
-    if (!bulan || !tahun) {
+    if (!periode || !tahun) {
       return NextResponse.json(
-        { success: false, error: 'Bulan dan tahun harus diisi' },
+        { success: false, error: 'Periode dan tahun harus diisi' },
         { status: 400 }
       );
     }
 
     const result = await db.payroll.deleteMany({
       where: {
-        bulan: parseInt(bulan),
+        periode: parseInt(periode),
         tahun: parseInt(tahun),
       }
     });
@@ -225,6 +214,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: `Berhasil menghapus ${result.count} record payroll`,
+      count: result.count,
     });
 
   } catch (error) {

@@ -168,6 +168,12 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // First delete all Payroll records for this Relawan
+    await db.payroll.deleteMany({
+      where: { relawanId: id },
+    });
+
+    // Then delete the Relawan
     await db.relawan.delete({
       where: { id },
     });
