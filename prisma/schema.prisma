@@ -231,3 +231,28 @@ model FoodDiary {
   @@index([date])
   @@index([ageGroup])
 }
+
+// Berita Acara - Event Minutes/Reports
+model BeritaAcara {
+  id              String   @id @default(cuid())
+  nomor           String   // Nomor berita acara
+  tanggal         DateTime // Tanggal kegiatan
+  judul           String   // Judul kegiatan
+  lokasi          String?  // Lokasi kegiatan
+  peserta         String?  // Jumlah peserta
+  uraian          String   // Uraian kegiatan (rich text/HTML)
+  kesimpulan      String?  // Kesimpulan
+  tindakLanjut    String?  // Tindak lanjut
+  picNama         String?  // Nama PIC
+  picJabatan      String?  // Jabatan PIC
+  status          String   @default("draft") // draft, selesai, dibatalkan
+  kategori        String?  // Kategori kegiatan
+  lampiran        String?  // URL/file path lampiran
+  createdBy       String?  // User ID pembuat
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([tanggal])
+  @@index([status])
+  @@index([kategori])
+}

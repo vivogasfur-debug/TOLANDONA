@@ -11,8 +11,8 @@ interface User {
 
 // Define page access by role
 const PAGE_PERMISSIONS: Record<string, string[]> = {
-  admin: ['dashboard', 'data', 'rekapitulasi', 'distribusi', 'payroll', 'ahligizi', 'users', 'pengaturan'],
-  user: ['dashboard', 'rekapitulasi', 'distribusi', 'payroll', 'ahligizi'],
+  admin: ['dashboard', 'data', 'rekapitulasi', 'distribusi', 'payroll', 'ahligizi', 'beritaacara', 'users', 'pengaturan'],
+  user: ['dashboard', 'rekapitulasi', 'distribusi', 'payroll', 'ahligizi', 'beritaacara'],
 };
 
 // Pages that require admin role
