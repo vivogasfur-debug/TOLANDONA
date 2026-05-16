@@ -629,16 +629,6 @@ function SummaryCard({ title, total, icon: Icon, color, genderData }: {
             <Icon className="w-8 h-8 opacity-80" />
           </div>
         </div>
-        <div className="p-3 flex justify-around text-sm">
-          <div className="text-center">
-            <p className="text-slate-500">Laki-laki</p>
-            <p className="font-bold text-blue-600">{genderData.find(g => g.name === 'L')?.value || 0}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-slate-500">Perempuan</p>
-            <p className="font-bold text-pink-600">{genderData.find(g => g.name === 'P')?.value || 0}</p>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
