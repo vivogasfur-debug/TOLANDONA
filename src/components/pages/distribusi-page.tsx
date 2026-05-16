@@ -738,13 +738,12 @@ export function DistribusiPage() {
                   msOverflowStyle: '-ms-autohiding-scrollbar'
                 }}
               >
-                <div className="min-w-[1800px]">
-                  <Table>
+                <Table className="w-full" style={{ minWidth: '1600px' }}>
                     <TableHeader>
                       {/* Header Row 1 - Group Headers */}
                       <TableRow className="bg-slate-100 dark:bg-slate-800">
-                        <TableHead rowSpan={2} className="border text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[50px]">No</TableHead>
-                        <TableHead rowSpan={2} className="border text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[200px]">Nama Sekolah</TableHead>
+                        <TableHead rowSpan={2} className="sticky-col border text-center align-middle bg-slate-200 dark:bg-slate-700 w-[50px] min-w-[50px]">No</TableHead>
+                        <TableHead rowSpan={2} className="sticky-col-2 border text-center align-middle bg-slate-200 dark:bg-slate-700 w-[200px] min-w-[200px]">Nama Sekolah</TableHead>
                         <TableHead colSpan={4} className="border text-center bg-pink-100 dark:bg-pink-900/30">TK/PAUD</TableHead>
                         <TableHead colSpan={12} className="border text-center bg-cyan-100 dark:bg-cyan-900/30">SD/MI</TableHead>
                         <TableHead colSpan={6} className="border text-center bg-green-100 dark:bg-green-900/30">SMP/MTs</TableHead>
@@ -810,8 +809,8 @@ export function DistribusiPage() {
                       ) : (
                         distribusiData.map((item, index) => (
                           <TableRow key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                            <TableCell className="border text-center">{(pagination.page - 1) * pagination.limit + index + 1}</TableCell>
-                            <TableCell className="border font-medium">{item.namaSekolah}</TableCell>
+                            <TableCell className="sticky-col border text-center bg-white dark:bg-slate-900">{(pagination.page - 1) * pagination.limit + index + 1}</TableCell>
+                            <TableCell className="sticky-col-2 border font-medium bg-white dark:bg-slate-900">{item.namaSekolah}</TableCell>
                             {/* TK/PAUD */}
                             <TableCell className="border text-center bg-blue-50 dark:bg-blue-900/20">{item.klsAL || '-'}</TableCell>
                             <TableCell className="border text-center bg-pink-50 dark:bg-pink-900/20">{item.klsAP || '-'}</TableCell>
@@ -872,7 +871,6 @@ export function DistribusiPage() {
                       )}
                     </TableBody>
                   </Table>
-                </div>
               </div>
             </CardContent>
           </Card>

@@ -168,6 +168,43 @@
   }
 }
 
+/* Sticky column for tables */
+.sticky-col {
+  position: sticky !important;
+  left: 0 !important;
+  z-index: 20 !important;
+}
+
+.sticky-col::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background: #e2e8f0;
+}
+
+.dark .sticky-col::after {
+  background: #475569;
+}
+
+.sticky-col-2 {
+  position: sticky !important;
+  left: 50px !important;
+  z-index: 20 !important;
+}
+
+.sticky-col-2::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to right, transparent, rgba(16, 185, 129, 0.3));
+}
+
 /* Force horizontal scroll for all overflow-x-auto elements */
 .overflow-x-auto {
   overflow-x: auto !important;
