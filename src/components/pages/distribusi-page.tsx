@@ -742,61 +742,87 @@ export function DistribusiPage() {
                     <TableHeader>
                       {/* Header Row 1 - Group Headers */}
                       <TableRow className="bg-slate-100 dark:bg-slate-800">
-                        <TableHead rowSpan={2} className="sticky-col border text-center align-middle bg-slate-200 dark:bg-slate-700 w-[50px] min-w-[50px]">No</TableHead>
-                        <TableHead rowSpan={2} className="sticky-col-2 border text-center align-middle bg-slate-200 dark:bg-slate-700 w-[200px] min-w-[200px]">Nama Sekolah</TableHead>
+                        <TableHead rowSpan={3} className="sticky-col border text-center align-middle bg-slate-200 dark:bg-slate-700 w-[50px] min-w-[50px]">No</TableHead>
+                        <TableHead rowSpan={3} className="sticky-col-2 border text-center align-middle bg-slate-200 dark:bg-slate-700 w-[200px] min-w-[200px]">Nama Sekolah</TableHead>
                         <TableHead colSpan={4} className="border text-center bg-pink-100 dark:bg-pink-900/30">TK/PAUD</TableHead>
                         <TableHead colSpan={12} className="border text-center bg-cyan-100 dark:bg-cyan-900/30">SD/MI</TableHead>
                         <TableHead colSpan={6} className="border text-center bg-green-100 dark:bg-green-900/30">SMP/MTs</TableHead>
                         <TableHead colSpan={6} className="border text-center bg-purple-100 dark:bg-purple-900/30">SMA/SMK/MA</TableHead>
                         <TableHead colSpan={8} className="border text-center bg-amber-100 dark:bg-amber-900/30">GURU</TableHead>
-                        <TableHead rowSpan={2} className="border text-center align-middle bg-red-100 dark:bg-red-900/30 min-w-[60px]">Uji Org.</TableHead>
-                        <TableHead rowSpan={2} className="border text-center align-middle bg-emerald-100 dark:bg-emerald-900/30 min-w-[60px]">Jumlah</TableHead>
-                        <TableHead rowSpan={2} className="border text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[100px]">Tanggal</TableHead>
-                        <TableHead rowSpan={2} className="border text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[80px]">Aksi</TableHead>
+                        <TableHead rowSpan={3} className="border text-center align-middle bg-red-100 dark:bg-red-900/30 min-w-[60px]">Uji Org.</TableHead>
+                        <TableHead rowSpan={3} className="border text-center align-middle bg-emerald-100 dark:bg-emerald-900/30 min-w-[60px]">Jumlah</TableHead>
+                        <TableHead rowSpan={3} className="border text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[100px]">Tanggal</TableHead>
+                        <TableHead rowSpan={3} className="border text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[80px]">Aksi</TableHead>
                       </TableRow>
-                      {/* Header Row 2 - Sub Headers */}
+                      {/* Header Row 2 - Class Names */}
                       <TableRow className="bg-slate-50 dark:bg-slate-800/50">
                         {/* TK/PAUD */}
-                        <TableHead className="border text-center w-10 bg-pink-50 dark:bg-pink-900/20">Kls A</TableHead>
-                        <TableHead className="border text-center w-10 bg-pink-50 dark:bg-pink-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-pink-50 dark:bg-pink-900/20">Kls B</TableHead>
-                        <TableHead className="border text-center w-10 bg-pink-50 dark:bg-pink-900/20"></TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-pink-50 dark:bg-pink-900/20">Kls A</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-pink-50 dark:bg-pink-900/20">Kls B</TableHead>
                         {/* SD/MI */}
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20">Kls 1</TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20">Kls 2</TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20">Kls 3</TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20">Kls 4</TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20">Kls 5</TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20">Kls 6</TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20"></TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-cyan-50 dark:bg-cyan-900/20">Kls 1</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-cyan-50 dark:bg-cyan-900/20">Kls 2</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-cyan-50 dark:bg-cyan-900/20">Kls 3</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-cyan-50 dark:bg-cyan-900/20">Kls 4</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-cyan-50 dark:bg-cyan-900/20">Kls 5</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-cyan-50 dark:bg-cyan-900/20">Kls 6</TableHead>
                         {/* SMP/MTs */}
-                        <TableHead className="border text-center w-10 bg-green-50 dark:bg-green-900/20">Kls 7</TableHead>
-                        <TableHead className="border text-center w-10 bg-green-50 dark:bg-green-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-green-50 dark:bg-green-900/20">Kls 8</TableHead>
-                        <TableHead className="border text-center w-10 bg-green-50 dark:bg-green-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-green-50 dark:bg-green-900/20">Kls 9</TableHead>
-                        <TableHead className="border text-center w-10 bg-green-50 dark:bg-green-900/20"></TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-green-50 dark:bg-green-900/20">Kls 7</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-green-50 dark:bg-green-900/20">Kls 8</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-green-50 dark:bg-green-900/20">Kls 9</TableHead>
                         {/* SMA/SMK/MA */}
-                        <TableHead className="border text-center w-10 bg-purple-50 dark:bg-purple-900/20">Kls 10</TableHead>
-                        <TableHead className="border text-center w-10 bg-purple-50 dark:bg-purple-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-purple-50 dark:bg-purple-900/20">Kls 11</TableHead>
-                        <TableHead className="border text-center w-10 bg-purple-50 dark:bg-purple-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-purple-50 dark:bg-purple-900/20">Kls 12</TableHead>
-                        <TableHead className="border text-center w-10 bg-purple-50 dark:bg-purple-900/20"></TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-purple-50 dark:bg-purple-900/20">Kls 10</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-purple-50 dark:bg-purple-900/20">Kls 11</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-purple-50 dark:bg-purple-900/20">Kls 12</TableHead>
                         {/* Guru */}
-                        <TableHead className="border text-center w-10 bg-amber-50 dark:bg-amber-900/20">Kepsek</TableHead>
-                        <TableHead className="border text-center w-10 bg-amber-50 dark:bg-amber-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-amber-50 dark:bg-amber-900/20">Guru</TableHead>
-                        <TableHead className="border text-center w-10 bg-amber-50 dark:bg-amber-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-amber-50 dark:bg-amber-900/20">Tendik</TableHead>
-                        <TableHead className="border text-center w-10 bg-amber-50 dark:bg-amber-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-amber-50 dark:bg-amber-900/20">Non Tendik</TableHead>
-                        <TableHead className="border text-center w-10 bg-amber-50 dark:bg-amber-900/20"></TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-amber-50 dark:bg-amber-900/20">Kepsek</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-amber-50 dark:bg-amber-900/20">Guru</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-amber-50 dark:bg-amber-900/20">Tendik</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-amber-50 dark:bg-amber-900/20">Non Tendik</TableHead>
+                      </TableRow>
+                      {/* Header Row 3 - Gender (L/P) */}
+                      <TableRow className="bg-slate-100 dark:bg-slate-800/70">
+                        {/* TK/PAUD - Kls A, Kls B */}
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        {/* SD/MI - Kls 1-6 */}
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        {/* SMP/MTs - Kls 7-9 */}
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        {/* SMA/SMK/MA - Kls 10-12 */}
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        {/* Guru */}
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
