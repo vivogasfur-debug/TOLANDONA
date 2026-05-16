@@ -164,16 +164,28 @@ export function RekapitulasiPage() {
         body: JSON.stringify({ data, filename, format: 'xlsx', title }),
       });
       if (res.ok) {
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Gagal mengekspor data');
+        }
         const blob = await res.blob();
+        if (blob.size === 0) {
+          throw new Error('File kosong');
+        }
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = `${filename}.xlsx`;
         a.click();
         URL.revokeObjectURL(url);
+      } else {
+        const errorData = await res.json().catch(() => ({ error: 'Gagal mengekspor data' }));
+        throw new Error(errorData.error || 'Gagal mengekspor data');
       }
     } catch (error) {
       console.error('Export Excel error:', error);
+      toast.error(error instanceof Error ? error.message : 'Gagal mengekspor ke Excel');
     }
   };
 
@@ -185,16 +197,28 @@ export function RekapitulasiPage() {
         body: JSON.stringify({ data, filename, format: 'pdf', title }),
       });
       if (res.ok) {
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Gagal mengekspor data');
+        }
         const blob = await res.blob();
+        if (blob.size === 0) {
+          throw new Error('File kosong');
+        }
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = `${filename}.pdf`;
         a.click();
         URL.revokeObjectURL(url);
+      } else {
+        const errorData = await res.json().catch(() => ({ error: 'Gagal mengekspor data' }));
+        throw new Error(errorData.error || 'Gagal mengekspor data');
       }
     } catch (error) {
       console.error('Export PDF error:', error);
+      toast.error(error instanceof Error ? error.message : 'Gagal mengekspor ke PDF');
     }
   };
 
@@ -221,16 +245,28 @@ export function RekapitulasiPage() {
         body: JSON.stringify({ data: rekap3BData, format: 'xlsx' }),
       });
       if (res.ok) {
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Gagal mengekspor data');
+        }
         const blob = await res.blob();
+        if (blob.size === 0) {
+          throw new Error('File kosong');
+        }
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = 'rekapitulasi_3b.xlsx';
         a.click();
         URL.revokeObjectURL(url);
+      } else {
+        const errorData = await res.json().catch(() => ({ error: 'Gagal mengekspor data' }));
+        throw new Error(errorData.error || 'Gagal mengekspor data');
       }
     } catch (error) {
       console.error('Export Excel error:', error);
+      toast.error(error instanceof Error ? error.message : 'Gagal mengekspor ke Excel');
     }
   };
 
@@ -242,16 +278,28 @@ export function RekapitulasiPage() {
         body: JSON.stringify({ data: rekap3BData, format: 'pdf' }),
       });
       if (res.ok) {
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Gagal mengekspor data');
+        }
         const blob = await res.blob();
+        if (blob.size === 0) {
+          throw new Error('File kosong');
+        }
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = 'rekapitulasi_3b.pdf';
         a.click();
         URL.revokeObjectURL(url);
+      } else {
+        const errorData = await res.json().catch(() => ({ error: 'Gagal mengekspor data' }));
+        throw new Error(errorData.error || 'Gagal mengekspor data');
       }
     } catch (error) {
       console.error('Export PDF error:', error);
+      toast.error(error instanceof Error ? error.message : 'Gagal mengekspor ke PDF');
     }
   };
 
