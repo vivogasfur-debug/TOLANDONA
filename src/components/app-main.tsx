@@ -14,8 +14,8 @@ import { PengaturanPage } from '@/components/pages/pengaturan-page';
 import { UsersPage } from '@/components/pages/users-page';
 import { PayrollPage } from '@/components/pages/payroll-page';
 import { AhliGiziPage } from '@/components/pages/ahli-gizi-page';
-import { BeritaAcaraPage } from '@/components/pages/berita-acara-page';
 import { BeritaAcaraDistribusiPage } from '@/components/pages/berita-acara-distribusi-page';
+import { GudangPage } from '@/components/pages/gudang-page';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -124,10 +124,10 @@ function AppContent() {
         return <PayrollPage />;
       case 'ahligizi':
         return <AhliGiziPage />;
-      case 'beritaacara':
-        return <BeritaAcaraPage />;
       case 'badistribusi':
         return <BeritaAcaraDistribusiPage />;
+      case 'gudang':
+        return <GudangPage />;
       case 'users':
         return <UsersPage />;
       case 'pengaturan':
