@@ -174,6 +174,12 @@
   overflow-y: visible !important;
   max-width: 100%;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  cursor: grab;
+}
+
+.overflow-x-auto:active {
+  cursor: grabbing;
 }
 
 /* Visible scrollbar */

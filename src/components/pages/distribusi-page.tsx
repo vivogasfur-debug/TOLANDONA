@@ -48,7 +48,7 @@ import {
   TrendingUp, Users, GraduationCap, Building2, RefreshCw, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+
 
 interface Distribusi {
   id: string;
@@ -701,8 +701,43 @@ export function DistribusiPage() {
         {/* Data Tab */}
         <TabsContent value="data" className="space-y-6 mt-6">
           <Card className="border-0 shadow-lg">
-            <CardContent className="p-0">
-              <ScrollArea className="w-full">
+            <CardContent className="p-0 relative">
+              {/* Scroll navigation buttons */}
+              <div className="flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b">
+                <span className="text-xs text-slate-500">Geser tabel untuk melihat semua kolom</span>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      const container = document.getElementById('distribusi-table-scroll');
+                      if (container) container.scrollBy({ left: -300, behavior: 'smooth' });
+                    }}
+                    className="gap-1 h-7 text-xs"
+                  >
+                    ← Kiri
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      const container = document.getElementById('distribusi-table-scroll');
+                      if (container) container.scrollBy({ left: 300, behavior: 'smooth' });
+                    }}
+                    className="gap-1 h-7 text-xs"
+                  >
+                    Kanan →
+                  </Button>
+                </div>
+              </div>
+              <div 
+                id="distribusi-table-scroll"
+                className="overflow-x-auto"
+                style={{
+                  WebkitOverflowScrolling: 'touch',
+                  msOverflowStyle: '-ms-autohiding-scrollbar'
+                }}
+              >
                 <div className="min-w-[1800px]">
                   <Table>
                     <TableHeader>
@@ -838,8 +873,7 @@ export function DistribusiPage() {
                     </TableBody>
                   </Table>
                 </div>
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
+              </div>
             </CardContent>
           </Card>
           
@@ -986,7 +1020,7 @@ export function DistribusiPage() {
                   <p className="text-sm">Belum ada distribusi pada tanggal ini</p>
                 </div>
               ) : (
-                <ScrollArea className="w-full">
+                <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
                   <div className="min-w-[800px]">
                     <Table>
                       <TableHeader>
@@ -1067,8 +1101,7 @@ export function DistribusiPage() {
                       </TableBody>
                     </Table>
                   </div>
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
+                </div>
               )}
             </CardContent>
           </Card>
