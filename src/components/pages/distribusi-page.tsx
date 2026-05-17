@@ -45,7 +45,7 @@ import {
 import {
   PieChart as PieChartIcon, BarChart3, Plus, Pencil, Trash2,
   Download, FileText, FileSpreadsheet, FileType, Calendar,
-  TrendingUp, Users, GraduationCap, Building2, RefreshCw, Loader2
+  Users, GraduationCap, Building2, RefreshCw, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -87,13 +87,6 @@ interface RekapResponse {
   monthlySummary: Array<{ month: number; monthName: string; jumlah: number; count: number }>;
   yearlySummary: Array<{ year: number; jumlah: number; count: number }>;
 }
-
-const MONTHS = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-];
-
-const COLORS = ['#10b981', '#06b6d4', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 // Function to detect school type from name
 function detectSchoolType(name: string): 'TK' | 'SD' | 'SMP' | 'SMA' | 'UNKNOWN' {
@@ -195,13 +188,6 @@ export function DistribusiPage() {
   // Filter state
   const [filterPeriod, setFilterPeriod] = useState('all');
   const [filterYear, setFilterYear] = useState(new Date().getFullYear());
-  const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
-  const [filterWeek, setFilterWeek] = useState(1);
-  
-  // Harian (Daily) state
-  const [harianDate, setHarianDate] = useState(new Date().toISOString().split('T')[0]);
-  const [harianData, setHarianData] = useState<Distribusi[]>([]);
-  const [harianLoading, setHarianLoading] = useState(false);
 
   // Schools list with type info
   const [schools, setSchools] = useState<SchoolInfo[]>([]);
@@ -216,17 +202,11 @@ export function DistribusiPage() {
     fetchDistribusi();
     fetchRekap();
     fetchSchools();
-    fetchHarianData();
   }, []);
 
   useEffect(() => {
     fetchRekap();
-  }, [filterPeriod, filterYear, filterMonth, filterWeek]);
-  
-  // Fetch harian data when date changes
-  useEffect(() => {
-    fetchHarianData();
-  }, [harianDate]);
+  }, [filterPeriod, filterYear]);
 
   const fetchDistribusi = async (page = 1) => {
     try {
@@ -244,30 +224,12 @@ export function DistribusiPage() {
       setLoading(false);
     }
   };
-  
-  // Fetch data for specific date (harian)
-  const fetchHarianData = async () => {
-    try {
-      setHarianLoading(true);
-      const res = await fetch(`/api/distribusi?tanggal=${harianDate}&limit=1000`);
-      const data = await res.json();
-      if (data.success) {
-        setHarianData(data.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch harian data:', error);
-    } finally {
-      setHarianLoading(false);
-    }
-  };
 
   const fetchRekap = async () => {
     try {
       const params = new URLSearchParams({
         period: filterPeriod,
         year: filterYear.toString(),
-        month: filterMonth.toString(),
-        week: filterWeek.toString(),
       });
       const res = await fetch(`/api/distribusi/rekap?${params}`);
       const data = await res.json();
@@ -671,30 +633,14 @@ export function DistribusiPage() {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6 max-w-3xl">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
           <TabsTrigger value="data" className="gap-2">
             <BarChart3 className="w-4 h-4" />
             Data
           </TabsTrigger>
-          <TabsTrigger value="harian" className="gap-2">
-            <Calendar className="w-4 h-4" />
-            Harian
-          </TabsTrigger>
-          <TabsTrigger value="hasil" className="gap-2">
-            <TrendingUp className="w-4 h-4" />
-            Hasil
-          </TabsTrigger>
-          <TabsTrigger value="mingguan" className="gap-2">
-            <Calendar className="w-4 h-4" />
-            Mingguan
-          </TabsTrigger>
-          <TabsTrigger value="bulanan" className="gap-2">
-            <Calendar className="w-4 h-4" />
-            Bulanan
-          </TabsTrigger>
           <TabsTrigger value="tahunan" className="gap-2">
             <Calendar className="w-4 h-4" />
-            Tahunan
+            Rekap Tahunan
           </TabsTrigger>
         </TabsList>
 
@@ -927,518 +873,6 @@ export function DistribusiPage() {
           )}
         </TabsContent>
 
-        {/* Harian Tab - Daily View */}
-        <TabsContent value="harian" className="space-y-4 mt-4">
-          {/* Date Navigation */}
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-4">
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const prev = new Date(harianDate);
-                    prev.setDate(prev.getDate() - 1);
-                    setHarianDate(prev.toISOString().split('T')[0]);
-                  }}
-                >
-                  ← Sebelumnya
-                </Button>
-                
-                <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg px-4 py-2">
-                  <Calendar className="w-5 h-5 text-emerald-500" />
-                  <Input
-                    type="date"
-                    value={harianDate}
-                    onChange={(e) => setHarianDate(e.target.value)}
-                    className="border-0 bg-transparent font-semibold w-40"
-                  />
-                </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const next = new Date(harianDate);
-                    next.setDate(next.getDate() + 1);
-                    setHarianDate(next.toISOString().split('T')[0]);
-                  }}
-                >
-                  Selanjutnya →
-                </Button>
-                
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setHarianDate(new Date().toISOString().split('T')[0])}
-                >
-                  Hari Ini
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Daily Summary */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-4">
-                <p className="text-xs text-slate-500">Total Sekolah</p>
-                <p className="text-xl font-bold text-emerald-600">{harianData.length}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-4">
-                <p className="text-xs text-slate-500">Total Siswa</p>
-                <p className="text-xl font-bold text-cyan-600">
-                  {harianData.reduce((sum, d) => 
-                    sum + d.klsAL + d.klsAP + d.klsBL + d.klsBP +
-                    d.kls1L + d.kls1P + d.kls2L + d.kls2P + d.kls3L + d.kls3P +
-                    d.kls4L + d.kls4P + d.kls5L + d.kls5P + d.kls6L + d.kls6P +
-                    d.kls7L + d.kls7P + d.kls8L + d.kls8P + d.kls9L + d.kls9P +
-                    d.kls10L + d.kls10P + d.kls11L + d.kls11P + d.kls12L + d.kls12P, 0
-                  ).toLocaleString()}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-4">
-                <p className="text-xs text-slate-500">Total Guru</p>
-                <p className="text-xl font-bold text-amber-600">
-                  {harianData.reduce((sum, d) => 
-                    sum + d.kepsekL + d.kepsekP + d.guruL + d.guruP + 
-                    d.tendikL + d.tendikP + d.nonTendikL + d.nonTendikP, 0
-                  ).toLocaleString()}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-4">
-                <p className="text-xs text-slate-500">Grand Total</p>
-                <p className="text-xl font-bold text-purple-600">
-                  {harianData.reduce((sum, d) => sum + d.jumlah, 0).toLocaleString()}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Daily Data Table */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-emerald-500" />
-                Data Distribusi - {new Date(harianDate).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              </CardTitle>
-              <CardDescription>
-                {harianLoading ? 'Memuat data...' : `${harianData.length} sekolah`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {harianLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
-                </div>
-              ) : harianData.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">
-                  <Calendar className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-                  <p className="font-medium">Tidak ada data</p>
-                  <p className="text-sm">Belum ada distribusi pada tanggal ini</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
-                  <Table className="w-full" style={{ minWidth: '800px' }}>
-                    <TableHeader>
-                      <TableRow className="bg-slate-100 dark:bg-slate-800">
-                        <TableHead className="sticky-col border text-center w-12 bg-slate-200 dark:bg-slate-700">No</TableHead>
-                        <TableHead className="sticky-col-2 border min-w-[200px] bg-slate-200 dark:bg-slate-700">Nama Sekolah</TableHead>
-                        <TableHead className="border text-center bg-pink-50 dark:bg-pink-900/20">TK/PAUD</TableHead>
-                        <TableHead className="border text-center bg-cyan-50 dark:bg-cyan-900/20">SD/MI</TableHead>
-                        <TableHead className="border text-center bg-green-50 dark:bg-green-900/20">SMP</TableHead>
-                        <TableHead className="border text-center bg-purple-50 dark:bg-purple-900/20">SMA</TableHead>
-                        <TableHead className="border text-center bg-amber-50 dark:bg-amber-900/20">Guru</TableHead>
-                        <TableHead className="border text-center bg-red-50 dark:bg-red-900/20">Uji Org</TableHead>
-                        <TableHead className="border text-center bg-emerald-50 dark:bg-emerald-900/20 font-bold">Total</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {harianData.map((item, index) => {
-                        const tkTotal = item.klsAL + item.klsAP + item.klsBL + item.klsBP;
-                        const sdTotal = item.kls1L + item.kls1P + item.kls2L + item.kls2P + 
-                                      item.kls3L + item.kls3P + item.kls4L + item.kls4P + 
-                                      item.kls5L + item.kls5P + item.kls6L + item.kls6P;
-                        const smpTotal = item.kls7L + item.kls7P + item.kls8L + item.kls8P + item.kls9L + item.kls9P;
-                        const smaTotal = item.kls10L + item.kls10P + item.kls11L + item.kls11P + item.kls12L + item.kls12P;
-                        const guruTotal = item.kepsekL + item.kepsekP + item.guruL + item.guruP + 
-                                        item.tendikL + item.tendikP + item.nonTendikL + item.nonTendikP;
-                        
-                        return (
-                          <TableRow key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                            <TableCell className="sticky-col border text-center text-slate-400 bg-white dark:bg-slate-900">{index + 1}</TableCell>
-                            <TableCell className="sticky-col-2 border font-medium bg-white dark:bg-slate-900">{item.namaSekolah}</TableCell>
-                            <TableCell className="border text-center bg-pink-50/50 dark:bg-pink-900/10">
-                              {tkTotal > 0 ? tkTotal : '-'}
-                            </TableCell>
-                            <TableCell className="border text-center bg-cyan-50/50 dark:bg-cyan-900/10">
-                              {sdTotal > 0 ? sdTotal : '-'}
-                            </TableCell>
-                            <TableCell className="border text-center bg-green-50/50 dark:bg-green-900/10">
-                              {smpTotal > 0 ? smpTotal : '-'}
-                            </TableCell>
-                            <TableCell className="border text-center bg-purple-50/50 dark:bg-purple-900/10">
-                              {smaTotal > 0 ? smaTotal : '-'}
-                            </TableCell>
-                            <TableCell className="border text-center bg-amber-50/50 dark:bg-amber-900/10">
-                              {guruTotal > 0 ? guruTotal : '-'}
-                            </TableCell>
-                            <TableCell className="border text-center">{item.ujiOrganoleptik || '-'}</TableCell>
-                            <TableCell className="border text-center font-bold text-emerald-600">{item.jumlah}</TableCell>
-                          </TableRow>
-                        );
-                      })}
-                      {/* Total Row */}
-                      <TableRow className="bg-slate-200 dark:bg-slate-700 font-bold">
-                        <TableCell colSpan={2} className="border text-right sticky-col sticky-col-2 bg-slate-200 dark:bg-slate-700">TOTAL</TableCell>
-                        <TableCell className="border text-center bg-pink-100 dark:bg-pink-900/30">
-                          {harianData.reduce((sum, d) => sum + d.klsAL + d.klsAP + d.klsBL + d.klsBP, 0)}
-                        </TableCell>
-                        <TableCell className="border text-center bg-cyan-100 dark:bg-cyan-900/30">
-                          {harianData.reduce((sum, d) => sum + d.kls1L + d.kls1P + d.kls2L + d.kls2P + 
-                            d.kls3L + d.kls3P + d.kls4L + d.kls4P + d.kls5L + d.kls5P + d.kls6L + d.kls6P, 0)}
-                        </TableCell>
-                        <TableCell className="border text-center bg-green-100 dark:bg-green-900/30">
-                          {harianData.reduce((sum, d) => sum + d.kls7L + d.kls7P + d.kls8L + d.kls8P + d.kls9L + d.kls9P, 0)}
-                        </TableCell>
-                        <TableCell className="border text-center bg-purple-100 dark:bg-purple-900/30">
-                          {harianData.reduce((sum, d) => sum + d.kls10L + d.kls10P + d.kls11L + d.kls11P + d.kls12L + d.kls12P, 0)}
-                        </TableCell>
-                        <TableCell className="border text-center bg-amber-100 dark:bg-amber-900/30">
-                          {harianData.reduce((sum, d) => sum + d.kepsekL + d.kepsekP + d.guruL + d.guruP + 
-                            d.tendikL + d.tendikP + d.nonTendikL + d.nonTendikP, 0)}
-                        </TableCell>
-                        <TableCell className="border text-center">
-                          {harianData.reduce((sum, d) => sum + (d.ujiOrganoleptik || 0), 0)}
-                        </TableCell>
-                        <TableCell className="border text-center bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700">
-                          {harianData.reduce((sum, d) => sum + d.jumlah, 0)}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Hasil Tab */}
-        <TabsContent value="hasil" className="space-y-6 mt-6">
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle>Rekapitulasi Hasil</CardTitle>
-              <CardDescription>Ringkasan total distribusi</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 bg-cyan-50 dark:bg-cyan-900/20 rounded-lg">
-                  <p className="text-sm text-slate-500">Total Siswa</p>
-                  <p className="text-2xl font-bold text-cyan-600">
-                    {rekapData ? Object.values(rekapData.totals.siswa).reduce((sum, k) => sum + k.L + k.P, 0) : 0}
-                  </p>
-                </div>
-                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                  <p className="text-sm text-slate-500">Total Guru</p>
-                  <p className="text-2xl font-bold text-amber-600">
-                    {rekapData ? Object.values(rekapData.totals.guru).reduce((sum, k) => sum + k.L + k.P, 0) : 0}
-                  </p>
-                </div>
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                  <p className="text-sm text-slate-500">Uji Organoleptik</p>
-                  <p className="text-2xl font-bold text-red-600">{rekapData?.totals.ujiOrganoleptik || 0}</p>
-                </div>
-                <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
-                  <p className="text-sm text-slate-500">Total Keseluruhan</p>
-                  <p className="text-2xl font-bold text-emerald-600">{rekapData?.totals.jumlah || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="mingguan" className="space-y-6 mt-6">
-          <div className="flex flex-wrap gap-4 mb-4">
-            <div className="flex items-center gap-2">
-              <Label>Tahun:</Label>
-              <Select value={filterYear.toString()} onValueChange={(v) => setFilterYear(parseInt(v))}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {rekapData?.years.map(y => (
-                    <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                  )) || <SelectItem value={filterYear.toString()}>{filterYear}</SelectItem>}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Label>Bulan:</Label>
-              <Select value={filterMonth.toString()} onValueChange={(v) => setFilterMonth(parseInt(v))}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {MONTHS.map((m, i) => (
-                    <SelectItem key={i + 1} value={(i + 1).toString()}>{m}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Label>Minggu:</Label>
-              <Select value={filterWeek.toString()} onValueChange={(v) => setFilterWeek(parseInt(v))}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[1, 2, 3, 4, 5].map(w => (
-                    <SelectItem key={w} value={w.toString()}>Minggu {w}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          {/* Summary Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-4">
-                <p className="text-xs text-slate-500">Total Data</p>
-                <p className="text-xl font-bold text-emerald-600">{rekapData?.filteredData.length || 0}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-4">
-                <p className="text-xs text-slate-500">Total Siswa</p>
-                <p className="text-xl font-bold text-cyan-600">
-                  {rekapData ? Object.values(rekapData.totals.siswa).reduce((sum, k) => sum + k.L + k.P, 0).toLocaleString() : 0}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-4">
-                <p className="text-xs text-slate-500">Total Guru</p>
-                <p className="text-xl font-bold text-amber-600">
-                  {rekapData ? Object.values(rekapData.totals.guru).reduce((sum, k) => sum + k.L + k.P, 0).toLocaleString() : 0}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-4">
-                <p className="text-xs text-slate-500">Grand Total</p>
-                <p className="text-xl font-bold text-purple-600">{(rekapData?.totals.jumlah || 0).toLocaleString()}</p>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Table */}
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-0 relative">
-              <div className="flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b">
-                <span className="text-sm font-medium">Rekapitulasi Minggu {filterWeek} {MONTHS[filterMonth - 1]} {filterYear}</span>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => {
-                    const container = document.getElementById('mingguan-table-scroll');
-                    if (container) container.scrollBy({ left: -300, behavior: 'smooth' });
-                  }} className="gap-1 h-7 text-xs">← Kiri</Button>
-                  <Button variant="outline" size="sm" onClick={() => {
-                    const container = document.getElementById('mingguan-table-scroll');
-                    if (container) container.scrollBy({ left: 300, behavior: 'smooth' });
-                  }} className="gap-1 h-7 text-xs">Kanan →</Button>
-                </div>
-              </div>
-              <div id="mingguan-table-scroll" className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
-                <Table className="w-full" style={{ minWidth: '800px' }}>
-                  <TableHeader>
-                    <TableRow className="bg-slate-100 dark:bg-slate-800">
-                      <TableHead className="sticky-col border text-center w-12 bg-slate-200 dark:bg-slate-700">No</TableHead>
-                      <TableHead className="sticky-col-2 border min-w-[200px] bg-slate-200 dark:bg-slate-700">Nama Sekolah</TableHead>
-                      <TableHead className="border text-center bg-pink-50 dark:bg-pink-900/20">TK/PAUD</TableHead>
-                      <TableHead className="border text-center bg-cyan-50 dark:bg-cyan-900/20">SD/MI</TableHead>
-                      <TableHead className="border text-center bg-green-50 dark:bg-green-900/20">SMP</TableHead>
-                      <TableHead className="border text-center bg-purple-50 dark:bg-purple-900/20">SMA</TableHead>
-                      <TableHead className="border text-center bg-amber-50 dark:bg-amber-900/20">Guru</TableHead>
-                      <TableHead className="border text-center bg-red-50 dark:bg-red-900/20">Uji Org</TableHead>
-                      <TableHead className="border text-center bg-emerald-50 dark:bg-emerald-900/20 font-bold">Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {rekapData?.filteredData.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-slate-500">Tidak ada data</TableCell>
-                      </TableRow>
-                    ) : (
-                      rekapData?.filteredData.map((item, index) => {
-                        const tkTotal = item.klsAL + item.klsAP + item.klsBL + item.klsBP;
-                        const sdTotal = item.kls1L + item.kls1P + item.kls2L + item.kls2P + 
-                                      item.kls3L + item.kls3P + item.kls4L + item.kls4P + 
-                                      item.kls5L + item.kls5P + item.kls6L + item.kls6P;
-                        const smpTotal = item.kls7L + item.kls7P + item.kls8L + item.kls8P + item.kls9L + item.kls9P;
-                        const smaTotal = item.kls10L + item.kls10P + item.kls11L + item.kls11P + item.kls12L + item.kls12P;
-                        const guruTotal = item.kepsekL + item.kepsekP + item.guruL + item.guruP + 
-                                        item.tendikL + item.tendikP + item.nonTendikL + item.nonTendikP;
-                        return (
-                          <TableRow key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                            <TableCell className="sticky-col border text-center bg-white dark:bg-slate-900">{index + 1}</TableCell>
-                            <TableCell className="sticky-col-2 border font-medium bg-white dark:bg-slate-900">{item.namaSekolah}</TableCell>
-                            <TableCell className="border text-center bg-pink-50/50 dark:bg-pink-900/10">{tkTotal || '-'}</TableCell>
-                            <TableCell className="border text-center bg-cyan-50/50 dark:bg-cyan-900/10">{sdTotal || '-'}</TableCell>
-                            <TableCell className="border text-center bg-green-50/50 dark:bg-green-900/10">{smpTotal || '-'}</TableCell>
-                            <TableCell className="border text-center bg-purple-50/50 dark:bg-purple-900/10">{smaTotal || '-'}</TableCell>
-                            <TableCell className="border text-center bg-amber-50/50 dark:bg-amber-900/10">{guruTotal || '-'}</TableCell>
-                            <TableCell className="border text-center">{item.ujiOrganoleptik || '-'}</TableCell>
-                            <TableCell className="border text-center font-bold text-emerald-600">{item.jumlah}</TableCell>
-                          </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="bulanan" className="space-y-6 mt-6">
-          {/* Year Filter */}
-          <div className="flex items-center gap-2">
-            <Label>Tahun:</Label>
-            <Select value={filterYear.toString()} onValueChange={(v) => setFilterYear(parseInt(v))}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {rekapData?.years.map(y => (
-                  <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                )) || <SelectItem value={filterYear.toString()}>{filterYear}</SelectItem>}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {/* Summary Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-4">
-                <p className="text-xs text-slate-500">Total Data</p>
-                <p className="text-xl font-bold text-emerald-600">{rekapData?.filteredData.length || 0}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-4">
-                <p className="text-xs text-slate-500">Total Siswa</p>
-                <p className="text-xl font-bold text-cyan-600">
-                  {rekapData ? Object.values(rekapData.totals.siswa).reduce((sum, k) => sum + k.L + k.P, 0).toLocaleString() : 0}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-4">
-                <p className="text-xs text-slate-500">Total Guru</p>
-                <p className="text-xl font-bold text-amber-600">
-                  {rekapData ? Object.values(rekapData.totals.guru).reduce((sum, k) => sum + k.L + k.P, 0).toLocaleString() : 0}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-4">
-                <p className="text-xs text-slate-500">Grand Total</p>
-                <p className="text-xl font-bold text-purple-600">{(rekapData?.totals.jumlah || 0).toLocaleString()}</p>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Chart */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle>Grafik Bulanan {filterYear}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={rekapData?.monthlySummary || []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="monthName" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={70} />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="jumlah" name="Total" fill="#10b981" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-          
-          {/* Table */}
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-0 relative">
-              <div className="flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b">
-                <span className="text-sm font-medium">Data Bulanan {filterYear}</span>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => {
-                    const container = document.getElementById('bulanan-table-scroll');
-                    if (container) container.scrollBy({ left: -300, behavior: 'smooth' });
-                  }} className="gap-1 h-7 text-xs">← Kiri</Button>
-                  <Button variant="outline" size="sm" onClick={() => {
-                    const container = document.getElementById('bulanan-table-scroll');
-                    if (container) container.scrollBy({ left: 300, behavior: 'smooth' });
-                  }} className="gap-1 h-7 text-xs">Kanan →</Button>
-                </div>
-              </div>
-              <div id="bulanan-table-scroll" className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
-                <Table className="w-full" style={{ minWidth: '800px' }}>
-                  <TableHeader>
-                    <TableRow className="bg-slate-100 dark:bg-slate-800">
-                      <TableHead className="sticky-col border text-center w-12 bg-slate-200 dark:bg-slate-700">No</TableHead>
-                      <TableHead className="sticky-col-2 border min-w-[200px] bg-slate-200 dark:bg-slate-700">Nama Sekolah</TableHead>
-                      <TableHead className="border text-center bg-pink-50 dark:bg-pink-900/20">TK/PAUD</TableHead>
-                      <TableHead className="border text-center bg-cyan-50 dark:bg-cyan-900/20">SD/MI</TableHead>
-                      <TableHead className="border text-center bg-green-50 dark:bg-green-900/20">SMP</TableHead>
-                      <TableHead className="border text-center bg-purple-50 dark:bg-purple-900/20">SMA</TableHead>
-                      <TableHead className="border text-center bg-amber-50 dark:bg-amber-900/20">Guru</TableHead>
-                      <TableHead className="border text-center bg-red-50 dark:bg-red-900/20">Uji Org</TableHead>
-                      <TableHead className="border text-center bg-emerald-50 dark:bg-emerald-900/20 font-bold">Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {rekapData?.filteredData.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-slate-500">Tidak ada data</TableCell>
-                      </TableRow>
-                    ) : (
-                      rekapData?.filteredData.map((item, index) => {
-                        const tkTotal = item.klsAL + item.klsAP + item.klsBL + item.klsBP;
-                        const sdTotal = item.kls1L + item.kls1P + item.kls2L + item.kls2P + 
-                                      item.kls3L + item.kls3P + item.kls4L + item.kls4P + 
-                                      item.kls5L + item.kls5P + item.kls6L + item.kls6P;
-                        const smpTotal = item.kls7L + item.kls7P + item.kls8L + item.kls8P + item.kls9L + item.kls9P;
-                        const smaTotal = item.kls10L + item.kls10P + item.kls11L + item.kls11P + item.kls12L + item.kls12P;
-                        const guruTotal = item.kepsekL + item.kepsekP + item.guruL + item.guruP + 
-                                        item.tendikL + item.tendikP + item.nonTendikL + item.nonTendikP;
-                        return (
-                          <TableRow key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                            <TableCell className="sticky-col border text-center bg-white dark:bg-slate-900">{index + 1}</TableCell>
-                            <TableCell className="sticky-col-2 border font-medium bg-white dark:bg-slate-900">{item.namaSekolah}</TableCell>
-                            <TableCell className="border text-center bg-pink-50/50 dark:bg-pink-900/10">{tkTotal || '-'}</TableCell>
-                            <TableCell className="border text-center bg-cyan-50/50 dark:bg-cyan-900/10">{sdTotal || '-'}</TableCell>
-                            <TableCell className="border text-center bg-green-50/50 dark:bg-green-900/10">{smpTotal || '-'}</TableCell>
-                            <TableCell className="border text-center bg-purple-50/50 dark:bg-purple-900/10">{smaTotal || '-'}</TableCell>
-                            <TableCell className="border text-center bg-amber-50/50 dark:bg-amber-900/10">{guruTotal || '-'}</TableCell>
-                            <TableCell className="border text-center">{item.ujiOrganoleptik || '-'}</TableCell>
-                            <TableCell className="border text-center font-bold text-emerald-600">{item.jumlah}</TableCell>
-                          </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="tahunan" className="space-y-6 mt-6">
           {/* Summary Cards */}
