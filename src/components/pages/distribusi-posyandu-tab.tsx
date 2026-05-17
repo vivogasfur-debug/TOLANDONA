@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, Baby, Heart, Users, Grandma } from 'lucide-react';
+import { Plus, Pencil, Trash2, Baby, Heart, Users, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface DistribusiPosyandu {
@@ -236,7 +236,7 @@ export function DistribusiPosyanduTab() {
                   </TableHead>
                   <TableHead colSpan={2} className="border text-center bg-amber-100 dark:bg-amber-900/30">
                     <div className="flex items-center justify-center gap-1">
-                      <Grandma className="w-4 h-4" /> Lansia
+                      <UserCheck className="w-4 h-4" /> Lansia
                     </div>
                   </TableHead>
                   <TableHead className="border text-center bg-green-100 dark:bg-green-900/30">
@@ -448,7 +448,7 @@ export function DistribusiPosyanduTab() {
             {/* Lansia */}
             <div className="border rounded-lg p-3 bg-amber-50 dark:bg-amber-900/20">
               <Label className="font-bold flex items-center gap-2 mb-2">
-                <Grandma className="w-4 h-4" /> Lansia (60+ tahun)
+                <UserCheck className="w-4 h-4" /> Lansia (60+ tahun)
               </Label>
               <div className="flex gap-2">
                 <div>
