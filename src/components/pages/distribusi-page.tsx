@@ -636,7 +636,7 @@ export function DistribusiPage() {
         <TabsList className="grid w-full grid-cols-2 max-w-md">
           <TabsTrigger value="data" className="gap-2">
             <BarChart3 className="w-4 h-4" />
-            Data
+            Harian
           </TabsTrigger>
           <TabsTrigger value="tahunan" className="gap-2">
             <Calendar className="w-4 h-4" />
@@ -644,7 +644,7 @@ export function DistribusiPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Data Tab */}
+        {/* Harian Tab */}
         <TabsContent value="data" className="space-y-6 mt-6">
           <Card className="border-0 shadow-lg">
             <CardContent className="p-0 relative">
