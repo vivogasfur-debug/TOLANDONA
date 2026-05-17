@@ -1138,8 +1138,9 @@ export function DataPage({ type }: DataPageProps) {
               <table className="min-w-max w-full text-sm">
                 <thead>
                   <tr className="bg-slate-100 dark:bg-slate-800">
-                    <th className="w-12 text-center font-semibold p-3 border-b">#</th>
-                    {config.columns.map((col) => (
+                    <th className="sticky-col w-12 text-center font-semibold p-3 border-b bg-slate-100 dark:bg-slate-800">#</th>
+                    <th className="sticky-col-2 whitespace-nowrap font-semibold p-3 border-b text-left min-w-[180px] bg-slate-100 dark:bg-slate-800">Nama</th>
+                    {config.columns.slice(1).map((col) => (
                       <th key={col.key} className="whitespace-nowrap font-semibold p-3 border-b text-left">{col.label}</th>
                     ))}
                     <th className="text-center font-semibold p-3 border-b w-28 bg-red-50 dark:bg-red-900/20">Aksi</th>
@@ -1162,10 +1163,13 @@ export function DataPage({ type }: DataPageProps) {
                   ) : (
                     data.map((item, index) => (
                       <tr key={item.id} className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                        <td className="text-center text-slate-400 p-2 border-b">
+                        <td className="sticky-col text-center text-slate-400 p-2 border-b bg-white dark:bg-slate-900">
                           {(pagination.page - 1) * pagination.limit + index + 1}
                         </td>
-                        {config.columns.map((col) => (
+                        <td className="sticky-col-2 max-w-[200px] truncate p-2 border-b font-medium bg-white dark:bg-slate-900">
+                          {item.nama || '-'}
+                        </td>
+                        {config.columns.slice(1).map((col) => (
                           <td key={col.key} className="max-w-[200px] truncate p-2 border-b">
                             {renderCell(item, col.key)}
                           </td>
