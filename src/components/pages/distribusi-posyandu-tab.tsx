@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, Baby, Heart, Users, UserCheck } from 'lucide-react';
+import { Plus, Pencil, Trash2, Baby, Heart, Users, UserCheck, RefreshCw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface DistribusiPosyandu {
@@ -55,6 +55,7 @@ export function DistribusiPosyanduTab() {
   const [data, setData] = useState<DistribusiPosyandu[]>([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [posyanduList, setPosyanduList] = useState<PosyanduInfo[]>([]);
+  const [loadingPosyanduData, setLoadingPosyanduData] = useState(false);
 
   // Form state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -105,6 +106,41 @@ export function DistribusiPosyanduTab() {
       }
     } catch (error) {
       console.error('Failed to fetch posyandu list:', error);
+    }
+  };
+
+  // Fetch posyandu data for auto-fill
+  const fetchPosyanduData = async (namaPosyandu: string) => {
+    if (!namaPosyandu || isEditing) return;
+
+    try {
+      setLoadingPosyanduData(true);
+      const encodedName = encodeURIComponent(namaPosyandu);
+      const res = await fetch(`/api/posyandu-data/${encodedName}`);
+      const result = await res.json();
+
+      if (result.success && result.data) {
+        const d = result.data;
+        toast.success(`Data ditemukan: ${result.totalData} orang`);
+
+        // Auto-fill form with fetched data
+        setFormData(prev => ({
+          ...prev,
+          balitaL: d.balitaL?.toString() || '',
+          balitaP: d.balitaP?.toString() || '',
+          bumilP: d.bumilP?.toString() || '',
+          busuiP: d.busuiP?.toString() || '',
+          lansiaL: d.lansiaL?.toString() || '',
+          lansiaP: d.lansiaP?.toString() || '',
+          wusP: d.wusP?.toString() || '',
+        }));
+      } else {
+        toast.info('Tidak ada data di database untuk posyandu ini');
+      }
+    } catch (error) {
+      console.error('Failed to fetch posyandu data:', error);
+    } finally {
+      setLoadingPosyanduData(false);
     }
   };
 
@@ -337,7 +373,7 @@ export function DistribusiPosyanduTab() {
 
       {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isEditing ? 'Edit Data Distribusi Posyandu' : 'Tambah Data Distribusi Posyandu'}</DialogTitle>
             <DialogDescription>
@@ -350,7 +386,10 @@ export function DistribusiPosyanduTab() {
                 <Label>Nama Posyandu</Label>
                 <Select
                   value={formData.namaPosyandu}
-                  onValueChange={(v) => setFormData({ ...formData, namaPosyandu: v })}
+                  onValueChange={(v) => {
+                    setFormData({ ...formData, namaPosyandu: v });
+                    fetchPosyanduData(v);
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih posyandu" />
@@ -363,12 +402,31 @@ export function DistribusiPosyanduTab() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Input
-                  value={!posyanduList.find((p) => p.nama === formData.namaPosyandu) ? formData.namaPosyandu : ''}
-                  onChange={(e) => setFormData({ ...formData, namaPosyandu: e.target.value })}
-                  placeholder="Atau ketik nama posyandu"
-                  className="mt-2"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={!posyanduList.find((p) => p.nama === formData.namaPosyandu) ? formData.namaPosyandu : ''}
+                    onChange={(e) => setFormData({ ...formData, namaPosyandu: e.target.value })}
+                    onBlur={(e) => {
+                      if (e.target.value) fetchPosyanduData(e.target.value);
+                    }}
+                    placeholder="Atau ketik nama posyandu"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => fetchPosyanduData(formData.namaPosyandu)}
+                    disabled={!formData.namaPosyandu || loadingPosyanduData}
+                    title="Ambil data dari database"
+                  >
+                    {loadingPosyanduData ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Tanggal</Label>

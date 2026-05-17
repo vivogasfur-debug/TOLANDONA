@@ -928,30 +928,30 @@ export function DistribusiPage() {
               </CardContent>
             </Card>
           </div>
-          
+
           {/* Chart */}
           <Card className="border-0 shadow-lg">
             <CardHeader>
-              <CardTitle>Grafik Tahunan</CardTitle>
+              <CardTitle>Grafik Bulanan</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={rekapData?.yearlySummary || []}>
+                <BarChart data={rekapData?.monthlySummary || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="year" />
+                  <XAxis dataKey="monthName" />
                   <YAxis />
                   <Tooltip />
-                  <Line type="monotone" dataKey="jumlah" name="Total" stroke="#10b981" strokeWidth={3} />
-                </LineChart>
+                  <Bar dataKey="jumlah" name="Total" fill="#10b981" />
+                </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
-          
-          {/* Table */}
+
+          {/* Table - Grouped by Date */}
           <Card className="border-0 shadow-lg">
             <CardContent className="p-0 relative">
               <div className="flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b">
-                <span className="text-sm font-medium">Data Tahunan</span>
+                <span className="text-sm font-medium">Rekapitulasi per Tanggal</span>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => {
                     const container = document.getElementById('tahunan-table-scroll');
@@ -964,11 +964,12 @@ export function DistribusiPage() {
                 </div>
               </div>
               <div id="tahunan-table-scroll" className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
-                <Table className="w-full" style={{ minWidth: '800px' }}>
+                <Table className="w-full" style={{ minWidth: '900px' }}>
                   <TableHeader>
                     <TableRow className="bg-slate-100 dark:bg-slate-800">
                       <TableHead className="sticky-col border text-center w-12 bg-slate-200 dark:bg-slate-700">No</TableHead>
-                      <TableHead className="sticky-col-2 border min-w-[200px] bg-slate-200 dark:bg-slate-700">Nama Sekolah</TableHead>
+                      <TableHead className="sticky-col-2 border min-w-[120px] bg-slate-200 dark:bg-slate-700">Tanggal</TableHead>
+                      <TableHead className="border min-w-[200px] bg-slate-200 dark:bg-slate-700">Nama Sekolah</TableHead>
                       <TableHead className="border text-center bg-pink-50 dark:bg-pink-900/20">TK/PAUD</TableHead>
                       <TableHead className="border text-center bg-cyan-50 dark:bg-cyan-900/20">SD/MI</TableHead>
                       <TableHead className="border text-center bg-green-50 dark:bg-green-900/20">SMP</TableHead>
@@ -981,22 +982,25 @@ export function DistribusiPage() {
                   <TableBody>
                     {rekapData?.filteredData.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-slate-500">Tidak ada data</TableCell>
+                        <TableCell colSpan={10} className="text-center py-8 text-slate-500">Tidak ada data</TableCell>
                       </TableRow>
                     ) : (
                       rekapData?.filteredData.map((item, index) => {
                         const tkTotal = item.klsAL + item.klsAP + item.klsBL + item.klsBP;
-                        const sdTotal = item.kls1L + item.kls1P + item.kls2L + item.kls2P + 
-                                      item.kls3L + item.kls3P + item.kls4L + item.kls4P + 
+                        const sdTotal = item.kls1L + item.kls1P + item.kls2L + item.kls2P +
+                                      item.kls3L + item.kls3P + item.kls4L + item.kls4P +
                                       item.kls5L + item.kls5P + item.kls6L + item.kls6P;
                         const smpTotal = item.kls7L + item.kls7P + item.kls8L + item.kls8P + item.kls9L + item.kls9P;
                         const smaTotal = item.kls10L + item.kls10P + item.kls11L + item.kls11P + item.kls12L + item.kls12P;
-                        const guruTotal = item.kepsekL + item.kepsekP + item.guruL + item.guruP + 
+                        const guruTotal = item.kepsekL + item.kepsekP + item.guruL + item.guruP +
                                         item.tendikL + item.tendikP + item.nonTendikL + item.nonTendikP;
                         return (
                           <TableRow key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                             <TableCell className="sticky-col border text-center bg-white dark:bg-slate-900">{index + 1}</TableCell>
-                            <TableCell className="sticky-col-2 border font-medium bg-white dark:bg-slate-900">{item.namaSekolah}</TableCell>
+                            <TableCell className="sticky-col-2 border bg-white dark:bg-slate-900 text-sm">
+                              {new Date(item.tanggal).toLocaleDateString('id-ID')}
+                            </TableCell>
+                            <TableCell className="border font-medium">{item.namaSekolah}</TableCell>
                             <TableCell className="border text-center bg-pink-50/50 dark:bg-pink-900/10">{tkTotal || '-'}</TableCell>
                             <TableCell className="border text-center bg-cyan-50/50 dark:bg-cyan-900/10">{sdTotal || '-'}</TableCell>
                             <TableCell className="border text-center bg-green-50/50 dark:bg-green-900/10">{smpTotal || '-'}</TableCell>
