@@ -634,14 +634,10 @@ export function DistribusiPage() {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-lg">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
           <TabsTrigger value="data" className="gap-2">
             <BarChart3 className="w-4 h-4" />
-            Harian Sekolah
-          </TabsTrigger>
-          <TabsTrigger value="posyandu" className="gap-2">
-            <Heart className="w-4 h-4" />
-            Harian Posyandu
+            Harian
           </TabsTrigger>
           <TabsTrigger value="tahunan" className="gap-2">
             <Calendar className="w-4 h-4" />
@@ -649,8 +645,23 @@ export function DistribusiPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Harian Sekolah Tab */}
-        <TabsContent value="data" className="space-y-6 mt-6">
+        {/* Harian Tab - Combined Sekolah & Posyandu */}
+        <TabsContent value="data" className="space-y-4 mt-6">
+          {/* Nested Tabs for Sekolah/Posyandu */}
+          <Tabs defaultValue="sekolah" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 max-w-xs">
+              <TabsTrigger value="sekolah" className="gap-2 text-sm">
+                <GraduationCap className="w-4 h-4" />
+                Sekolah (21)
+              </TabsTrigger>
+              <TabsTrigger value="posyandu" className="gap-2 text-sm">
+                <Heart className="w-4 h-4" />
+                Posyandu (10)
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Sekolah Tab */}
+            <TabsContent value="sekolah" className="mt-4">
           <Card className="border-0 shadow-lg">
             <CardContent className="p-0 relative">
               {/* Scroll navigation buttons */}
@@ -876,11 +887,13 @@ export function DistribusiPage() {
               </Button>
             </div>
           )}
-        </TabsContent>
+            </TabsContent>
 
-        {/* Harian Posyandu Tab */}
-        <TabsContent value="posyandu" className="space-y-6 mt-6">
-          <DistribusiPosyanduTab />
+            {/* Posyandu Tab */}
+            <TabsContent value="posyandu" className="mt-4">
+              <DistribusiPosyanduTab />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="tahunan" className="space-y-6 mt-6">
