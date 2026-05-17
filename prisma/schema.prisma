@@ -280,3 +280,83 @@ model BeritaAcaraDistribusi {
   @@index([namaSekolah])
   @@index([status])
 }
+
+// Kategori Barang Gudang
+model BarangKategori {
+  id          String   @id @default(cuid())
+  nama        String   // Nama kategori
+  deskripsi   String?  // Deskripsi kategori
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  barang      Barang[]
+  
+  @@index([nama])
+}
+
+// Barang / Inventori Gudang
+model Barang {
+  id            String   @id @default(cuid())
+  kode          String   @unique // Kode barang
+  nama          String   // Nama barang
+  kategoriId    String?  // Kategori barang
+  satuan        String   // Satuan (kg, pcs, liter, dll)
+  stok          Int      @default(0) // Stok saat ini
+  stokMin       Int      @default(0) // Stok minimum (untuk alert)
+  harga         Int      @default(0) // Harga satuan
+  lokasi        String?  // Lokasi penyimpanan
+  keterangan    String?  // Catatan tambahan
+  status        String   @default("aktif") // aktif, nonaktif
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  kategori      BarangKategori?  @relation(fields: [kategoriId], references: [id])
+  transaksi     BarangTransaksi[]
+  
+  @@index([kode])
+  @@index([nama])
+  @@index([status])
+}
+
+// Transaksi Barang (Masuk/Keluar)
+model BarangTransaksi {
+  id            String   @id @default(cuid())
+  barangId      String   // ID barang
+  jenis         String   // masuk, keluar
+  jumlah        Int      // Jumlah barang
+  hargaSatuan   Int      @default(0) // Harga satuan saat transaksi
+  totalHarga    Int      @default(0) // Total harga
+  tanggal       DateTime @default(now()) // Tanggal transaksi
+  keterangan    String?  // Keterangan
+  referensi     String?  // No. referensi/surat
+  penerima      String?  // Nama penerima (untuk barang keluar)
+  pengirim      String?  // Nama pengirim (untuk barang masuk)
+  userId        String?  // User yang input
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  barang        Barang   @relation(fields: [barangId], references: [id])
+  
+  @@index([barangId])
+  @@index([jenis])
+  @@index([tanggal])
+}
+
+// Laporan Gudang
+model LaporanGudang {
+  id            String   @id @default(cuid())
+  judul         String   // Judul laporan
+  jenis         String   // stok, transaksi, nilai
+  periodeMulai  DateTime // Periode awal
+  periodeSelesai DateTime // Periode akhir
+  data          String   // JSON data laporan
+  keterangan    String?  // Catatan
+  status        String   @default("draft") // draft, final
+  createdBy     String?  // User ID pembuat
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([jenis])
+  @@index([status])
+  @@index([periodeMulai])
+}

@@ -48,7 +48,7 @@ import {
   TrendingUp, Users, GraduationCap, Building2, RefreshCw, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+
 
 interface Distribusi {
   id: string;
@@ -701,68 +701,128 @@ export function DistribusiPage() {
         {/* Data Tab */}
         <TabsContent value="data" className="space-y-6 mt-6">
           <Card className="border-0 shadow-lg">
-            <CardContent className="p-0">
-              <ScrollArea className="w-full">
-                <div className="min-w-[1800px]">
-                  <Table>
+            <CardContent className="p-0 relative">
+              {/* Scroll navigation buttons */}
+              <div className="flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b">
+                <span className="text-xs text-slate-500">Geser tabel untuk melihat semua kolom</span>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      const container = document.getElementById('distribusi-table-scroll');
+                      if (container) container.scrollBy({ left: -300, behavior: 'smooth' });
+                    }}
+                    className="gap-1 h-7 text-xs"
+                  >
+                    ← Kiri
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      const container = document.getElementById('distribusi-table-scroll');
+                      if (container) container.scrollBy({ left: 300, behavior: 'smooth' });
+                    }}
+                    className="gap-1 h-7 text-xs"
+                  >
+                    Kanan →
+                  </Button>
+                </div>
+              </div>
+              <div 
+                id="distribusi-table-scroll"
+                className="overflow-x-auto"
+                style={{
+                  WebkitOverflowScrolling: 'touch',
+                  msOverflowStyle: '-ms-autohiding-scrollbar'
+                }}
+              >
+                <Table className="w-full" style={{ minWidth: '1600px' }}>
                     <TableHeader>
                       {/* Header Row 1 - Group Headers */}
                       <TableRow className="bg-slate-100 dark:bg-slate-800">
-                        <TableHead rowSpan={2} className="border text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[50px]">No</TableHead>
-                        <TableHead rowSpan={2} className="border text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[200px]">Nama Sekolah</TableHead>
+                        <TableHead rowSpan={3} className="sticky-col border text-center align-middle bg-slate-200 dark:bg-slate-700 w-[50px] min-w-[50px]">No</TableHead>
+                        <TableHead rowSpan={3} className="sticky-col-2 border text-center align-middle bg-slate-200 dark:bg-slate-700 w-[200px] min-w-[200px]">Nama Sekolah</TableHead>
                         <TableHead colSpan={4} className="border text-center bg-pink-100 dark:bg-pink-900/30">TK/PAUD</TableHead>
                         <TableHead colSpan={12} className="border text-center bg-cyan-100 dark:bg-cyan-900/30">SD/MI</TableHead>
                         <TableHead colSpan={6} className="border text-center bg-green-100 dark:bg-green-900/30">SMP/MTs</TableHead>
                         <TableHead colSpan={6} className="border text-center bg-purple-100 dark:bg-purple-900/30">SMA/SMK/MA</TableHead>
                         <TableHead colSpan={8} className="border text-center bg-amber-100 dark:bg-amber-900/30">GURU</TableHead>
-                        <TableHead rowSpan={2} className="border text-center align-middle bg-red-100 dark:bg-red-900/30 min-w-[60px]">Uji Org.</TableHead>
-                        <TableHead rowSpan={2} className="border text-center align-middle bg-emerald-100 dark:bg-emerald-900/30 min-w-[60px]">Jumlah</TableHead>
-                        <TableHead rowSpan={2} className="border text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[100px]">Tanggal</TableHead>
-                        <TableHead rowSpan={2} className="border text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[80px]">Aksi</TableHead>
+                        <TableHead rowSpan={3} className="border text-center align-middle bg-red-100 dark:bg-red-900/30 min-w-[60px]">Uji Org.</TableHead>
+                        <TableHead rowSpan={3} className="border text-center align-middle bg-emerald-100 dark:bg-emerald-900/30 min-w-[60px]">Jumlah</TableHead>
+                        <TableHead rowSpan={3} className="border text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[100px]">Tanggal</TableHead>
+                        <TableHead rowSpan={3} className="border text-center align-middle bg-slate-200 dark:bg-slate-700 min-w-[80px]">Aksi</TableHead>
                       </TableRow>
-                      {/* Header Row 2 - Sub Headers */}
+                      {/* Header Row 2 - Class Names */}
                       <TableRow className="bg-slate-50 dark:bg-slate-800/50">
                         {/* TK/PAUD */}
-                        <TableHead className="border text-center w-10 bg-pink-50 dark:bg-pink-900/20">Kls A</TableHead>
-                        <TableHead className="border text-center w-10 bg-pink-50 dark:bg-pink-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-pink-50 dark:bg-pink-900/20">Kls B</TableHead>
-                        <TableHead className="border text-center w-10 bg-pink-50 dark:bg-pink-900/20"></TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-pink-50 dark:bg-pink-900/20">Kls A</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-pink-50 dark:bg-pink-900/20">Kls B</TableHead>
                         {/* SD/MI */}
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20">Kls 1</TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20">Kls 2</TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20">Kls 3</TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20">Kls 4</TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20">Kls 5</TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20">Kls 6</TableHead>
-                        <TableHead className="border text-center w-10 bg-cyan-50 dark:bg-cyan-900/20"></TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-cyan-50 dark:bg-cyan-900/20">Kls 1</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-cyan-50 dark:bg-cyan-900/20">Kls 2</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-cyan-50 dark:bg-cyan-900/20">Kls 3</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-cyan-50 dark:bg-cyan-900/20">Kls 4</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-cyan-50 dark:bg-cyan-900/20">Kls 5</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-cyan-50 dark:bg-cyan-900/20">Kls 6</TableHead>
                         {/* SMP/MTs */}
-                        <TableHead className="border text-center w-10 bg-green-50 dark:bg-green-900/20">Kls 7</TableHead>
-                        <TableHead className="border text-center w-10 bg-green-50 dark:bg-green-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-green-50 dark:bg-green-900/20">Kls 8</TableHead>
-                        <TableHead className="border text-center w-10 bg-green-50 dark:bg-green-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-green-50 dark:bg-green-900/20">Kls 9</TableHead>
-                        <TableHead className="border text-center w-10 bg-green-50 dark:bg-green-900/20"></TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-green-50 dark:bg-green-900/20">Kls 7</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-green-50 dark:bg-green-900/20">Kls 8</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-green-50 dark:bg-green-900/20">Kls 9</TableHead>
                         {/* SMA/SMK/MA */}
-                        <TableHead className="border text-center w-10 bg-purple-50 dark:bg-purple-900/20">Kls 10</TableHead>
-                        <TableHead className="border text-center w-10 bg-purple-50 dark:bg-purple-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-purple-50 dark:bg-purple-900/20">Kls 11</TableHead>
-                        <TableHead className="border text-center w-10 bg-purple-50 dark:bg-purple-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-purple-50 dark:bg-purple-900/20">Kls 12</TableHead>
-                        <TableHead className="border text-center w-10 bg-purple-50 dark:bg-purple-900/20"></TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-purple-50 dark:bg-purple-900/20">Kls 10</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-purple-50 dark:bg-purple-900/20">Kls 11</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-purple-50 dark:bg-purple-900/20">Kls 12</TableHead>
                         {/* Guru */}
-                        <TableHead className="border text-center w-10 bg-amber-50 dark:bg-amber-900/20">Kepsek</TableHead>
-                        <TableHead className="border text-center w-10 bg-amber-50 dark:bg-amber-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-amber-50 dark:bg-amber-900/20">Guru</TableHead>
-                        <TableHead className="border text-center w-10 bg-amber-50 dark:bg-amber-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-amber-50 dark:bg-amber-900/20">Tendik</TableHead>
-                        <TableHead className="border text-center w-10 bg-amber-50 dark:bg-amber-900/20"></TableHead>
-                        <TableHead className="border text-center w-10 bg-amber-50 dark:bg-amber-900/20">Non Tendik</TableHead>
-                        <TableHead className="border text-center w-10 bg-amber-50 dark:bg-amber-900/20"></TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-amber-50 dark:bg-amber-900/20">Kepsek</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-amber-50 dark:bg-amber-900/20">Guru</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-amber-50 dark:bg-amber-900/20">Tendik</TableHead>
+                        <TableHead colSpan={2} className="border text-center bg-amber-50 dark:bg-amber-900/20">Non Tendik</TableHead>
+                      </TableRow>
+                      {/* Header Row 3 - Gender (L/P) */}
+                      <TableRow className="bg-slate-100 dark:bg-slate-800/70">
+                        {/* TK/PAUD - Kls A, Kls B */}
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        {/* SD/MI - Kls 1-6 */}
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        {/* SMP/MTs - Kls 7-9 */}
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        {/* SMA/SMK/MA - Kls 10-12 */}
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        {/* Guru */}
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
+                        <TableHead className="border text-center w-8 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium">L</TableHead>
+                        <TableHead className="border text-center w-8 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 font-medium">P</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -775,8 +835,8 @@ export function DistribusiPage() {
                       ) : (
                         distribusiData.map((item, index) => (
                           <TableRow key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                            <TableCell className="border text-center">{(pagination.page - 1) * pagination.limit + index + 1}</TableCell>
-                            <TableCell className="border font-medium">{item.namaSekolah}</TableCell>
+                            <TableCell className="sticky-col border text-center bg-white dark:bg-slate-900">{(pagination.page - 1) * pagination.limit + index + 1}</TableCell>
+                            <TableCell className="sticky-col-2 border font-medium bg-white dark:bg-slate-900">{item.namaSekolah}</TableCell>
                             {/* TK/PAUD */}
                             <TableCell className="border text-center bg-blue-50 dark:bg-blue-900/20">{item.klsAL || '-'}</TableCell>
                             <TableCell className="border text-center bg-pink-50 dark:bg-pink-900/20">{item.klsAP || '-'}</TableCell>
@@ -837,9 +897,7 @@ export function DistribusiPage() {
                       )}
                     </TableBody>
                   </Table>
-                </div>
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
+              </div>
             </CardContent>
           </Card>
           
@@ -986,89 +1044,86 @@ export function DistribusiPage() {
                   <p className="text-sm">Belum ada distribusi pada tanggal ini</p>
                 </div>
               ) : (
-                <ScrollArea className="w-full">
-                  <div className="min-w-[800px]">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-slate-100 dark:bg-slate-800">
-                          <TableHead className="border text-center w-12">No</TableHead>
-                          <TableHead className="border min-w-[200px]">Nama Sekolah</TableHead>
-                          <TableHead className="border text-center bg-pink-50 dark:bg-pink-900/20">TK/PAUD</TableHead>
-                          <TableHead className="border text-center bg-cyan-50 dark:bg-cyan-900/20">SD/MI</TableHead>
-                          <TableHead className="border text-center bg-green-50 dark:bg-green-900/20">SMP</TableHead>
-                          <TableHead className="border text-center bg-purple-50 dark:bg-purple-900/20">SMA</TableHead>
-                          <TableHead className="border text-center bg-amber-50 dark:bg-amber-900/20">Guru</TableHead>
-                          <TableHead className="border text-center bg-red-50 dark:bg-red-900/20">Uji Org</TableHead>
-                          <TableHead className="border text-center bg-emerald-50 dark:bg-emerald-900/20 font-bold">Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {harianData.map((item, index) => {
-                          const tkTotal = item.klsAL + item.klsAP + item.klsBL + item.klsBP;
-                          const sdTotal = item.kls1L + item.kls1P + item.kls2L + item.kls2P + 
-                                        item.kls3L + item.kls3P + item.kls4L + item.kls4P + 
-                                        item.kls5L + item.kls5P + item.kls6L + item.kls6P;
-                          const smpTotal = item.kls7L + item.kls7P + item.kls8L + item.kls8P + item.kls9L + item.kls9P;
-                          const smaTotal = item.kls10L + item.kls10P + item.kls11L + item.kls11P + item.kls12L + item.kls12P;
-                          const guruTotal = item.kepsekL + item.kepsekP + item.guruL + item.guruP + 
-                                          item.tendikL + item.tendikP + item.nonTendikL + item.nonTendikP;
-                          
-                          return (
-                            <TableRow key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                              <TableCell className="border text-center text-slate-400">{index + 1}</TableCell>
-                              <TableCell className="border font-medium">{item.namaSekolah}</TableCell>
-                              <TableCell className="border text-center bg-pink-50/50 dark:bg-pink-900/10">
-                                {tkTotal > 0 ? tkTotal : '-'}
-                              </TableCell>
-                              <TableCell className="border text-center bg-cyan-50/50 dark:bg-cyan-900/10">
-                                {sdTotal > 0 ? sdTotal : '-'}
-                              </TableCell>
-                              <TableCell className="border text-center bg-green-50/50 dark:bg-green-900/10">
-                                {smpTotal > 0 ? smpTotal : '-'}
-                              </TableCell>
-                              <TableCell className="border text-center bg-purple-50/50 dark:bg-purple-900/10">
-                                {smaTotal > 0 ? smaTotal : '-'}
-                              </TableCell>
-                              <TableCell className="border text-center bg-amber-50/50 dark:bg-amber-900/10">
-                                {guruTotal > 0 ? guruTotal : '-'}
-                              </TableCell>
-                              <TableCell className="border text-center">{item.ujiOrganoleptik || '-'}</TableCell>
-                              <TableCell className="border text-center font-bold text-emerald-600">{item.jumlah}</TableCell>
-                            </TableRow>
-                          );
-                        })}
-                        {/* Total Row */}
-                        <TableRow className="bg-slate-200 dark:bg-slate-700 font-bold">
-                          <TableCell colSpan={2} className="border text-right">TOTAL</TableCell>
-                          <TableCell className="border text-center bg-pink-100 dark:bg-pink-900/30">
-                            {harianData.reduce((sum, d) => sum + d.klsAL + d.klsAP + d.klsBL + d.klsBP, 0)}
-                          </TableCell>
-                          <TableCell className="border text-center bg-cyan-100 dark:bg-cyan-900/30">
-                            {harianData.reduce((sum, d) => sum + d.kls1L + d.kls1P + d.kls2L + d.kls2P + 
-                              d.kls3L + d.kls3P + d.kls4L + d.kls4P + d.kls5L + d.kls5P + d.kls6L + d.kls6P, 0)}
-                          </TableCell>
-                          <TableCell className="border text-center bg-green-100 dark:bg-green-900/30">
-                            {harianData.reduce((sum, d) => sum + d.kls7L + d.kls7P + d.kls8L + d.kls8P + d.kls9L + d.kls9P, 0)}
-                          </TableCell>
-                          <TableCell className="border text-center bg-purple-100 dark:bg-purple-900/30">
-                            {harianData.reduce((sum, d) => sum + d.kls10L + d.kls10P + d.kls11L + d.kls11P + d.kls12L + d.kls12P, 0)}
-                          </TableCell>
-                          <TableCell className="border text-center bg-amber-100 dark:bg-amber-900/30">
-                            {harianData.reduce((sum, d) => sum + d.kepsekL + d.kepsekP + d.guruL + d.guruP + 
-                              d.tendikL + d.tendikP + d.nonTendikL + d.nonTendikP, 0)}
-                          </TableCell>
-                          <TableCell className="border text-center">
-                            {harianData.reduce((sum, d) => sum + (d.ujiOrganoleptik || 0), 0)}
-                          </TableCell>
-                          <TableCell className="border text-center bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700">
-                            {harianData.reduce((sum, d) => sum + d.jumlah, 0)}
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </div>
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
+                <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+                  <Table className="w-full" style={{ minWidth: '800px' }}>
+                    <TableHeader>
+                      <TableRow className="bg-slate-100 dark:bg-slate-800">
+                        <TableHead className="sticky-col border text-center w-12 bg-slate-200 dark:bg-slate-700">No</TableHead>
+                        <TableHead className="sticky-col-2 border min-w-[200px] bg-slate-200 dark:bg-slate-700">Nama Sekolah</TableHead>
+                        <TableHead className="border text-center bg-pink-50 dark:bg-pink-900/20">TK/PAUD</TableHead>
+                        <TableHead className="border text-center bg-cyan-50 dark:bg-cyan-900/20">SD/MI</TableHead>
+                        <TableHead className="border text-center bg-green-50 dark:bg-green-900/20">SMP</TableHead>
+                        <TableHead className="border text-center bg-purple-50 dark:bg-purple-900/20">SMA</TableHead>
+                        <TableHead className="border text-center bg-amber-50 dark:bg-amber-900/20">Guru</TableHead>
+                        <TableHead className="border text-center bg-red-50 dark:bg-red-900/20">Uji Org</TableHead>
+                        <TableHead className="border text-center bg-emerald-50 dark:bg-emerald-900/20 font-bold">Total</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {harianData.map((item, index) => {
+                        const tkTotal = item.klsAL + item.klsAP + item.klsBL + item.klsBP;
+                        const sdTotal = item.kls1L + item.kls1P + item.kls2L + item.kls2P + 
+                                      item.kls3L + item.kls3P + item.kls4L + item.kls4P + 
+                                      item.kls5L + item.kls5P + item.kls6L + item.kls6P;
+                        const smpTotal = item.kls7L + item.kls7P + item.kls8L + item.kls8P + item.kls9L + item.kls9P;
+                        const smaTotal = item.kls10L + item.kls10P + item.kls11L + item.kls11P + item.kls12L + item.kls12P;
+                        const guruTotal = item.kepsekL + item.kepsekP + item.guruL + item.guruP + 
+                                        item.tendikL + item.tendikP + item.nonTendikL + item.nonTendikP;
+                        
+                        return (
+                          <TableRow key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <TableCell className="sticky-col border text-center text-slate-400 bg-white dark:bg-slate-900">{index + 1}</TableCell>
+                            <TableCell className="sticky-col-2 border font-medium bg-white dark:bg-slate-900">{item.namaSekolah}</TableCell>
+                            <TableCell className="border text-center bg-pink-50/50 dark:bg-pink-900/10">
+                              {tkTotal > 0 ? tkTotal : '-'}
+                            </TableCell>
+                            <TableCell className="border text-center bg-cyan-50/50 dark:bg-cyan-900/10">
+                              {sdTotal > 0 ? sdTotal : '-'}
+                            </TableCell>
+                            <TableCell className="border text-center bg-green-50/50 dark:bg-green-900/10">
+                              {smpTotal > 0 ? smpTotal : '-'}
+                            </TableCell>
+                            <TableCell className="border text-center bg-purple-50/50 dark:bg-purple-900/10">
+                              {smaTotal > 0 ? smaTotal : '-'}
+                            </TableCell>
+                            <TableCell className="border text-center bg-amber-50/50 dark:bg-amber-900/10">
+                              {guruTotal > 0 ? guruTotal : '-'}
+                            </TableCell>
+                            <TableCell className="border text-center">{item.ujiOrganoleptik || '-'}</TableCell>
+                            <TableCell className="border text-center font-bold text-emerald-600">{item.jumlah}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                      {/* Total Row */}
+                      <TableRow className="bg-slate-200 dark:bg-slate-700 font-bold">
+                        <TableCell colSpan={2} className="border text-right sticky-col sticky-col-2 bg-slate-200 dark:bg-slate-700">TOTAL</TableCell>
+                        <TableCell className="border text-center bg-pink-100 dark:bg-pink-900/30">
+                          {harianData.reduce((sum, d) => sum + d.klsAL + d.klsAP + d.klsBL + d.klsBP, 0)}
+                        </TableCell>
+                        <TableCell className="border text-center bg-cyan-100 dark:bg-cyan-900/30">
+                          {harianData.reduce((sum, d) => sum + d.kls1L + d.kls1P + d.kls2L + d.kls2P + 
+                            d.kls3L + d.kls3P + d.kls4L + d.kls4P + d.kls5L + d.kls5P + d.kls6L + d.kls6P, 0)}
+                        </TableCell>
+                        <TableCell className="border text-center bg-green-100 dark:bg-green-900/30">
+                          {harianData.reduce((sum, d) => sum + d.kls7L + d.kls7P + d.kls8L + d.kls8P + d.kls9L + d.kls9P, 0)}
+                        </TableCell>
+                        <TableCell className="border text-center bg-purple-100 dark:bg-purple-900/30">
+                          {harianData.reduce((sum, d) => sum + d.kls10L + d.kls10P + d.kls11L + d.kls11P + d.kls12L + d.kls12P, 0)}
+                        </TableCell>
+                        <TableCell className="border text-center bg-amber-100 dark:bg-amber-900/30">
+                          {harianData.reduce((sum, d) => sum + d.kepsekL + d.kepsekP + d.guruL + d.guruP + 
+                            d.tendikL + d.tendikP + d.nonTendikL + d.nonTendikP, 0)}
+                        </TableCell>
+                        <TableCell className="border text-center">
+                          {harianData.reduce((sum, d) => sum + (d.ujiOrganoleptik || 0), 0)}
+                        </TableCell>
+                        <TableCell className="border text-center bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700">
+                          {harianData.reduce((sum, d) => sum + d.jumlah, 0)}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -1150,17 +1205,156 @@ export function DistribusiPage() {
               </Select>
             </div>
           </div>
+          
+          {/* Summary Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-4">
+                <p className="text-xs text-slate-500">Total Data</p>
+                <p className="text-xl font-bold text-emerald-600">{rekapData?.filteredData.length || 0}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-4">
+                <p className="text-xs text-slate-500">Total Siswa</p>
+                <p className="text-xl font-bold text-cyan-600">
+                  {rekapData ? Object.values(rekapData.totals.siswa).reduce((sum, k) => sum + k.L + k.P, 0).toLocaleString() : 0}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-4">
+                <p className="text-xs text-slate-500">Total Guru</p>
+                <p className="text-xl font-bold text-amber-600">
+                  {rekapData ? Object.values(rekapData.totals.guru).reduce((sum, k) => sum + k.L + k.P, 0).toLocaleString() : 0}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-4">
+                <p className="text-xs text-slate-500">Grand Total</p>
+                <p className="text-xl font-bold text-purple-600">{(rekapData?.totals.jumlah || 0).toLocaleString()}</p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Table */}
           <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle>Rekapitulasi Minggu {filterWeek} {MONTHS[filterMonth - 1]} {filterYear}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-500">Total: {rekapData?.totals.jumlah || 0} data</p>
+            <CardContent className="p-0 relative">
+              <div className="flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b">
+                <span className="text-sm font-medium">Rekapitulasi Minggu {filterWeek} {MONTHS[filterMonth - 1]} {filterYear}</span>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => {
+                    const container = document.getElementById('mingguan-table-scroll');
+                    if (container) container.scrollBy({ left: -300, behavior: 'smooth' });
+                  }} className="gap-1 h-7 text-xs">← Kiri</Button>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    const container = document.getElementById('mingguan-table-scroll');
+                    if (container) container.scrollBy({ left: 300, behavior: 'smooth' });
+                  }} className="gap-1 h-7 text-xs">Kanan →</Button>
+                </div>
+              </div>
+              <div id="mingguan-table-scroll" className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <Table className="w-full" style={{ minWidth: '800px' }}>
+                  <TableHeader>
+                    <TableRow className="bg-slate-100 dark:bg-slate-800">
+                      <TableHead className="sticky-col border text-center w-12 bg-slate-200 dark:bg-slate-700">No</TableHead>
+                      <TableHead className="sticky-col-2 border min-w-[200px] bg-slate-200 dark:bg-slate-700">Nama Sekolah</TableHead>
+                      <TableHead className="border text-center bg-pink-50 dark:bg-pink-900/20">TK/PAUD</TableHead>
+                      <TableHead className="border text-center bg-cyan-50 dark:bg-cyan-900/20">SD/MI</TableHead>
+                      <TableHead className="border text-center bg-green-50 dark:bg-green-900/20">SMP</TableHead>
+                      <TableHead className="border text-center bg-purple-50 dark:bg-purple-900/20">SMA</TableHead>
+                      <TableHead className="border text-center bg-amber-50 dark:bg-amber-900/20">Guru</TableHead>
+                      <TableHead className="border text-center bg-red-50 dark:bg-red-900/20">Uji Org</TableHead>
+                      <TableHead className="border text-center bg-emerald-50 dark:bg-emerald-900/20 font-bold">Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rekapData?.filteredData.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-8 text-slate-500">Tidak ada data</TableCell>
+                      </TableRow>
+                    ) : (
+                      rekapData?.filteredData.map((item, index) => {
+                        const tkTotal = item.klsAL + item.klsAP + item.klsBL + item.klsBP;
+                        const sdTotal = item.kls1L + item.kls1P + item.kls2L + item.kls2P + 
+                                      item.kls3L + item.kls3P + item.kls4L + item.kls4P + 
+                                      item.kls5L + item.kls5P + item.kls6L + item.kls6P;
+                        const smpTotal = item.kls7L + item.kls7P + item.kls8L + item.kls8P + item.kls9L + item.kls9P;
+                        const smaTotal = item.kls10L + item.kls10P + item.kls11L + item.kls11P + item.kls12L + item.kls12P;
+                        const guruTotal = item.kepsekL + item.kepsekP + item.guruL + item.guruP + 
+                                        item.tendikL + item.tendikP + item.nonTendikL + item.nonTendikP;
+                        return (
+                          <TableRow key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <TableCell className="sticky-col border text-center bg-white dark:bg-slate-900">{index + 1}</TableCell>
+                            <TableCell className="sticky-col-2 border font-medium bg-white dark:bg-slate-900">{item.namaSekolah}</TableCell>
+                            <TableCell className="border text-center bg-pink-50/50 dark:bg-pink-900/10">{tkTotal || '-'}</TableCell>
+                            <TableCell className="border text-center bg-cyan-50/50 dark:bg-cyan-900/10">{sdTotal || '-'}</TableCell>
+                            <TableCell className="border text-center bg-green-50/50 dark:bg-green-900/10">{smpTotal || '-'}</TableCell>
+                            <TableCell className="border text-center bg-purple-50/50 dark:bg-purple-900/10">{smaTotal || '-'}</TableCell>
+                            <TableCell className="border text-center bg-amber-50/50 dark:bg-amber-900/10">{guruTotal || '-'}</TableCell>
+                            <TableCell className="border text-center">{item.ujiOrganoleptik || '-'}</TableCell>
+                            <TableCell className="border text-center font-bold text-emerald-600">{item.jumlah}</TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="bulanan" className="space-y-6 mt-6">
+          {/* Year Filter */}
+          <div className="flex items-center gap-2">
+            <Label>Tahun:</Label>
+            <Select value={filterYear.toString()} onValueChange={(v) => setFilterYear(parseInt(v))}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {rekapData?.years.map(y => (
+                  <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                )) || <SelectItem value={filterYear.toString()}>{filterYear}</SelectItem>}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {/* Summary Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-4">
+                <p className="text-xs text-slate-500">Total Data</p>
+                <p className="text-xl font-bold text-emerald-600">{rekapData?.filteredData.length || 0}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-4">
+                <p className="text-xs text-slate-500">Total Siswa</p>
+                <p className="text-xl font-bold text-cyan-600">
+                  {rekapData ? Object.values(rekapData.totals.siswa).reduce((sum, k) => sum + k.L + k.P, 0).toLocaleString() : 0}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-4">
+                <p className="text-xs text-slate-500">Total Guru</p>
+                <p className="text-xl font-bold text-amber-600">
+                  {rekapData ? Object.values(rekapData.totals.guru).reduce((sum, k) => sum + k.L + k.P, 0).toLocaleString() : 0}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-4">
+                <p className="text-xs text-slate-500">Grand Total</p>
+                <p className="text-xl font-bold text-purple-600">{(rekapData?.totals.jumlah || 0).toLocaleString()}</p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Chart */}
           <Card className="border-0 shadow-lg">
             <CardHeader>
               <CardTitle>Grafik Bulanan {filterYear}</CardTitle>
@@ -1177,9 +1371,109 @@ export function DistribusiPage() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
+          
+          {/* Table */}
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-0 relative">
+              <div className="flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b">
+                <span className="text-sm font-medium">Data Bulanan {filterYear}</span>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => {
+                    const container = document.getElementById('bulanan-table-scroll');
+                    if (container) container.scrollBy({ left: -300, behavior: 'smooth' });
+                  }} className="gap-1 h-7 text-xs">← Kiri</Button>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    const container = document.getElementById('bulanan-table-scroll');
+                    if (container) container.scrollBy({ left: 300, behavior: 'smooth' });
+                  }} className="gap-1 h-7 text-xs">Kanan →</Button>
+                </div>
+              </div>
+              <div id="bulanan-table-scroll" className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <Table className="w-full" style={{ minWidth: '800px' }}>
+                  <TableHeader>
+                    <TableRow className="bg-slate-100 dark:bg-slate-800">
+                      <TableHead className="sticky-col border text-center w-12 bg-slate-200 dark:bg-slate-700">No</TableHead>
+                      <TableHead className="sticky-col-2 border min-w-[200px] bg-slate-200 dark:bg-slate-700">Nama Sekolah</TableHead>
+                      <TableHead className="border text-center bg-pink-50 dark:bg-pink-900/20">TK/PAUD</TableHead>
+                      <TableHead className="border text-center bg-cyan-50 dark:bg-cyan-900/20">SD/MI</TableHead>
+                      <TableHead className="border text-center bg-green-50 dark:bg-green-900/20">SMP</TableHead>
+                      <TableHead className="border text-center bg-purple-50 dark:bg-purple-900/20">SMA</TableHead>
+                      <TableHead className="border text-center bg-amber-50 dark:bg-amber-900/20">Guru</TableHead>
+                      <TableHead className="border text-center bg-red-50 dark:bg-red-900/20">Uji Org</TableHead>
+                      <TableHead className="border text-center bg-emerald-50 dark:bg-emerald-900/20 font-bold">Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rekapData?.filteredData.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-8 text-slate-500">Tidak ada data</TableCell>
+                      </TableRow>
+                    ) : (
+                      rekapData?.filteredData.map((item, index) => {
+                        const tkTotal = item.klsAL + item.klsAP + item.klsBL + item.klsBP;
+                        const sdTotal = item.kls1L + item.kls1P + item.kls2L + item.kls2P + 
+                                      item.kls3L + item.kls3P + item.kls4L + item.kls4P + 
+                                      item.kls5L + item.kls5P + item.kls6L + item.kls6P;
+                        const smpTotal = item.kls7L + item.kls7P + item.kls8L + item.kls8P + item.kls9L + item.kls9P;
+                        const smaTotal = item.kls10L + item.kls10P + item.kls11L + item.kls11P + item.kls12L + item.kls12P;
+                        const guruTotal = item.kepsekL + item.kepsekP + item.guruL + item.guruP + 
+                                        item.tendikL + item.tendikP + item.nonTendikL + item.nonTendikP;
+                        return (
+                          <TableRow key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <TableCell className="sticky-col border text-center bg-white dark:bg-slate-900">{index + 1}</TableCell>
+                            <TableCell className="sticky-col-2 border font-medium bg-white dark:bg-slate-900">{item.namaSekolah}</TableCell>
+                            <TableCell className="border text-center bg-pink-50/50 dark:bg-pink-900/10">{tkTotal || '-'}</TableCell>
+                            <TableCell className="border text-center bg-cyan-50/50 dark:bg-cyan-900/10">{sdTotal || '-'}</TableCell>
+                            <TableCell className="border text-center bg-green-50/50 dark:bg-green-900/10">{smpTotal || '-'}</TableCell>
+                            <TableCell className="border text-center bg-purple-50/50 dark:bg-purple-900/10">{smaTotal || '-'}</TableCell>
+                            <TableCell className="border text-center bg-amber-50/50 dark:bg-amber-900/10">{guruTotal || '-'}</TableCell>
+                            <TableCell className="border text-center">{item.ujiOrganoleptik || '-'}</TableCell>
+                            <TableCell className="border text-center font-bold text-emerald-600">{item.jumlah}</TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="tahunan" className="space-y-6 mt-6">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-4">
+                <p className="text-xs text-slate-500">Total Data</p>
+                <p className="text-xl font-bold text-emerald-600">{rekapData?.filteredData.length || 0}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-4">
+                <p className="text-xs text-slate-500">Total Siswa</p>
+                <p className="text-xl font-bold text-cyan-600">
+                  {rekapData ? Object.values(rekapData.totals.siswa).reduce((sum, k) => sum + k.L + k.P, 0).toLocaleString() : 0}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-4">
+                <p className="text-xs text-slate-500">Total Guru</p>
+                <p className="text-xl font-bold text-amber-600">
+                  {rekapData ? Object.values(rekapData.totals.guru).reduce((sum, k) => sum + k.L + k.P, 0).toLocaleString() : 0}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-4">
+                <p className="text-xs text-slate-500">Grand Total</p>
+                <p className="text-xl font-bold text-purple-600">{(rekapData?.totals.jumlah || 0).toLocaleString()}</p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Chart */}
           <Card className="border-0 shadow-lg">
             <CardHeader>
               <CardTitle>Grafik Tahunan</CardTitle>
@@ -1194,6 +1488,73 @@ export function DistribusiPage() {
                   <Line type="monotone" dataKey="jumlah" name="Total" stroke="#10b981" strokeWidth={3} />
                 </LineChart>
               </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          
+          {/* Table */}
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-0 relative">
+              <div className="flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b">
+                <span className="text-sm font-medium">Data Tahunan</span>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => {
+                    const container = document.getElementById('tahunan-table-scroll');
+                    if (container) container.scrollBy({ left: -300, behavior: 'smooth' });
+                  }} className="gap-1 h-7 text-xs">← Kiri</Button>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    const container = document.getElementById('tahunan-table-scroll');
+                    if (container) container.scrollBy({ left: 300, behavior: 'smooth' });
+                  }} className="gap-1 h-7 text-xs">Kanan →</Button>
+                </div>
+              </div>
+              <div id="tahunan-table-scroll" className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <Table className="w-full" style={{ minWidth: '800px' }}>
+                  <TableHeader>
+                    <TableRow className="bg-slate-100 dark:bg-slate-800">
+                      <TableHead className="sticky-col border text-center w-12 bg-slate-200 dark:bg-slate-700">No</TableHead>
+                      <TableHead className="sticky-col-2 border min-w-[200px] bg-slate-200 dark:bg-slate-700">Nama Sekolah</TableHead>
+                      <TableHead className="border text-center bg-pink-50 dark:bg-pink-900/20">TK/PAUD</TableHead>
+                      <TableHead className="border text-center bg-cyan-50 dark:bg-cyan-900/20">SD/MI</TableHead>
+                      <TableHead className="border text-center bg-green-50 dark:bg-green-900/20">SMP</TableHead>
+                      <TableHead className="border text-center bg-purple-50 dark:bg-purple-900/20">SMA</TableHead>
+                      <TableHead className="border text-center bg-amber-50 dark:bg-amber-900/20">Guru</TableHead>
+                      <TableHead className="border text-center bg-red-50 dark:bg-red-900/20">Uji Org</TableHead>
+                      <TableHead className="border text-center bg-emerald-50 dark:bg-emerald-900/20 font-bold">Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rekapData?.filteredData.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-8 text-slate-500">Tidak ada data</TableCell>
+                      </TableRow>
+                    ) : (
+                      rekapData?.filteredData.map((item, index) => {
+                        const tkTotal = item.klsAL + item.klsAP + item.klsBL + item.klsBP;
+                        const sdTotal = item.kls1L + item.kls1P + item.kls2L + item.kls2P + 
+                                      item.kls3L + item.kls3P + item.kls4L + item.kls4P + 
+                                      item.kls5L + item.kls5P + item.kls6L + item.kls6P;
+                        const smpTotal = item.kls7L + item.kls7P + item.kls8L + item.kls8P + item.kls9L + item.kls9P;
+                        const smaTotal = item.kls10L + item.kls10P + item.kls11L + item.kls11P + item.kls12L + item.kls12P;
+                        const guruTotal = item.kepsekL + item.kepsekP + item.guruL + item.guruP + 
+                                        item.tendikL + item.tendikP + item.nonTendikL + item.nonTendikP;
+                        return (
+                          <TableRow key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <TableCell className="sticky-col border text-center bg-white dark:bg-slate-900">{index + 1}</TableCell>
+                            <TableCell className="sticky-col-2 border font-medium bg-white dark:bg-slate-900">{item.namaSekolah}</TableCell>
+                            <TableCell className="border text-center bg-pink-50/50 dark:bg-pink-900/10">{tkTotal || '-'}</TableCell>
+                            <TableCell className="border text-center bg-cyan-50/50 dark:bg-cyan-900/10">{sdTotal || '-'}</TableCell>
+                            <TableCell className="border text-center bg-green-50/50 dark:bg-green-900/10">{smpTotal || '-'}</TableCell>
+                            <TableCell className="border text-center bg-purple-50/50 dark:bg-purple-900/10">{smaTotal || '-'}</TableCell>
+                            <TableCell className="border text-center bg-amber-50/50 dark:bg-amber-900/10">{guruTotal || '-'}</TableCell>
+                            <TableCell className="border text-center">{item.ujiOrganoleptik || '-'}</TableCell>
+                            <TableCell className="border text-center font-bold text-emerald-600">{item.jumlah}</TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

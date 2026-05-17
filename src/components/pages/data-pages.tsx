@@ -215,7 +215,27 @@ export function DataPage({ type }: DataPageProps) {
       });
 
       const response = await fetch(`/api/export?${params}`);
+      
+      // Check if response is ok
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Gagal mengekspor data' }));
+        throw new Error(errorData.error || 'Gagal mengekspor data');
+      }
+      
+      // Check content type to ensure it's a file, not JSON error
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Gagal mengekspor data');
+      }
+      
       const blob = await response.blob();
+      
+      // Verify blob has content
+      if (blob.size === 0) {
+        throw new Error('File kosong, tidak ada data untuk diekspor');
+      }
+      
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -228,7 +248,7 @@ export function DataPage({ type }: DataPageProps) {
       setShowExportDialog(false);
     } catch (error) {
       console.error('Export error:', error);
-      toast.error('Gagal mengekspor data');
+      toast.error(error instanceof Error ? error.message : 'Gagal mengekspor data');
     } finally {
       setExporting(false);
     }

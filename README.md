@@ -1,4 +1,4 @@
-# SIDATA - Sistem Informasi Data TOLANDONA
+# SIDATA - Sistem Informasi Data
 
 ![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black.svg)
@@ -15,23 +15,23 @@ Sistem Informasi Data terpadu untuk pengelolaan data Guru, Siswa, Posyandu, Rela
 - Akses cepat ke modul utama
 
 ### 👨‍🏫 Manajemen Guru
-- Input dan pengelolaan data guru (235 data terisi)
+- Input dan pengelolaan data guru
 - Informasi NUPTK, NIP, NIK
 - Klasifikasi jenis tendik
 - Import/export data CSV
 
 ### 👨‍🎓 Manajemen Siswa
-- Data siswa per jenjang pendidikan (1,395 data terisi)
+- Data siswa per jenjang pendidikan
 - Informasi NISN, NIK, kelas
 - Import/export data CSV
 
 ### 👶 Manajemen Posyandu
-- Data anak dan ibu balita (469 data terisi)
+- Data anak dan ibu balita
 - Kategori posyandu
 - Riwayat kesehatan
 
 ### 🤝 Manajemen Relawan
-- Data relawan per divisi (3 data terisi)
+- Data relawan per divisi
 - Informasi jabatan dan gaji pokok
 - Integrasi dengan sistem payroll
 
@@ -42,7 +42,7 @@ Sistem Informasi Data terpadu untuk pengelolaan data Guru, Siswa, Posyandu, Rela
 - Laporan payroll periode
 
 ### 📦 Distribusi Makanan
-- Distribusi per sekolah (21 sekolah)
+- Distribusi per sekolah
 - Klasifikasi per kelas (TK, SD, SMP, SMA)
 - Data L/P (Laki-laki/Perempuan)
 - Berita Acara Distribusi
@@ -51,6 +51,12 @@ Sistem Informasi Data terpadu untuk pengelolaan data Guru, Siswa, Posyandu, Rela
 - Pembuatan berita acara kegiatan
 - Template dan format standar
 - Export ke PDF
+
+### 🏪 Manajemen Gudang
+- Inventori barang
+- Transaksi masuk/keluar
+- Kategori barang
+- Laporan stok
 
 ### 🍎 Ahli Gizi (Food Diary)
 - Pencatatan asupan makanan
@@ -107,17 +113,21 @@ Sistem Informasi Data terpadu untuk pengelolaan data Guru, Siswa, Posyandu, Rela
 
 ## 🗃️ Database Models
 
-| Model | Deskripsi | Data Terisi |
-|-------|-----------|-------------|
-| `User` | User authentication | 1 |
-| `Guru` | Data guru/tenaga pendidik | 235 |
-| `Siswa` | Data siswa | 1,395 |
-| `Posyandu` | Data posyandu | 469 |
-| `Relawan` | Data relawan | 3 |
-| `Payroll` | Penggajian relawan | 36 |
-| `Distribusi` | Distribusi makanan | 189 |
-| `BeritaAcara` | Berita acara kegiatan | 61 |
-| `FoodDiary` | Catatan asupan gizi | 3,152 |
+| Model | Deskripsi |
+|-------|-----------|
+| `User` | User authentication |
+| `Guru` | Data guru/tenaga pendidik |
+| `Siswa` | Data siswa |
+| `Posyandu` | Data posyandu |
+| `Relawan` | Data relawan |
+| `Payroll` | Penggajian relawan |
+| `Distribusi` | Distribusi makanan |
+| `BeritaAcara` | Berita acara kegiatan |
+| `BeritaAcaraDistribusi` | BA penerimaan makanan |
+| `Barang` | Inventori gudang |
+| `BarangTransaksi` | Transaksi barang |
+| `FoodDiary` | Catatan asupan gizi |
+| `Setting` | Pengaturan aplikasi |
 
 ## 🚀 Instalasi
 
@@ -169,49 +179,9 @@ DATABASE_URL="file:./dev.db"
 
 | Email | Password | Role |
 |-------|----------|------|
-| admin@tolandona.go.id | admin123 | admin |
+| admin@sidata.id | admin123 | admin |
 
 > ⚠️ Harap ganti password default setelah login pertama!
-
-## 📊 Data Terimport
-
-Sistem sudah terisi dengan data real dari file CSV:
-- **Guru**: 235 data
-- **Siswa**: 1,395 data (21 sekolah)
-- **Posyandu**: 469 data
-- **Relawan**: 3 data
-
-Simulasi data periode Desember 2025 - Mei 2026:
-- **Distribusi**: 189 record
-- **Payroll**: 36 record
-- **Food Diary**: 3,152 record
-- **Berita Acara**: 61 record
-
-## 🏫 Daftar Sekolah
-
-| Sekolah | Jumlah Siswa |
-|---------|--------------|
-| SMAS LAKINA LIMBO | 169 |
-| SMP 2 BUTON TENGAH | 163 |
-| SDN 4 SANGIA WAMBULU | 145 |
-| SMP 8 BUTON TENGAH | 109 |
-| SDN 5 SANGIA WAMBULU | 104 |
-| SMAN 1 SANGIA WAMBULU | 104 |
-| SDN 6 SANGIA WAMBULU | 86 |
-| SDN 3 SANGIA WAMBULU | 76 |
-| MI AL-AMIN | 70 |
-| SDN 1 SANGIA WAMBULU | 62 |
-| SDN 2 SANGIA WAMBULU | 61 |
-| SDN 7 SANGIA WAMBULU | 51 |
-| RA AL AMIN | 45 |
-| TK PKK DODA BAHARI | 27 |
-| TK LAKINALIMBO 2 | 21 |
-| RA AL MAWADAH | 20 |
-| TK LAKINALIMBO 1 | 18 |
-| RA SHAFHA MARWAH | 17 |
-| TK HANDAYANI | 16 |
-| TK MOLAGINA | 16 |
-| TK MANDIRI ANALALAKI | 15 |
 
 ## 📤 Import Data
 
