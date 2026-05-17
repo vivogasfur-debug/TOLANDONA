@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,353 +7,351 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User for authentication
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      String   @default("admin")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// Settings for website customization
-model Setting {
-  id          String   @id @default(cuid())
-  key         String   @unique
-  value       String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// Guru (Teacher) Data
-model Guru {
-  id          String   @id @default(cuid())
-  originalId  String?  // Original ID from CSV
-  nama        String
-  jk          String?  // Jenis Kelamin
-  sekolah     String?
-  alamat      String?
-  nuptk       String?
-  jenisTendik String?
-  nik         String?
-  nip         String?
-  tempatLahir String?
-  tanggalLahir String?
-  umur        String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// Siswa (Student) Data
-model Siswa {
-  id          String   @id @default(cuid())
-  originalId  String?  // Original ID from CSV
-  nama        String
-  jenjang     String?
-  namaSekolah String?
-  jk          String?  // Jenis Kelamin
-  alamat      String?
-  tempatLahir String?
-  tanggalLahir String?
-  nisn        String?
-  nik         String?
-  kelas       String?
-  umur        String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// Posyandu Data
-model Posyandu {
-  id          String   @id @default(cuid())
-  originalId  String?  // Original ID from CSV
-  nama        String
-  posyandu    String?
-  alamat      String?
-  kategori    String?
-  jk          String?  // Jenis Kelamin
-  nik         String?
-  tempatLahir String?
-  tanggalLahir String?
-  umur        String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// Activity Log
 model ActivityLog {
-  id        String   @id @default(cuid())
+  id        String   @id
   action    String
   details   String?
   userId    String?
   createdAt DateTime @default(now())
 }
 
-// Export Settings for customizing export headers
-model ExportSetting {
-  id        String   @id @default(cuid())
-  type      String   @unique // guru, siswa, posyandu, relawan
-  headers   String   // JSON string of header configuration
+model Barang {
+  id              String            @id
+  kode            String            @unique
+  nama            String
+  kategoriId      String?
+  satuan          String
+  stok            Int               @default(0)
+  stokMin         Int               @default(0)
+  harga           Int               @default(0)
+  lokasi          String?
+  keterangan      String?
+  status          String            @default("aktif")
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime
+  BarangKategori  BarangKategori?   @relation(fields: [kategoriId], references: [id])
+  BarangTransaksi BarangTransaksi[]
+
+  @@index([status])
+  @@index([nama])
+  @@index([kode])
+}
+
+model BarangKategori {
+  id        String   @id
+  nama      String
+  deskripsi String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime
+  Barang    Barang[]
+
+  @@index([nama])
 }
 
-// Relawan (Volunteer) Data
-model Relawan {
-  id          String   @id @default(cuid())
-  originalId  String?  // Original ID from CSV
-  nama        String
-  divisi      String?
-  jabatan     String?
-  gajiPokok   String?
-  jk          String?  // Jenis Kelamin
-  nik         String?
-  tempatLahir String?
-  tanggalLahir String?
-  umur        String?
-  alamat      String?  // Alamat
-  hariKerja   String?
-  bonus       String?
-  totalGaji   String?
+model BarangTransaksi {
+  id          String   @id
+  barangId    String
+  jenis       String
+  jumlah      Int
+  hargaSatuan Int      @default(0)
+  totalHarga  Int      @default(0)
+  tanggal     DateTime @default(now())
+  keterangan  String?
+  referensi   String?
+  penerima    String?
+  pengirim    String?
+  userId      String?
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  payroll     Payroll[]
+  updatedAt   DateTime
+  Barang      Barang   @relation(fields: [barangId], references: [id])
+
+  @@index([tanggal])
+  @@index([jenis])
+  @@index([barangId])
 }
 
-// Payroll Record for tracking salary payments (2 mingguan)
-model Payroll {
-  id             String   @id @default(cuid())
-  relawanId      String
-  periode        Int      // 1-26 (2 mingguan dalam setahun)
-  tahun          Int      // e.g., 2024
-  tanggalMulai   DateTime // Tanggal mulai periode
-  tanggalSelesai DateTime // Tanggal selesai periode
-  gajiHarian     Int      @default(0) // Gaji per hari
-  hariKerja      Int      @default(0) // Jumlah hari kerja (maks 14)
-  bonus          Int      @default(0)
-  potongan       Int      @default(0)
-  totalGaji      Int      @default(0)
-  status         String   @default("pending") // pending, paid
-  tanggalBayar   DateTime?
-  keterangan     String?
+model BeritaAcara {
+  id           String   @id
+  nomor        String
+  tanggal      DateTime
+  judul        String
+  lokasi       String?
+  peserta      String?
+  uraian       String
+  kesimpulan   String?
+  tindakLanjut String?
+  picNama      String?
+  picJabatan   String?
+  status       String   @default("draft")
+  kategori     String?
+  lampiran     String?
+  createdBy    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+
+  @@index([kategori])
+  @@index([status])
+  @@index([tanggal])
+}
+
+model BeritaAcaraDistribusi {
+  id              String   @id
+  nomor           String
+  tanggal         DateTime
+  jam             String?
+  namaSekolah     String
+  jumlahPaket     Int
+  kondisi         String?
+  sppgNama        String?
+  sppgInstansi    String?
+  penerimaNama    String?
+  penerimaJabatan String?
+  keterangan      String?
+  status          String   @default("draft")
+  distribusiId    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime
+
+  @@index([status])
+  @@index([namaSekolah])
+  @@index([tanggal])
+}
+
+model Distribusi {
+  id              String   @id
+  namaSekolah     String
+  klsAL           Int      @default(0)
+  klsAP           Int      @default(0)
+  klsBL           Int      @default(0)
+  klsBP           Int      @default(0)
+  kls1L           Int      @default(0)
+  kls1P           Int      @default(0)
+  kls2L           Int      @default(0)
+  kls2P           Int      @default(0)
+  kls3L           Int      @default(0)
+  kls3P           Int      @default(0)
+  kls4L           Int      @default(0)
+  kls4P           Int      @default(0)
+  kls5L           Int      @default(0)
+  kls5P           Int      @default(0)
+  kls6L           Int      @default(0)
+  kls6P           Int      @default(0)
+  kls7L           Int      @default(0)
+  kls7P           Int      @default(0)
+  kls8L           Int      @default(0)
+  kls8P           Int      @default(0)
+  kls9L           Int      @default(0)
+  kls9P           Int      @default(0)
+  kls10L          Int      @default(0)
+  kls10P          Int      @default(0)
+  kls11L          Int      @default(0)
+  kls11P          Int      @default(0)
+  kls12L          Int      @default(0)
+  kls12P          Int      @default(0)
+  kepsekL         Int      @default(0)
+  kepsekP         Int      @default(0)
+  guruL           Int      @default(0)
+  guruP           Int      @default(0)
+  tendikL         Int      @default(0)
+  tendikP         Int      @default(0)
+  nonTendikL      Int      @default(0)
+  nonTendikP      Int      @default(0)
+  ujiOrganoleptik Int      @default(0)
+  jumlah          Int
+  tanggal         DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime
+}
+
+model DistribusiPosyandu {
+  id              String   @id @default(cuid())
+  namaPosyandu    String   // Nama posyandu
+
+  // Balita (0-5 tahun)
+  balitaL         Int      @default(0) // Laki-laki
+  balitaP         Int      @default(0) // Perempuan
+
+  // Ibu Hamil
+  bumilL          Int      @default(0) // (tidak dipakai, untuk konsistensi)
+  bumilP          Int      @default(0) // Ibu hamil
+
+  // Ibu Menyusui
+  busuiL         Int      @default(0) // (tidak dipakai)
+  busuiP         Int      @default(0) // Ibu menyusui
+
+  // Lansia (60+ tahun)
+  lansiaL        Int      @default(0) // Laki-laki
+  lansiaP        Int      @default(0) // Perempuan
+
+  // WUS (Wanita Usia Subur 15-49 tahun)
+  wusL           Int      @default(0) // (tidak dipakai)
+  wusP           Int      @default(0) // Wanita usia subur
+
+  // Total & Date
+  jumlah         Int      // Total penerima
+  tanggal        DateTime @default(now())
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  
-  relawan        Relawan  @relation(fields: [relawanId], references: [id])
+
+  @@index([namaPosyandu])
+  @@index([tanggal])
 }
 
-// Distribusi Data
-model Distribusi {
-  id          String   @id @default(cuid())
-  namaSekolah String
-  
-  // Siswa - TK/PAUD
-  klsAL       Int      @default(0)
-  klsAP       Int      @default(0)
-  klsBL       Int      @default(0)
-  klsBP       Int      @default(0)
-  
-  // Siswa - SD/MI
-  kls1L       Int      @default(0)
-  kls1P       Int      @default(0)
-  kls2L       Int      @default(0)
-  kls2P       Int      @default(0)
-  kls3L       Int      @default(0)
-  kls3P       Int      @default(0)
-  kls4L       Int      @default(0)
-  kls4P       Int      @default(0)
-  kls5L       Int      @default(0)
-  kls5P       Int      @default(0)
-  kls6L       Int      @default(0)
-  kls6P       Int      @default(0)
-  
-  // Siswa - SMP/MTs
-  kls7L       Int      @default(0)
-  kls7P       Int      @default(0)
-  kls8L       Int      @default(0)
-  kls8P       Int      @default(0)
-  kls9L       Int      @default(0)
-  kls9P       Int      @default(0)
-  
-  // Siswa - SMA/SMK/MA
-  kls10L      Int      @default(0)
-  kls10P      Int      @default(0)
-  kls11L      Int      @default(0)
-  kls11P      Int      @default(0)
-  kls12L      Int      @default(0)
-  kls12P      Int      @default(0)
-  
-  // Guru
-  kepsekL     Int      @default(0)
-  kepsekP     Int      @default(0)
-  guruL       Int      @default(0)
-  guruP       Int      @default(0)
-  tendikL     Int      @default(0)
-  tendikP     Int      @default(0)
-  nonTendikL  Int      @default(0)
-  nonTendikP  Int      @default(0)
-  
-  // Uji Organoleptik
-  ujiOrganoleptik Int  @default(0)
-  
-  // Total & Date
-  jumlah      Int
-  tanggal     DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model ExportSetting {
+  id        String   @id
+  type      String   @unique
+  headers   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
 }
 
-// Food Diary Entry - Ahli Gizi
 model FoodDiary {
-  id          String   @id @default(cuid())
-  date        DateTime // Tanggal pencatatan
-  ageGroup    String   // "dewasa" atau "anak"
-  foodId      Int      // ID makanan dari database lokal
-  foodName    String   // Nama makanan
-  category    String   // Kategori makanan
-  amount      Int      // Jumlah dalam gram
-  calories    Int      // Kalori
-  protein     Float    // Protein dalam gram
-  carbs       Float    // Karbohidrat dalam gram
-  fat         Float    // Lemak dalam gram
-  fiber       Float    // Serat dalam gram
-  mealType    String?  // Jenis makanan: sarapan, makanSiang, makanMalam, snack
-  notes       String?  // Catatan tambahan
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  @@index([date])
+  id        String   @id
+  date      DateTime
+  ageGroup  String
+  foodId    Int
+  foodName  String
+  category  String
+  amount    Int
+  calories  Int
+  protein   Float
+  carbs     Float
+  fat       Float
+  fiber     Float
+  mealType  String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+
   @@index([ageGroup])
+  @@index([date])
 }
 
-// Berita Acara - Event Minutes/Reports
-model BeritaAcara {
-  id              String   @id @default(cuid())
-  nomor           String   // Nomor berita acara
-  tanggal         DateTime // Tanggal kegiatan
-  judul           String   // Judul kegiatan
-  lokasi          String?  // Lokasi kegiatan
-  peserta         String?  // Jumlah peserta
-  uraian          String   // Uraian kegiatan (rich text/HTML)
-  kesimpulan      String?  // Kesimpulan
-  tindakLanjut    String?  // Tindak lanjut
-  picNama         String?  // Nama PIC
-  picJabatan      String?  // Jabatan PIC
-  status          String   @default("draft") // draft, selesai, dibatalkan
-  kategori        String?  // Kategori kegiatan
-  lampiran        String?  // URL/file path lampiran
-  createdBy       String?  // User ID pembuat
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  @@index([tanggal])
-  @@index([status])
-  @@index([kategori])
+model Guru {
+  id           String   @id
+  originalId   String?
+  nama         String
+  jk           String?
+  sekolah      String?
+  alamat       String?
+  nuptk        String?
+  jenisTendik  String?
+  nik          String?
+  nip          String?
+  tempatLahir  String?
+  tanggalLahir String?
+  umur         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
 }
 
-// Berita Acara Distribusi - Food Package Receipt Minutes
-model BeritaAcaraDistribusi {
-  id                String   @id @default(cuid())
-  nomor             String   // Nomor berita acara
-  tanggal           DateTime // Tanggal penerimaan
-  jam               String?  // Jam penerimaan
-  namaSekolah       String   // Nama sekolah penerima
-  jumlahPaket       Int      // Jumlah paket makanan
-  kondisi           String?  // Kondisi paket (baik/rusak)
-  sppgNama          String?  // Nama SPPG penyerah
-  sppgInstansi      String?  // Instansi SPPG
-  penerimaNama      String?  // Nama penerima di sekolah
-  penerimaJabatan   String?  // Jabatan penerima
-  keterangan        String?  // Keterangan tambahan
-  status            String   @default("draft") // draft, selesai
-  distribusiId      String?  // Reference to Distribusi
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
-  @@index([tanggal])
-  @@index([namaSekolah])
-  @@index([status])
-}
-
-// Kategori Barang Gudang
-model BarangKategori {
-  id          String   @id @default(cuid())
-  nama        String   // Nama kategori
-  deskripsi   String?  // Deskripsi kategori
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  barang      Barang[]
-  
-  @@index([nama])
-}
-
-// Barang / Inventori Gudang
-model Barang {
-  id            String   @id @default(cuid())
-  kode          String   @unique // Kode barang
-  nama          String   // Nama barang
-  kategoriId    String?  // Kategori barang
-  satuan        String   // Satuan (kg, pcs, liter, dll)
-  stok          Int      @default(0) // Stok saat ini
-  stokMin       Int      @default(0) // Stok minimum (untuk alert)
-  harga         Int      @default(0) // Harga satuan
-  lokasi        String?  // Lokasi penyimpanan
-  keterangan    String?  // Catatan tambahan
-  status        String   @default("aktif") // aktif, nonaktif
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  kategori      BarangKategori?  @relation(fields: [kategoriId], references: [id])
-  transaksi     BarangTransaksi[]
-  
-  @@index([kode])
-  @@index([nama])
-  @@index([status])
-}
-
-// Transaksi Barang (Masuk/Keluar)
-model BarangTransaksi {
-  id            String   @id @default(cuid())
-  barangId      String   // ID barang
-  jenis         String   // masuk, keluar
-  jumlah        Int      // Jumlah barang
-  hargaSatuan   Int      @default(0) // Harga satuan saat transaksi
-  totalHarga    Int      @default(0) // Total harga
-  tanggal       DateTime @default(now()) // Tanggal transaksi
-  keterangan    String?  // Keterangan
-  referensi     String?  // No. referensi/surat
-  penerima      String?  // Nama penerima (untuk barang keluar)
-  pengirim      String?  // Nama pengirim (untuk barang masuk)
-  userId        String?  // User yang input
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  barang        Barang   @relation(fields: [barangId], references: [id])
-  
-  @@index([barangId])
-  @@index([jenis])
-  @@index([tanggal])
-}
-
-// Laporan Gudang
 model LaporanGudang {
-  id            String   @id @default(cuid())
-  judul         String   // Judul laporan
-  jenis         String   // stok, transaksi, nilai
-  periodeMulai  DateTime // Periode awal
-  periodeSelesai DateTime // Periode akhir
-  data          String   // JSON data laporan
-  keterangan    String?  // Catatan
-  status        String   @default("draft") // draft, final
-  createdBy     String?  // User ID pembuat
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  @@index([jenis])
-  @@index([status])
+  id             String   @id
+  judul          String
+  jenis          String
+  periodeMulai   DateTime
+  periodeSelesai DateTime
+  data           String
+  keterangan     String?
+  status         String   @default("draft")
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime
+
   @@index([periodeMulai])
+  @@index([status])
+  @@index([jenis])
+}
+
+model Payroll {
+  id             String    @id
+  relawanId      String
+  periode        Int
+  tahun          Int
+  tanggalMulai   DateTime
+  tanggalSelesai DateTime
+  gajiHarian     Int       @default(0)
+  hariKerja      Int       @default(0)
+  bonus          Int       @default(0)
+  potongan       Int       @default(0)
+  totalGaji      Int       @default(0)
+  status         String    @default("pending")
+  tanggalBayar   DateTime?
+  keterangan     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime
+  Relawan        Relawan   @relation(fields: [relawanId], references: [id])
+}
+
+model Posyandu {
+  id           String   @id
+  originalId   String?
+  nama         String
+  posyandu     String?
+  alamat       String?
+  kategori     String?
+  jk           String?
+  nik          String?
+  tempatLahir  String?
+  tanggalLahir String?
+  umur         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+}
+
+model Relawan {
+  id           String    @id
+  originalId   String?
+  nama         String
+  divisi       String?
+  jabatan      String?
+  gajiPokok    String?
+  jk           String?
+  nik          String?
+  tempatLahir  String?
+  tanggalLahir String?
+  umur         String?
+  alamat       String?
+  hariKerja    String?
+  bonus        String?
+  totalGaji    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime
+  Payroll      Payroll[]
+}
+
+model Setting {
+  id        String   @id
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model Siswa {
+  id           String   @id
+  originalId   String?
+  nama         String
+  jenjang      String?
+  namaSekolah  String?
+  jk           String?
+  alamat       String?
+  tempatLahir  String?
+  tanggalLahir String?
+  nisn         String?
+  nik          String?
+  kelas        String?
+  umur         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+}
+
+model User {
+  id        String   @id
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime
 }

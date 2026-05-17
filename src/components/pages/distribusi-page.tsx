@@ -45,9 +45,10 @@ import {
 import {
   PieChart as PieChartIcon, BarChart3, Plus, Pencil, Trash2,
   Download, FileText, FileSpreadsheet, FileType, Calendar,
-  Users, GraduationCap, Building2, RefreshCw, Loader2
+  Users, GraduationCap, Building2, RefreshCw, Loader2, Heart
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DistribusiPosyanduTab } from './distribusi-posyandu-tab';
 
 
 interface Distribusi {
@@ -633,10 +634,14 @@ export function DistribusiPage() {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsList className="grid w-full grid-cols-3 max-w-lg">
           <TabsTrigger value="data" className="gap-2">
             <BarChart3 className="w-4 h-4" />
-            Harian
+            Harian Sekolah
+          </TabsTrigger>
+          <TabsTrigger value="posyandu" className="gap-2">
+            <Heart className="w-4 h-4" />
+            Harian Posyandu
           </TabsTrigger>
           <TabsTrigger value="tahunan" className="gap-2">
             <Calendar className="w-4 h-4" />
@@ -644,7 +649,7 @@ export function DistribusiPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Harian Tab */}
+        {/* Harian Sekolah Tab */}
         <TabsContent value="data" className="space-y-6 mt-6">
           <Card className="border-0 shadow-lg">
             <CardContent className="p-0 relative">
@@ -873,6 +878,10 @@ export function DistribusiPage() {
           )}
         </TabsContent>
 
+        {/* Harian Posyandu Tab */}
+        <TabsContent value="posyandu" className="space-y-6 mt-6">
+          <DistribusiPosyanduTab />
+        </TabsContent>
 
         <TabsContent value="tahunan" className="space-y-6 mt-6">
           {/* Summary Cards */}
